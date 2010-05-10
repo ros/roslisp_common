@@ -1,0 +1,12 @@
+<package>
+  <description brief="cl_utils">
+Common Lisp utility libraries
+  </description>
+  <author>Bhaskara Marthi</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/cl_utils</url>
+
+</package>
+
+
