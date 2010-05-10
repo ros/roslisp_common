@@ -8,7 +8,7 @@
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/actionlib_lisp</url>
-  <depend package="roslisp" />
+  <depend package="roslisp_runtime" />
   <depend package="actionlib_msgs" />
   <depend package="cl_utils" />
   
