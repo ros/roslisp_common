@@ -1,7 +1,5 @@
 (in-package :cl-transforms)
 
-(deftype 3d-vector () '(vector quaternion-coefficient 3))
-
 (defparameter *tolerance* 1e-6)
 
 (defun axis-angle->quaternion (axis angle)
@@ -10,9 +8,26 @@
            (type quaternion-coefficient angle))
   (let ((c (cos (/ angle 2)))
         (s (sin (/ angle 2))))
-    (make-instance 'quaternion :w c
-                   :x (* s (aref axis 0)) :y (* s (aref axis 1))
-                   :z (* s (aref axis 2)))))
+    (make-quaternion (* s (x axis))
+                     (* s (y axis))
+                     (* s (z axis))
+                     c)))
+
+(defun quaternion->axis-angle (q)
+  "convert quaterion to axis and angle"
+  (values
+    (make-3d-vector (x q) (y q) (z q))
+    (* 2 (acos (w q)))))
+
+(defun euler->quaternion (&key (ax 0.0) (ay 0.0) (az 0.0))
+  "create a quaternion from euler angles"
+  (let ((phi (* ax 0.5))
+        (the (* ay 0.5))
+        (psi (* az 0.5)))
+    (make-quaternion (- (* (sin phi) (cos the) (cos psi)) (* (cos phi) (sin the) (sin psi)))
+                     (+ (* (cos phi) (sin the) (cos psi)) (* (sin phi) (cos the) (sin psi)))
+                     (- (* (cos phi) (cos the) (sin psi)) (* (sin phi) (sin the) (cos psi)))
+                     (+ (* (cos phi) (cos the) (cos psi)) (* (sin phi) (sin the) (sin psi))))))
 
 (defun normalize (q)
   "Crude normalization by just dividing all coefficients by the norm.
@@ -34,32 +49,33 @@ This guarantees that Q represents a rotation."
     ((eq normalize :check) (assert (is-normalized q)))
     ((eq normalize t) (setq q (normalize q))))
   (with-readers (x y z w) q
-    (let ((t2 (* w x))
-          (t3 (* w y))
-          (t4 (* w z))
-          (t5 (- (* x x)))
-          (t6 (* x y))
-          (t7 (* x z))
-          (t8 (- (* y y)))
-          (t9 (* y z))
-          (t10 (- (* z z)))
-          (v0 (aref v 0))
-          (v1 (aref v 1))
-          (v2 (aref v 2))
-          (v (make-array 3 :element-type 'quaternion-coefficient)))
-      (setf (aref v 0)
-            (* 2
-               (+ (* v0 (+ t8 t10 0.5))
-                  (* v1 (- t6 t4))
-                  (* v2 (+ t3 t7))))
-            (aref v 1)
-            (* 2
-               (+ (* v0 (+ t4 t6))
-                  (* v1 (+ t5 t10 0.5))
-                  (* v2 (- t9 t2))))
-            (aref v 2)
-            (* 2
-               (+ (* v0 (- t7 t3))
-                  (* v1 (+ t2 t9))
-                  (* v2 (+ t5 t8 0.5)))))
-      v)))
+    (with-readers ((v0 x) (v1 y) (v2 z)) v
+      (let ((t2 (* w x))
+            (t3 (* w y))
+            (t4 (* w z))
+            (t5 (- (* x x)))
+            (t6 (* x y))
+            (t7 (* x z))
+            (t8 (- (* y y)))
+            (t9 (* y z))
+            (t10 (- (* z z))))
+        (make-3d-vector
+         (* 2
+            (+ (* v0 (+ t8 t10 0.5))
+               (* v1 (- t6 t4))
+               (* v2 (+ t3 t7))))
+         (* 2
+            (+ (* v0 (+ t4 t6))
+               (* v1 (+ t5 t10 0.5))
+               (* v2 (- t9 t2))))
+         (* 2
+                 (+ (* v0 (- t7 t3))
+                    (* v1 (+ t2 t9))
+                    (* v2 (+ t5 t8 0.5)))))))))
+
+(defun angle-between-quaternions (q1 q2)
+  "Returns two values: the angle between quaternions `q1' and `q2' and
+   the rotation axis."
+  (multiple-value-bind (axis angle)
+      (quaternion->axis-angle (q* (q-inv q1) q2))
+    (values angle axis)))

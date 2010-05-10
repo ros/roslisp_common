@@ -1,11 +1,5 @@
-(defpackage :quaternions
-  (:use :cl :cl-utils)
-  (:export :quaternion :quaternion-coefficient :gen-quaternion
-           :x :y :z :w :make-quaternion
-           :q= :q* :q-inv :q+ :q- :q-norm :squared-norm
-           :rotate :axis-angle-quaternion :normalize))
 
-(in-package :quaternions)
+(in-package :cl-transforms)
 
 (deftype quaternion-coefficient () '(or fixnum float))
 
@@ -109,3 +103,5 @@
          (if (cdr args)
              (apply #'q- q (cdr args))
              q)))))
+
+

@@ -3,8 +3,17 @@
 (in-package :asdf)
 
 (defsystem "cl-transforms"
-    :components ((:file "quaternions")
-                 (:file "transform-package" :depends-on ("quaternions"))
-                 (:file "quaternion-rotations"
-                        :depends-on ("transform-package")))
-    :depends-on ("cl-utils"))
+  :components ((:file "package")
+               (:file "quaternions" :depends-on ("package"))
+               (:file "3d-vector" :depends-on ("package"))
+               (:file "quaternion-rotations" :depends-on ("package" "quaternions" "3d-vector"))
+               (:file "transforms" :depends-on ("package"
+                                                "quaternions"
+                                                "quaternion-rotations"
+                                                "3d-vector"))
+               (:file "matrix-conversions" :depends-on ("package"
+                                                        "quaternions"
+                                                        "quaternion-rotations"
+                                                        "3d-vector"
+                                                        "transforms")))
+  :depends-on ("cl-utils"))
