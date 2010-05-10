@@ -96,3 +96,11 @@ For now, all the Fi except the last one must be unary.  Return F s.t. (apply f #
 (defun partial (fn &rest some-args)
   "Return fn with first k args bound to some-args"
   #'(lambda (&rest remaining-args) (apply fn (append some-args remaining-args))))
+
+(defun rcurry (fn &rest arguments)
+  "Returns a function that applies the arguments it is called
+with and ARGUMENTS to FUNCTION."
+  (declare (optimize (speed 3) (safety 1) (debug 1)))
+  (lambda (&rest more)
+    (declare (dynamic-extent more))
+    (multiple-value-call fn (values-list more) (values-list arguments))))

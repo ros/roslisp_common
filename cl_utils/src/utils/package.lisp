@@ -43,7 +43,7 @@
    :bind-pprint-args
 
    ;; Functional 
-   :compose :nth-arg-fn :fn :defaggregator :partial
+   :compose :nth-arg-fn :fn :defaggregator :partial :rcurry
 
    ;; Hash tables
    :hash-table-has-key :do-hash-entries :hash-keys :pprint-hash-table
