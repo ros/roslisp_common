@@ -1,0 +1,20 @@
+<package>
+  <description brief="actionlib_lisp">
+
+     actionlib_lisp
+
+  </description>
+  <author>Bhaskara Marthi</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/actionlib_lisp</url>
+  <depend package="roslisp" />
+  <depend package="actionlib_msgs" />
+  <depend package="cl_utils" />
+  
+  <!-- Temporary -->
+  <depend package="actionlib_tutorials" />
+
+</package>
+
+
