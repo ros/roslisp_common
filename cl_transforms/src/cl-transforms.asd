@@ -11,6 +11,7 @@
                                                 "quaternions"
                                                 "quaternion-rotations"
                                                 "3d-vector"))
+               (:file "pose" :depends-on ("package" "transforms" "3d-vector"))
                (:file "matrix-conversions" :depends-on ("package"
                                                         "quaternions"
                                                         "quaternion-rotations"

@@ -17,4 +17,4 @@
   (make-pose (translation tr) (rotation tr)))
 
 (defun transform-pose (tr p)
-  (transformed-identity (compose tr (reference-transform p))))
+  (transformed-identity (transform* tr (reference-transform p))))

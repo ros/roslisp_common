@@ -2,7 +2,7 @@
 
 (defclass transform ()
   ((translation :initarg :translation :reader translation :type 3d-vector)
-   (rotation :initarg :rotation :reader rotation :type quaternion))
+   (rotation :initarg :rotation :reader rotation :type gen-quaternion))
   (:documentation "Represents a rigid affine transform of R^3, consisting of a rotation (represented as a normalized-quaternion) and translation (represented as a 3d-vector).  Object should be treated as immutable."))
 
 (defun make-transform (translation rotation)
@@ -29,7 +29,7 @@
    pair of transformations is applied first."
   (reduce (lambda (prev trans)
             (make-transform (v+ (translation trans) (rotate (rotation trans) (translation prev)))
-                            (q* (rotation prev) (rotation trans))))
+                            (q* (rotation trans) (rotation prev))))
           (reverse transforms)))
 
 (defun transform-point (trans p)
