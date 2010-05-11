@@ -1,5 +1,5 @@
 (defpackage :test-quaternions
-  (:use :cl :cl-utils :quaternions :cl-test))
+  (:use :cl :cl-utils :cl-transforms :cl-test))
 
 (in-package :test-quaternions)
 
@@ -60,17 +60,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun random-vec ()
-  (let ((v (make-array 3 :element-type 'quaternion-coefficient)))
-    (setf (aref v 0) (rand *range*)
-          (aref v 1) (rand *range*)
-          (aref v 2) (rand *range*))
-    v))
+  (make-3d-vector (rand *range*) (rand *range*) (rand *range*)))
 
 
 (defun vec-close-to (v1 v2)
-  (let ((dx (- (aref v1 0) (aref v2 0)))
-        (dy (- (aref v1 1) (aref v2 1)))
-        (dz (- (aref v1 2) (aref v2 2))))
+  (let ((dx (- (x v1) (x v2)))
+        (dy (- (y v1) (y v2)))
+        (dz (- (z v1) (z v2))))
     (< (+ (* dx dx) (* dy dy) (* dz dz))
        *tol*)))
 

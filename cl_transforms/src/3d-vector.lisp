@@ -58,9 +58,3 @@
                   (- (* (x v-1) (y v-2))
                      (* (y v-1) (x v-2)))))
 
-(defun angle-between-vectors (v-1 v-2)
-  "Returns the angle between two points."
-  (let ((prod (dot-product v-1 v-2)))
-    (unless (= prod 0.0)
-      (acos (/ prod (* (v-norm v-1)
-                       (v-norm v-2)))))))

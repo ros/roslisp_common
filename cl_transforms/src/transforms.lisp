@@ -31,3 +31,8 @@
             (make-transform (v+ (translation trans) (rotate (rotation trans) (translation prev)))
                             (q* (rotation prev) (rotation trans))))
           (reverse transforms)))
+
+(defun transform-point (trans p)
+  (declare (type transform trans) (type 3d-vector p))
+  (v+ (translation trans) (rotate (rotation trans) p)))
+

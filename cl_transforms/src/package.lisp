@@ -4,7 +4,7 @@
            :x :y :z :w :make-quaternion
            :q= :q* :q-inv :q+ :q- :q-norm :squared-norm
            :3d-vector :make-3d-vector :v+ :v- :v* :v-inv
-           :dot-product :cross-product :angle-between-vectors
+           :dot-product :cross-product 
            :rotate :axis-angle->quaternion :quaternion->axis-angle
            :euler->quaternion :matrix->quaternion :normalize
            :is-normalized :rotate :angle-between-quaternions
