@@ -1,0 +1,17 @@
+<package>
+  <description brief="cl_tf">
+
+     cl_tf
+
+  </description>
+  <author>Lorenz Moesenlechner</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/cl_tf</url>
+  <depend package="roslisp_runtime"/>
+  <depend package="cl_transforms"/>
+  <depend package="tf"/>
+
+</package>
+
+
