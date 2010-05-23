@@ -8,8 +8,8 @@
             ((:file "package")
              (:file "messages" :depends-on ("package"))
              (:file "transformer" :depends-on ("package"))
-             ;; (:file "transform-listener"
-             ;;        :depends-on ("messages" "transformer"))
+             (:file "transform-listener"
+                    :depends-on ("package" "messages" "transformer"))
              ;; (:file "transform-broadcaster"
-             ;;        :depends-on ("messages" "transformer"))
+             ;;        :depends-on ("package" "messages" "transformer"))
              ))))

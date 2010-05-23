@@ -10,7 +10,7 @@
 
 (defclass pose-stamped (pose stamped) ())
 
-(defclass point-stamped (3d-vector stamped ()))
+(defclass point-stamped (3d-vector stamped) ())
 
 (defun make-stamped-transform (frame-id child-frame-id stamp translation rotation)
   (make-instance 'stamped-transform
@@ -33,27 +33,28 @@
                 (rotation rotation))
       msg
     (make-transform
-     (with-fields ((x (translation x))
-                   (y (translation y))
-                   (z (translation z)))
+     (with-fields ((x x)
+                   (y y)
+                   (z z))
          translation
        (make-3d-vector x y z))
-     (with-fields ((x (rotation x))
-                   (y (rotation y))
-                   (z (rotation z))
-                   (w (rotation w)))
+     (with-fields ((x x)
+                   (y y)
+                   (z z)
+                   (w w))
          rotation
        (make-quaternion x y z w)))))
 
 (defun tf-message->transforms (tf-msgs)
   "Return the transform that corresponds to a tf message."
-  (loop for msg in (transforms-val tf-msgs)
+  (loop for msg across (transforms-val tf-msgs)
         collecting
-     (with-fields ((frame-id (header frame_id))
-                   (stamp (header stamp))
+     (with-fields ((frame-id (frame_id header))
+                   (stamp (stamp header))
                    (child-frame-id child_frame_id))
          msg
-       (let ((transform (tf-transform->transform (transforms-val msg))))
+       (let ((transform (tf-transform->transform
+                         (geometry_msgs-msg:transform-val msg))))
          (make-stamped-transform frame-id child-frame-id stamp
                                  (translation transform)
                                  (rotation transform))))))
