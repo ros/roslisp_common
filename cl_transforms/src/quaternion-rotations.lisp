@@ -2,9 +2,11 @@
 
 (defparameter *tolerance* 1e-6)
 
+
+
 (defun axis-angle->quaternion (axis angle)
   "Return quaternion corresponding to rotation about axis by angle"
-  (declare (type 3d-vector axis)
+  (declare (type point axis)
            (type quaternion-coefficient angle))
   (let ((c (cos (/ angle 2)))
         (s (sin (/ angle 2))))
@@ -29,6 +31,9 @@
                      (- (* (cos phi) (cos the) (sin psi)) (* (sin phi) (sin the) (cos psi)))
                      (+ (* (cos phi) (cos the) (cos psi)) (* (sin phi) (sin the) (sin psi))))))
 
+(defun yaw (angle)
+  (axis-angle->quaternion #(0 0 1) angle))
+
 (defun normalize (q)
   "Crude normalization by just dividing all coefficients by the norm.
 This guarantees that Q represents a rotation."
@@ -44,7 +49,7 @@ This guarantees that Q represents a rotation."
 
 
 (defun rotate (q v &key (normalize :check))
-  (declare (type 3d-vector v) (type gen-quaternion q))
+  (declare (type point v) (type gen-quaternion q))
   (cond
     ((eq normalize :check) (assert (is-normalized q)))
     ((eq normalize t) (setq q (normalize q))))

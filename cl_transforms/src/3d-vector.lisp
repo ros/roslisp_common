@@ -8,6 +8,18 @@
    (y :initarg :y :reader y :type vector-coefficient)
    (z :initarg :z :reader z :type vector-coefficient)))
 
+(defmethod x ((v vector))
+  (aref v 0))
+
+(defmethod y ((v vector))
+  (aref v 1))
+
+(defmethod z ((v vector))
+  (aref v 2))
+
+(deftype point ()
+  '(or 3d-vector (vector * 3)))
+
 (defun make-3d-vector (x y z)
   (make-instance '3d-vector :x x :y y :z z))
 
@@ -16,7 +28,7 @@
     (format strm "(~a, ~a, ~a)" (x v) (y v) (z v))))
 
 (defun v-norm (v)
-  "Returns the magniturde of the vector"
+  "Returns the magnitude of the vector"
   (sqrt (dot-product v v)))
 
 (defun v+ (&rest vecs)

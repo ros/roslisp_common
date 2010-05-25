@@ -1,7 +1,7 @@
 (in-package :cl-transforms)
 
 (defclass transform ()
-  ((translation :initarg :translation :reader translation :type 3d-vector)
+  ((translation :initarg :translation :reader translation :type point)
    (rotation :initarg :rotation :reader rotation :type gen-quaternion))
   (:documentation "Represents a rigid affine transform of R^3, consisting of a rotation (represented as a normalized-quaternion) and translation (represented as a 3d-vector).  Object should be treated as immutable."))
 
@@ -33,6 +33,6 @@
           (reverse transforms)))
 
 (defun transform-point (trans p)
-  (declare (type transform trans) (type 3d-vector p))
+  (declare (type transform trans) (type point p))
   (v+ (translation trans) (rotate (rotation trans) p)))
 

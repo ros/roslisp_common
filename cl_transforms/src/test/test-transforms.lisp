@@ -125,7 +125,7 @@
                  (v+ p1 p2) #'vec-close-to)
 
     ;; Check that rotations work as expected
-    (check-equal (transform-point (make-transform (make-3d-vector 0 0 0) q) p1)
+    (check-equal (transform-point (make-transform #(0 0 0) q) p1)
                  (rotate q p1) #'vec-close-to)
     
     

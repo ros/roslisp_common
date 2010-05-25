@@ -1,12 +1,16 @@
 (in-package :cl-transforms)
 
 (defclass pose ()
-  ((origin :type 3d-vector :reader origin :initarg :origin)
+  ((origin :type point :reader origin :initarg :origin)
    (orientation :type quaternion :reader orientation :initarg :orientation))
   (:documentation "Represents a 6 dof pose, consisting of an origin in R^3 and an orientation, represented as a quaternion"))
 
 (defun make-pose (origin orientation)
   (make-instance 'pose :origin origin :orientation orientation))
+
+(defun make-2d-pose (x y theta)
+  (make-pose (make-3d-vector x y 0.0)
+             (axis-angle->quaternion (make-3d-vector 0 0 1) theta)))
 
 (defun reference-transform (pose)
   "Return the transform that takes in the coordinates of a point in the pose's frame, and returns the coordinates in the reference frame"
