@@ -173,10 +173,11 @@
     (with-recursive-lock (mutex)
       (not (null (gethash (goal-id goal) goals))))))
 
-(defun get-goal (client goal)
-  (assert (has-goal client goal))
+(defun get-goal (client goal &key (fail-without-goal t))
   (with-slots (mutex goals) client
     (with-recursive-lock (mutex)
+      (when fail-without-goal
+        (assert (has-goal client goal)))
       (gethash (goal-id goal) goals))))
 
 (defun remove-goal (client goal)
@@ -303,7 +304,7 @@ current state, based on `transitions'."
                 (status-msg status))
       feedback
     (when (has-goal client status-msg)
-      (let ((goal (get-goal client status-msg)))
+      (let ((goal (get-goal client status-msg :fail-without-goal nil)))
         (funcall (feedback-callback goal) feedback-msg))))
   (with-mutex ((slot-value client 'mutex))
     (setf (active-time client) (ros-time))    
