@@ -54,8 +54,8 @@
    (mutex :reader as-mutex :initform (make-mutex))
    (goals :reader goals :initform (make-hash-table :test #'equal))
    (deactivated-goals :reader deactivated-goals :initform (make-hash-table :test #'equal))
-   (result-queue :initform (make-priority-queue) :reader result-queue)
-   (feedback-queue :initform (make-priority-queue) :reader feedback-queue)
+   (result-pub :initarg :result-pub :reader result-pub)
+   (feedback-pub :initarg :feedback-pub :reader feedback-pub)
    (feedback-type :writer set-feedback-type :reader feedback-type)
    (result-type :writer set-result-type :reader result-type)
    (result-msg-type :writer set-result-msg-type :reader result-msg-type)
@@ -192,10 +192,9 @@
 
 (defun set-current-result (as msg status)
   "Assumes mutex is held.  Add a result message for the current goal to the result queue."
-  (with-slots (result-queue result-msg-type current) as
-    (enqueue result-queue 
-             (make-msg result-msg-type :status (make-status status current) :result msg) 
-             0.0)))
+  (verify-in-callback-thread)
+  (with-slots (result-pub result-msg-type current) as
+    (publish result-pub (make-msg result-msg-type :status (make-status status current) :result msg))))
 
 
 (defun preempt-current-fn (msg)
@@ -263,12 +262,9 @@ The arguments are as in roslisp:make-message for the result type of the action: 
 
 (defun publish-feedback-fn (feedback)
   "Add feedback to the feedback queue of *action-server*"
-  (verify-in-callback-thread)
-  (with-slots (mutex feedback-queue current feedback-msg-type) *action-server*
+  (with-slots (mutex feedback-pub current feedback-msg-type) *action-server*
     (with-mutex (mutex)
-      (enqueue feedback-queue 
-               (make-msg feedback-msg-type :status (make-status :active current) :feedback feedback)
-               0.0))))
+      (publish feedback-pub (make-msg feedback-msg-type :status (make-status :active current) :feedback feedback)))))
 
 (defmacro publish-feedback (&rest args)
   (if (= 1 (length args))
@@ -332,20 +328,16 @@ The arguments are as in roslisp:make-message for the result type of the action: 
               (sleep 0.1)))
       (ros-debug (action-server callback) "Callback thread exiting")))))
 
-(defun update-loop (as status-pub feedback-pub result-pub)
+(defun update-loop (as status-pub)
   "Returns a loop each iteration of which 1) publishes any messages that may have arrived on the feedback and result queues for the action server 2) publishes the status 3) accepts any pending goals 4) garbage collects old goals"
   #'(lambda ()
       (loop-at-most-every *status-publish-interval*
          (ros-debug (action-server update-loop) "Update loop")
          (unless (eq (node-status) :running) (return))
-        (with-slots (mutex feedback-queue result-queue pending current) as
+        (with-slots (mutex pending current) as
           (with-mutex (mutex)
             (gc-old-goals as (- (ros-time) *gc-interval*))
             (when (and pending (null current)) (accept-next-goal as))
-            (while (not (zerop (num-entries feedback-queue)))
-              (publish feedback-pub (dequeue-highest feedback-queue)))
-            (while (not (zerop (num-entries result-queue)))
-              (publish result-pub (dequeue-highest result-queue)))
             (publish status-pub (get-current-status as)))))))
 
 
@@ -362,16 +354,18 @@ The arguments are as in roslisp:make-message for the result type of the action: 
            (status-pub (advertise (action-topic "status") "actionlib_msgs/GoalStatusArray"))
            (feedback-pub (advertise (action-topic "feedback") (action-type "Feedback")))
            (result-pub (advertise (action-topic "result") (action-type "Result")))
-           (as (make-instance 'action-server :exec-callback exec-callback :action action-type)))
+           (as (make-instance 'action-server
+                              :exec-callback exec-callback :action action-type
+                              :feedback-pub feedback-pub :result-pub result-pub)))
       (make-thread (callback-loop as) 
                    :name (format nil "~a-callback-loop" action-name))
       (subscribe (action-topic "goal") (action-type "Goal") (partial #'add-goal as))
       (subscribe (action-topic "cancel") "actionlib_msgs/GoalId"
                  #'(lambda (m) (declare (ignore m)) (process-cancel-request as)))
       (if separate-thread
-          (make-thread (update-loop as status-pub feedback-pub result-pub)
+          (make-thread (update-loop as status-pub)
                        :name (format nil "~a-update-loop" action-name))
-          (funcall (update-loop as status-pub feedback-pub result-pub))))))
+          (funcall (update-loop as status-pub))))))
 
 
 
