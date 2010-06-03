@@ -47,6 +47,7 @@
    :def-exec-callback :exec-callback-tag
    ;; Client
    :*action-server-timeout*
+   :server-lost
    :simple-state :result :goal-id :make-action-client
    :send-goal :cancel-goal :wait-for-server
    :connected-to-server :wait-for-result :call-goal
