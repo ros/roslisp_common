@@ -300,13 +300,13 @@ current state, based on `transitions'."
     (condition-broadcast (slot-value client 'condition))))
 
 (defun client-feedback-callback (client feedback)
-  (with-fields ((feedback-msg feedback)
-                (status-msg status))
-      feedback
-    (when (has-goal client status-msg)
-      (let ((goal (get-goal client status-msg :fail-without-goal nil)))
-        (funcall (feedback-callback goal) feedback-msg))))
   (with-mutex ((slot-value client 'mutex))
+    (with-fields ((feedback-msg feedback)
+                  (status-msg status))
+        feedback
+      (when (has-goal client status-msg)
+        (let ((goal (get-goal client status-msg :fail-without-goal nil)))
+          (funcall (feedback-callback goal) feedback-msg))))
     (setf (active-time client) (ros-time))    
     (condition-broadcast (slot-value client 'condition))))
 
@@ -388,7 +388,7 @@ current state, based on `transitions'."
 (defmethod wait-for-result ((goal client-goal-handle) &optional timeout)
   (flet ((wait ()
            (with-recursive-lock ((slot-value goal 'mutex))
-             (loop until (and (result goal)
+             (loop until (and goal (result goal)
                               (eq (simple-state goal) :done))
                    unless (connected-to-server (client goal)) do
                      (error 'server-lost
