@@ -7,6 +7,7 @@
                (:file "quaternions" :depends-on ("package"))
                (:file "3d-vector" :depends-on ("package"))
                (:file "quaternion-rotations" :depends-on ("package" "quaternions" "3d-vector"))
+               (:file "interpolation" :depends-on ("package" "quaternions" "3d-vector"))
                (:file "transforms" :depends-on ("package"
                                                 "quaternions"
                                                 "quaternion-rotations"

@@ -104,4 +104,15 @@
              (apply #'q- q (cdr args))
              q)))))
 
+(defun q-dot (q1 q2)
+  (+ (* (x q1) (x q2))
+     (* (y q1) (y q2))
+     (* (z q1) (z q2))
+     (* (w q1) (w q2))))
 
+(defun q-scale (q scalar)
+  "Returns a quaternion scaled with factor `scalar'."
+  (make-quaternion (* scalar (x q))
+                   (* scalar (y q))
+                   (* scalar (z q))
+                   (* scalar (w q))))
