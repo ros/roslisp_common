@@ -461,5 +461,5 @@ current state, based on `transitions'."
                            (condition-wait condition mutex))))
                  (sb-ext:timeout (e)
                    (declare (ignore e))))))
-        (unless (eq (simple-state goal-handle) :done)
+        (unless (or (not goal-handle) (eq (simple-state goal-handle) :done))
           (cancel-goal goal-handle))))))
