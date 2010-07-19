@@ -28,3 +28,6 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #rosbuild_link_boost(${PROJECT_NAME} thread)
 #rosbuild_add_executable(example examples/example.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
+
+rospack_add_lisp_executable(bin/fibonacci_server actionlib-examples actionlib-examples:fib-server)
+rospack_add_lisp_executable(bin/fibonacci_client actionlib-examples actionlib-examples:fib-client)
