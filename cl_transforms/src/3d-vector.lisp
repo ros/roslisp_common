@@ -70,3 +70,8 @@
                   (- (* (x v-1) (y v-2))
                      (* (y v-1) (x v-2)))))
 
+(defun v-dist (v-1 v-2)
+  "Returns the euclidean distance between two vectors."
+  (sqrt (+ (expt (- (x v-1) (x v-2)) 2)
+           (expt (- (y v-1) (y v-2)) 2)
+           (expt (- (z v-1) (z v-2)) 2))))
