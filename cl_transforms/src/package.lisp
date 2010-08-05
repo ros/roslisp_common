@@ -9,7 +9,7 @@
            :euler->quaternion :matrix->quaternion :normalize
            :is-normalized :rotate :angle-between-quaternions
            :transform :make-transform :transform-inv :transform* :transform-point :translation :rotation
-           :pose :make-pose :make-2d-pose :transform-pose :reference-transform :origin :orientation
+           :point :pose :make-pose :make-2d-pose :transform-pose :reference-transform :origin :orientation
            :matrix->quaternion :matrix->transform :transform->matrix
            :slerp :interpolate-vector))
 
