@@ -5,4 +5,6 @@
            :transform-listener
            :can-transform :lookup-transform
            :set-transform :transform-pose
-           :transform-point))
+           :transform-point
+           :stamped-transform :pose-stamped :point-stamped
+           :frame-id :stamp :child-frame-id))
