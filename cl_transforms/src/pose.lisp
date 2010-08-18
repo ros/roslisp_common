@@ -8,6 +8,11 @@
 (defun make-pose (origin orientation)
   (make-instance 'pose :origin origin :orientation orientation))
 
+(defmethod print-object ((obj pose) strm)
+  (print-unreadable-object (obj strm :type t)
+    (with-slots (origin orientation) obj
+      (format strm "~{~<~%   ~a~>~}" (list origin orientation)))))
+
 (defun make-2d-pose (x y theta)
   (make-pose (make-3d-vector x y 0.0)
              (axis-angle->quaternion (make-3d-vector 0 0 1) theta)))
