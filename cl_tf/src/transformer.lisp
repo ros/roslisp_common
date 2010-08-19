@@ -26,9 +26,11 @@
                (equal (frame-id (car target-root))
                       (frame-id (car source-root))))
               ((and (not target-root) source-root)
-               (equal target-frame (frame-id (car source-root))))
+               (equal target-frame
+                      (frame-id (car source-root))))
               ((and target-root (not source-root))
-               (equal (car target-root) source-root))))))
+               (equal (frame-id (car target-root))
+                      source-frame))))))
 
 (defmethod lookup-transform (tf &key target-frame source-frame time)
   (declare (ignore time))
