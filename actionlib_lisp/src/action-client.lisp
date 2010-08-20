@@ -306,7 +306,8 @@ current state, based on `transitions'."
         feedback
       (when (has-goal client status-msg)
         (let ((goal (get-goal client status-msg :fail-without-goal nil)))
-          (funcall (feedback-callback goal) feedback-msg))))
+          (when (feedback-callback goal)
+            (funcall (feedback-callback goal) feedback-msg)))))
     (setf (active-time client) (ros-time))    
     (condition-broadcast (slot-value client 'condition))))
 
