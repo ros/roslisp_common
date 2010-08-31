@@ -20,7 +20,7 @@
     (make-quaternion x y z w)))
 
 (defun matrix->transform (matrix)
-  "Converts a homoenouse 4x4 matrix to a pose object."
+  "Converts a homogenous 4x4 matrix to a pose object."
   (assert (typep matrix '(array t (4 4))))
   (let ((rotation-submatrix
          (make-array '(3 3)
