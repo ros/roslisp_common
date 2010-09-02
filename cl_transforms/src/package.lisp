@@ -10,6 +10,6 @@
            :is-normalized :rotate :angle-between-quaternions
            :transform :make-transform :transform-inv :transform* :transform-point :translation :rotation
            :point :pose :make-pose :make-2d-pose :transform-pose :reference-transform :origin :orientation
-           :matrix->quaternion :matrix->transform :transform->matrix
+           :matrix->quaternion :matrix->transform :transform->matrix :pose->matrix
            :slerp :interpolate-vector))
 

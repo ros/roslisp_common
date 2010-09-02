@@ -62,15 +62,21 @@
   (with-slots (translation rotation) trans
     (let ((result (make-array '(4 4) :initial-element 0.0)))
       (with-slots (x y z w) rotation
-        (setf (aref result 0 0) (- 1 (* 2 y y) (* 2 z z))
-              (aref result 0 1) (- (* 2 x y) (* 2 z w))
-              (aref result 0 2) (+ (* 2 x z) (* 2 y w))
-              (aref result 1 0) (+ (* 2 x y) (* 2 z w))
-              (aref result 1 1) (- 1 (* 2 x x) (* 2 z z))
-              (aref result 1 2) (- (* 2 y z) (* 2 x w))
-              (aref result 2 0) (- (* 2 x y) (* 2 y w))
-              (aref result 2 1) (+ (* 2 y z) (* 2 x w))
-              (aref result 2 2) (- 1 (* 2 x x) (* 2 y y))))
+        (let ((x2 (* x x))
+              (y2 (* y y))
+              (z2 (* z z))
+              (w2 (* w w)))
+          (setf (aref result 0 0) (+ w2 x2 (- y2) (- z2))
+                (aref result 0 1) (- (* 2 x y) (* 2 w z))
+                (aref result 0 2) (+ (* 2 x z) (* 2 w y))
+
+                (aref result 1 0) (+ (* 2 x y) (* 2 w z))
+                (aref result 1 1) (+ w2 (- x2) y2 (- z2))
+                (aref result 1 2) (- (* 2 y z) (* 2 w x))
+
+                (aref result 2 0) (- (* 2 x z) (* 2 w y))
+                (aref result 2 1) (+ (* 2 y z) (* 2 w x))
+                (aref result 2 2) (+ w2 (- x2) (- y2) z2))))
       (with-slots (x y z) translation
         (setf (aref result 0 3) x
               (aref result 1 3) y
@@ -78,4 +84,5 @@
               (aref result 3 3) 1))
       result)))
 
-
+(defun pose->matrix (pose)
+  (transform->matrix (reference-transform pose)))
