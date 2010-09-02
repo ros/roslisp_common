@@ -12,6 +12,19 @@
 
 (defclass point-stamped (3d-vector stamped) ())
 
+(defun make-pose-stamped (frame-id stamp translation rotation)
+  (make-instance 'pose-stamped
+                 :frame-id frame-id
+                 :stamp stamp
+                 :origin translation
+                 :orientation rotation))
+
+(defun make-point-stamped (frame-id stamp 3d-vector)
+  (make-instance 'point-stamped
+                 :frame-id frame-id
+                 :stamp stamp
+                 :3d-vector 3d-vector))
+
 (defun make-stamped-transform (frame-id child-frame-id stamp translation rotation)
   (make-instance 'stamped-transform
                  :frame-id frame-id
