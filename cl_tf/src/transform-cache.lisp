@@ -53,6 +53,13 @@
            (cache-entry (aref cache cache-entry-index)))
       (when (> (- (stamp transform) (newest-stamp cache-entry))
                cache-size)
+        ;; When writing the first entry into a cache, we need to also
+        ;; write it into the previous one to make interpolation
+        ;; work. Otherwise, we cannot request transforms between the
+        ;; last transform of the previous cache entry and the first
+        ;; transform of the current cache entry.
+        (let ((prev-entry-index (truncate (mod (1- (stamp transform)) cache-size))))
+          (cache-transform (aref cache prev-entry-index) transform))
         (gc-cache-entry cache-entry))
       (cache-transform cache-entry transform))))
 
@@ -115,8 +122,16 @@
              :description "The requested time stamp does not point into the cache."))
     (multiple-value-bind (lower upper)
         (binary-search time transforms-cache
-                       :array-size fill-pointer :key #'stamp)
-      (cond (interpolate
+                       :end (1- fill-pointer) :key #'stamp)
+      (cond ((not lower)
+             (error "The cache is in a weird state. Although the
+             timestamp should be in the cache no corresponding
+             transforms could be found. Please file a ticket."))
+            ((eql (stamp lower) time)
+             lower)
+            ((eql (stamp upper) time)
+             upper)
+            (interpolate
              (let ((ratio (/ (- time (stamp lower))
                              (- (stamp upper) (stamp lower)))))
                (make-stamped-transform
