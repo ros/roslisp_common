@@ -1,6 +1,10 @@
 
 (in-package :cl-tf)
 
+(define-condition tf-connectivity-error (error)
+  ((source-frame :initarg :source-frame)
+   (target-frame :initarg :target-frame)))
+
 (defclass transformer ()
   ((transforms :initform (make-hash-table :test 'equal)
                :reader transforms)))
@@ -49,7 +53,8 @@
                             (apply #'transform* up-transforms))
                            ((and down-transforms (not up-transforms))
                             (transform-inv (apply #'transform* down-transforms))))))
-      (assert result-tf () "Couldn't find a valid transformation from `~a' to `~a'." source-frame target-frame)
+      (unless result-tf
+        (error 'tf-connectivity-error :source-frame source-frame :target-frame target-frame))
       (make-stamped-transform target-frame source-frame
                               (or time (gethash source-frame (slot-value tf 'transforms)))
                               (translation result-tf)
