@@ -4,7 +4,7 @@
      cl_transforms
 
   </description>
-  <author>Bhaskara Marthi</author>
+  <author>Bhaskara Marthi, Lorenz Moesenlechner</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/cl_transforms</url>
