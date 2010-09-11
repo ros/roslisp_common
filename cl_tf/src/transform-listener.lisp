@@ -12,8 +12,9 @@
 
 (defun tf-listener-callback (tf msg)
   (mapc (lambda (transform)
-          (set-transform tf transform))
-        (tf-message->transforms msg)))
+          (set-transform tf transform :suppress-callbacks t))
+        (tf-message->transforms msg))
+  (execute-set-callbacks tf))
 
 (defmethod destroy ((tf transform-listener))
   ;; (roslisp:unsubscribe (slot-value tf 'subscriber))

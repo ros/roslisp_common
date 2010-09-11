@@ -8,13 +8,16 @@
 (defclass transformer ()
   ((transforms :initform (make-hash-table :test 'equal)
                :reader transforms)
+   (set-transform-callbacks :initform nil)
    (lock :initform (sb-thread:make-mutex))))
 
 (defgeneric can-transform (tf &key target-frame source-frame time))
 
-(defgeneric lookup-transform (tf &key source-frame target-frame time))
+(defgeneric lookup-transform (tf &key target-frame source-frame time))
 
-(defgeneric set-transform (tf transform))
+(defgeneric wait-for-transform (tf &key target-frame source-frame time))
+
+(defgeneric set-transform (tf transform &key suppress-callbacks))
 
 (defgeneric transform-pose (tf &key target-frame pose))
 
@@ -73,7 +76,31 @@
         (unless cache
           (setf cache (make-instance 'transform-cache))
           (setf (gethash (child-frame-id transform) transforms) cache))
-        (cache-transform cache transform)))))
+        (cache-transform cache transform)))
+    (unless suppress-callbacks
+      (execute-set-callbacks tf))))
+
+(defmethod wait-for-transform ((tf transformer) &key target-frame source-frame time)
+  (let ((cond-var (sb-thread:make-waitqueue))
+        (lock (sb-thread:make-mutex))
+        (waiter-name (gensym)))
+    (flet ((on-set-transform ()
+             (sb-thread:with-mutex (lock)
+               (sb-thread:condition-broadcast cond-var))))
+      (unwind-protect
+           (unless (can-transform
+                         tf :time time
+                         :target-frame target-frame
+                         :source-frame source-frame)
+             (add-set-callback tf waiter-name #'on-set-transform)
+             (loop
+               do (sb-thread:with-mutex (lock)
+                    (sb-thread:condition-wait cond-var lock))
+               until (can-transform
+                         tf :time time
+                         :target-frame target-frame
+                         :source-frame source-frame)))
+        (remove-set-callback tf waiter-name)))))
 
 (defmethod transform-pose ((tf transformer) &key target-frame pose time)
   (check-type target-frame string)
@@ -112,3 +139,16 @@
           (get-transforms-to-root transforms (frame-id current-tf)
                                   time (cons current-tf result)))
         result)))
+
+(defun execute-set-callbacks (tf)
+  (with-slots (set-transform-callbacks) tf
+    (map 'nil (cl-utils:compose #'funcall #'cdr) set-transform-callbacks)))
+
+(defun add-set-callback (tf name callback)
+  (with-slots (set-transform-callbacks) tf
+    (pushnew (cons name callback) set-transform-callbacks)))
+
+(defun remove-set-callback (tf name)
+  (with-slots (set-transform-callbacks) tf
+    (setf set-transform-callbacks (remove name set-transform-callbacks
+                                          :key #'car))))
