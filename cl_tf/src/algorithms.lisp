@@ -1,7 +1,9 @@
 
 (in-package :cl-tf)
 
-(defun binary-search (value array &key (lt #'<) (key #'identity))
+(defun binary-search (value array &key
+                      (array-size (array-dimension array 0))
+                      (lt #'<) (key #'identity))
   "Performs a binary search for `value' in `array'. This function
 assumes that `array' is ordered with respect predicate `lt'.
 
@@ -24,7 +26,7 @@ first `value' that is not `lt' than `value'."
                          (perform-search lower pivot)
                          (perform-search pivot upper))))))
       (multiple-value-call #'values
-        (perform-search 0 (1- (array-dimension array 0)))
+        (perform-search 0 (1- array-size))
         i))))
 
 (defun lower-bound (value array &key (lt #'<) (key #'identity))
