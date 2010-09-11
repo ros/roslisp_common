@@ -37,7 +37,7 @@
 (defgeneric get-cached-transform (cache timestamp &key interpolate)
   (:documentation "Find the transform for a specific timestamp. When
   `interpolate' is T, return an interpolated transform, otherwise,
-  return the transformation whose timestamp is closest to
+  return the transformation with a timestamp that is closest to
   `timestamp'."))
 
 (defmethod initialize-instance :after ((tf-cache transform-cache) &key)
@@ -66,7 +66,7 @@
 (defun gc-cache-entry (cache-entry)
   (with-slots (fill-pointer) cache-entry
     (setf fill-pointer 0)
-    ;; TODO: Maybe shrink transforms-cache again
+    ;; TODO: Maybe shrink transforms-cache
     ))
 
 (defmethod initialize-instance :after ((cache-entry cache-entry) &key)
@@ -75,19 +75,22 @@
                     :initial-element (make-instance 'stamped-transform))))
 
 (defmethod cache-transform ((cache-entry cache-entry) transform)
-  (let ((cache-size (array-dimension (transforms-cache cache-entry) 0)))
+  (let ((cache-size (array-dimension (transforms-cache cache-entry) 0))
+        (cache (transforms-cache cache-entry)))
+    (declare (type (simple-array * 1) cache))
     (assert (> (stamp transform) (newest-stamp cache-entry)))
     (when (eql (fill-pointer cache-entry) cache-size)
-      (setf (transforms-cache cache-entry)
-            (adjust-array (transforms-cache cache-entry)
-                          (truncate (* cache-size +cache-adjust-factor+)))))
-    (setf (aref (transforms-cache cache-entry) (fill-pointer cache-entry))
+      (setf cache (resize-transforms-cache
+                   cache (* cache-size +cache-adjust-factor+)))
+      (setf (transforms-cache cache-entry) cache))
+    (setf (aref cache (fill-pointer cache-entry))
           transform)
     (setf (newest-stamp cache-entry) (stamp transform))
     (incf (fill-pointer cache-entry))))
 
 (defmethod get-cached-transform ((cache-entry cache-entry) timestamp &key (interpolate t))
   (with-slots (newest-stamp fill-pointer transforms-cache) cache-entry
+    (declare (type (simple-array * 1) transforms-cache))
     (when (or (> timestamp newest-stamp)
               (< timestamp (stamp (aref transforms-cache 0))))
       (error 'tf-cache-error
@@ -110,3 +113,7 @@
                     (abs (- timestamp upper)))
                  lower upper))))))
 
+(defun resize-transforms-cache (cache new-size)
+  (declare (type (simple-array * 1) cache))
+  (let ((result (make-array new-size :element-type (array-element-type cache))))
+    (map-into result #'identity cache)))
