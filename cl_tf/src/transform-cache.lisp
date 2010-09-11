@@ -85,8 +85,9 @@
       (get-cached-transform cache-entry time :interpolate interpolate))))
 
 (defun gc-cache-entry (cache-entry)
-  (with-slots (fill-pointer) cache-entry
+  (with-slots (fill-pointer newest-stamp) cache-entry
     (setf fill-pointer 0)
+    (setf newest-stamp 0)
     ;; TODO: Maybe shrink transforms-cache
     ))
 
