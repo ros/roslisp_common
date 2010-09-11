@@ -1,5 +1,6 @@
 (defpackage :cl-tf
   (:use :cl :roslisp :tf-msg :cl-transforms)
+  (:nicknames :tf)
   (:shadow :transform-pose :transform-point)
   (:export :transformer :make-transformer
            :transform-listener
