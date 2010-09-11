@@ -11,7 +11,7 @@
 
 (defgeneric can-transform (tf &key target-frame source-frame time))
 
-(defgeneric lookup-transform (tf &key target-frame source-frame time))
+(defgeneric lookup-transform (tf &key source-frame target-frame time))
 
 (defgeneric set-transform (tf transform))
 
@@ -59,8 +59,7 @@
                               (translation result-tf)
                               (rotation result-tf)))))
 
-(defmethod set-transform ((tf transformer) transform)
-  (check-type transform stamped-transform)
+(defmethod set-transform ((tf transformer) (transform stamped-transform))
   (with-slots (transforms) tf
     (let ((cache (gethash (child-frame-id transform) transforms)))
       (unless cache
