@@ -27,25 +27,28 @@
    (cache :accessor cache)))
 
 (defclass cache-entry ()
-  ((newest-stamp :initform nil :accessor newest-stamp)
+  ((newest-stamp :initform 0 :accessor newest-stamp)
    (fill-pointer :initform 0 :accessor cache-fill-pointer)
    (transforms-cache :accessor transforms-cache)))
 
 (defgeneric cache-transform (cache transform)
   (:documentation "Cache a transform."))
 
-(defgeneric get-cached-transform (cache timestamp &key interpolate)
-  (:documentation "Find the transform for a specific timestamp. When
+(defgeneric get-cached-transform (cache time &key interpolate)
+  (:documentation "Find the transform for a specific time. When
   `interpolate' is T, return an interpolated transform, otherwise,
-  return the transformation with a timestamp that is closest to
-  `timestamp'."))
+  return the transformation with a time that is closest to
+  `time'."))
 
 (defmethod initialize-instance :after ((tf-cache transform-cache) &key)
   (setf (slot-value tf-cache 'cache)
-        (make-array (slot-value tf-cache 'cache-size) :element-type 'cache-entry :adjustable 0)))
+        (make-array (slot-value tf-cache 'cache-size) :element-type 'cache-entry
+                    :initial-contents (loop repeat (slot-value tf-cache 'cache-size)
+                                            collecting (make-instance 'cache-entry)))))
 
 (defmethod cache-transform ((tf-cache transform-cache) transform)
   (with-slots (cache-size cache) tf-cache
+    (declare (type (simple-array cache-entry 1) cache))
     (let* ((cache-entry-index (truncate (mod (stamp transform) cache-size)))
            (cache-entry (aref cache cache-entry-index)))
       (when (> (- (stamp transform) (newest-stamp cache-entry))
@@ -53,15 +56,26 @@
         (gc-cache-entry cache-entry))
       (cache-transform cache-entry transform))))
 
-(defmethod get-cached-transform ((tf-cache transform-cache) timestamp &key (interpolate t))
+(defmethod get-cached-transform ((tf-cache transform-cache) time &key (interpolate t))
   (with-slots (cache-size cache) tf-cache
-    (let* ((cache-entry-index (truncate (mod timestamp cache-size)))
+    (unless time
+      (return-from get-cached-transform
+        (get-cached-transform
+         (loop for cache-entry across cache
+               with latest-stamp = 0
+               with latest-cache-entry = nil
+               when (> (newest-stamp cache-entry) latest-stamp)
+                 do (setf latest-stamp (newest-stamp cache-entry)
+                          latest-cache-entry cache-entry)
+               finally (return latest-cache-entry))
+         time :interpolate interpolate)))
+    (let* ((cache-entry-index (truncate (mod time cache-size)))
            (cache-entry (aref cache cache-entry-index)))
-      (when (> (abs (- timestamp (newest-stamp cache-entry)))
+      (when (> (abs (- time (newest-stamp cache-entry)))
                cache-size)
           (error 'tf-cache-error
-                 :description "Requested timestamp points to the future. Cannot transform."))
-      (get-cached-transform cache-entry timestamp :interpolate interpolate))))
+                 :description "Requested time points to the future. Cannot transform."))
+      (get-cached-transform cache-entry time :interpolate interpolate))))
 
 (defun gc-cache-entry (cache-entry)
   (with-slots (fill-pointer) cache-entry
@@ -71,49 +85,52 @@
 
 (defmethod initialize-instance :after ((cache-entry cache-entry) &key)
   (setf (slot-value cache-entry 'transforms-cache)
-        (make-array +initial-cache-size+ :element-type 'stamped-transform
-                    :initial-element (make-instance 'stamped-transform))))
+        (make-array +initial-cache-size+ :element-type '(or null stamped-transform)
+                    :initial-element nil)))
 
 (defmethod cache-transform ((cache-entry cache-entry) transform)
   (let ((cache-size (array-dimension (transforms-cache cache-entry) 0))
         (cache (transforms-cache cache-entry)))
-    (declare (type (simple-array * 1) cache))
+    (declare (type (simple-array (or null stamped-transform) 1) cache))
     (assert (> (stamp transform) (newest-stamp cache-entry)))
-    (when (eql (fill-pointer cache-entry) cache-size)
+    (when (eql (cache-fill-pointer cache-entry) cache-size)
       (setf cache (resize-transforms-cache
                    cache (* cache-size +cache-adjust-factor+)))
       (setf (transforms-cache cache-entry) cache))
-    (setf (aref cache (fill-pointer cache-entry))
+    (setf (aref cache (cache-fill-pointer cache-entry))
           transform)
     (setf (newest-stamp cache-entry) (stamp transform))
-    (incf (fill-pointer cache-entry))))
+    (incf (cache-fill-pointer cache-entry))))
 
-(defmethod get-cached-transform ((cache-entry cache-entry) timestamp &key (interpolate t))
+(defmethod get-cached-transform ((cache-entry cache-entry) time &key (interpolate t))
   (with-slots (newest-stamp fill-pointer transforms-cache) cache-entry
     (declare (type (simple-array * 1) transforms-cache))
-    (when (or (> timestamp newest-stamp)
-              (< timestamp (stamp (aref transforms-cache 0))))
+    (unless time
+      ;; Early exit. When no time is specified, return the newest stamp
+      (return-from get-cached-transform
+        (aref transforms-cache (1- fill-pointer))))
+    (when (or (> time newest-stamp)
+              (< time (stamp (aref transforms-cache 0))))
       (error 'tf-cache-error
              :description "The requested time stamp does not point into the cache."))
     (multiple-value-bind (lower upper)
-        (binary-search timestamp
-                       (make-array fill-pointer :displaced-to  transforms-cache)
-                       :key #'stamp)
+        (binary-search time transforms-cache
+                       :array-size fill-pointer :key #'stamp)
       (cond (interpolate
-             (let ((ratio (/ (- timestamp (stamp lower))
+             (let ((ratio (/ (- time (stamp lower))
                              (- (stamp upper) (stamp lower)))))
                (make-stamped-transform
                 (frame-id lower)
                 (child-frame-id lower)
-                timestamp
+                time
                 (interpolate-vector (translation lower) (translation upper) ratio)
                 (slerp (rotation lower) (rotation upper) ratio))))
             (t
-             (if (< (abs (- timestamp lower))
-                    (abs (- timestamp upper)))
+             (if (< (abs (- time lower))
+                    (abs (- time upper)))
                  lower upper))))))
 
 (defun resize-transforms-cache (cache new-size)
   (declare (type (simple-array * 1) cache))
-  (let ((result (make-array new-size :element-type (array-element-type cache))))
+  (let ((result (make-array (truncate new-size) :element-type (array-element-type cache))))
     (map-into result #'identity cache)))
