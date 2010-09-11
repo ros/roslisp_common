@@ -1,3 +1,6 @@
+
+(in-package :cl-user)
+
 (defpackage :cl-tf
   (:use :cl :roslisp :tf-msg :cl-transforms)
   (:nicknames :tf)

@@ -7,7 +7,8 @@
 
 (defclass transformer ()
   ((transforms :initform (make-hash-table :test 'equal)
-               :reader transforms)))
+               :reader transforms)
+   (lock :initform (sb-thread:make-mutex))))
 
 (defgeneric can-transform (tf &key target-frame source-frame time))
 
@@ -22,22 +23,23 @@
 (defmethod can-transform ((tf transformer) &key target-frame source-frame time)
   (check-type target-frame string)
   (check-type source-frame string)
-  (handler-case
-      (or (equal target-frame source-frame)
-          (let ((target-root (get-transforms-to-root (transforms tf) target-frame time))
-                (source-root (get-transforms-to-root (transforms tf) source-frame time)))
-            (cond ((and target-root source-root)
-                   (equal (frame-id (car target-root))
-                          (frame-id (car source-root))))
-                  ((and (not target-root) source-root)
-                   (equal target-frame
-                          (frame-id (car source-root))))
-                  ((and target-root (not source-root))
-                   (equal (frame-id (car target-root))
-                          source-frame)))))
-    (tf-cache-error (e)
-      (declare (ignore e))
-      nil)))
+  (sb-thread:with-mutex ((slot-value tf 'lock))
+    (handler-case
+        (or (equal target-frame source-frame)
+            (let ((target-root (get-transforms-to-root (transforms tf) target-frame time))
+                  (source-root (get-transforms-to-root (transforms tf) source-frame time)))
+              (cond ((and target-root source-root)
+                     (equal (frame-id (car target-root))
+                            (frame-id (car source-root))))
+                    ((and (not target-root) source-root)
+                     (equal target-frame
+                            (frame-id (car source-root))))
+                    ((and target-root (not source-root))
+                     (equal (frame-id (car target-root))
+                            source-frame)))))
+      (tf-cache-error (e)
+        (declare (ignore e))
+        nil))))
 
 (defmethod lookup-transform (tf &key target-frame source-frame time)
   (check-type target-frame string)
@@ -47,29 +49,31 @@
       (make-stamped-transform target-frame source-frame (ros-time)
                               (make-3d-vector 0 0 0)
                               (make-quaternion 0 0 0 1))))
-  (let* ((down-transforms (get-transforms-to-root (transforms tf) target-frame time))
-         (up-transforms (get-transforms-to-root (transforms tf) source-frame time)))
-    (let ((result-tf (cond ((and down-transforms up-transforms)
-                            (apply #'transform* (transform-inv (apply #'transform* down-transforms))
-                                   up-transforms))
-                           ((and (not down-transforms) up-transforms)
-                            (apply #'transform* up-transforms))
-                           ((and down-transforms (not up-transforms))
-                            (transform-inv (apply #'transform* down-transforms))))))
-      (unless result-tf
-        (error 'tf-connectivity-error :source-frame source-frame :target-frame target-frame))
-      (make-stamped-transform target-frame source-frame
-                              (or time (stamp (car (last up-transforms))))
-                              (translation result-tf)
-                              (rotation result-tf)))))
+  (sb-thread:with-mutex ((slot-value tf 'lock))
+    (let* ((down-transforms (get-transforms-to-root (transforms tf) target-frame time))
+           (up-transforms (get-transforms-to-root (transforms tf) source-frame time)))
+      (let ((result-tf (cond ((and down-transforms up-transforms)
+                              (apply #'transform* (transform-inv (apply #'transform* down-transforms))
+                                     up-transforms))
+                             ((and (not down-transforms) up-transforms)
+                              (apply #'transform* up-transforms))
+                             ((and down-transforms (not up-transforms))
+                              (transform-inv (apply #'transform* down-transforms))))))
+        (unless result-tf
+          (error 'tf-connectivity-error :source-frame source-frame :target-frame target-frame))
+        (make-stamped-transform target-frame source-frame
+                                (or time (stamp (car (last up-transforms))))
+                                (translation result-tf)
+                                (rotation result-tf))))))
 
-(defmethod set-transform ((tf transformer) (transform stamped-transform))
-  (with-slots (transforms) tf
-    (let ((cache (gethash (child-frame-id transform) transforms)))
-      (unless cache
-        (setf cache (make-instance 'transform-cache))
-        (setf (gethash (child-frame-id transform) transforms) cache))
-      (cache-transform cache transform))))
+(defmethod set-transform ((tf transformer) (transform stamped-transform) &key suppress-callbacks)
+  (with-slots (transforms set-transform-callbacks lock) tf
+    (sb-thread:with-mutex (lock)
+      (let ((cache (gethash (child-frame-id transform) transforms)))
+        (unless cache
+          (setf cache (make-instance 'transform-cache))
+          (setf (gethash (child-frame-id transform) transforms) cache))
+        (cache-transform cache transform)))))
 
 (defmethod transform-pose ((tf transformer) &key target-frame pose time)
   (check-type target-frame string)
