@@ -52,7 +52,7 @@
     (let* ((cache-entry-index (truncate (mod (stamp transform) cache-size)))
            (cache-entry (aref cache cache-entry-index)))
       (when (> (- (stamp transform) (newest-stamp cache-entry))
-               cache-size)
+               1)
         ;; When writing the first entry into a cache, we need to also
         ;; write it into the previous one to make interpolation
         ;; work. Otherwise, we cannot request transforms between the
