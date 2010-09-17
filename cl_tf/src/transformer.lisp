@@ -65,7 +65,9 @@
         (unless result-tf
           (error 'tf-connectivity-error :source-frame source-frame :target-frame target-frame))
         (make-stamped-transform target-frame source-frame
-                                (or time (stamp (car (last up-transforms))))
+                                (or time
+                                    (stamp (or (car (last up-transforms))
+                                               (car down-transforms))))
                                 (translation result-tf)
                                 (rotation result-tf))))))
 
