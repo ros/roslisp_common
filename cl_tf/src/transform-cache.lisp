@@ -100,7 +100,13 @@
   (let ((cache-size (array-dimension (transforms-cache cache-entry) 0))
         (cache (transforms-cache cache-entry)))
     (declare (type (simple-array (or null stamped-transform) 1) cache))
-    (assert (> (stamp transform) (newest-stamp cache-entry)))
+    (unless (> (stamp transform) (newest-stamp cache-entry))
+      (ros-debug
+       (cl-tf cache)
+       "Transform `~a' to `~a'. Timestamp `~a' earlyer than newest timestamp `~a'. Ignoring transform."
+       (frame-id transform) (child-frame-id transform) (stamp transform)
+       (newest-stamp cache-entry))
+      (return-from cache-transform))
     (when (eql (cache-fill-pointer cache-entry) cache-size)
       (setf cache (resize-transforms-cache
                    cache (* cache-size +cache-adjust-factor+)))
