@@ -1,10 +1,15 @@
 <stack>
-  <description brief="roslisp_common">roslisp_common</description>
+  <description brief="Common libraries to work with ROS in Common Lisp">
+    Common libraries control ROS based robots It contains an
+    implementation of actionlib (client and server) in Common Lisp, a
+    transformation library and an implementation of tf in Common Lisp.
+  </description>
   <author>Maintained by Bhaskara Marti and Lorenz Mosenlechner</author>
   <license>BSD</license>  
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/roslisp_common</url>
   <depend stack="common_msgs" /> <!-- actionlib_msgs -->
+  <depend stack="geometry" /> <!-- tf -->
   <depend stack="ros" />
   <depend stack="ros_pkg_tutorials" /> <!-- actionlib_tutorials -->
   <depend stack="roslisp_support" /> <!-- roslisp_runtime -->
