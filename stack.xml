@@ -11,7 +11,6 @@
   <depend stack="common_msgs" /> <!-- actionlib_msgs -->
   <depend stack="geometry" /> <!-- tf -->
   <depend stack="ros" />
-  <depend stack="ros_pkg_tutorials" /> <!-- actionlib_tutorials -->
   <depend stack="roslisp_support" /> <!-- roslisp_runtime -->
 
 </stack>
