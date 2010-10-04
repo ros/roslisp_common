@@ -333,7 +333,7 @@ current state, based on `transitions'."
                                :goal-pub (advertise (action-topic action-name "goal")
                                                     (action-type action-type "Goal"))
                                :cancel-pub (advertise (action-topic action-name "cancel")
-                                                      "actionlib_msgs/GoalId"))))
+                                                      "actionlib_msgs/GoalID"))))
     (subscribe (action-topic action-name "status") "actionlib_msgs/GoalStatusArray"
                (partial #'client-status-callback client))
     (subscribe (action-topic action-name "feedback") (action-type action-type "Feedback")
