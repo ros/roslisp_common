@@ -190,7 +190,7 @@
                 (goal-id goal))))
 
 (defun make-goal-id ()
-  (remove #\. (format nil "~a_GOAL_~10,5f" *ros-node-name* (ros-time))))
+  (remove #\. (format nil "~a_GOAL_~10,5$" *ros-node-name* (ros-time))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; State management
