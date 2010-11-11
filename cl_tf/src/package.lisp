@@ -15,6 +15,7 @@
               :make-stamped-transform :transform->stamped-transform
               :tf-transform->transform :tf-message->transforms
               :stamped :stamped-transform :pose-stamped :point-stamped
+              :wait-for-transform :tf-cache-error :tf-connectivity-error
               :frame-id :stamp :child-frame-id
               ,@(let ((r nil))
                   (do-external-symbols (s :cl-transforms r) (push s r)))))
