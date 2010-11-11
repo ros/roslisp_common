@@ -181,13 +181,16 @@
       (gethash (goal-id goal) goals))))
 
 (defun remove-goal (client goal)
-  (assert (has-goal client goal))
-  (with-slots (mutex goals) client
-    (with-recursive-lock (mutex)
-      (remhash (goal-id goal) goals))))
+  (if (has-goal client goal)
+      (with-slots (mutex goals) client
+        (with-recursive-lock (mutex)
+          (remhash (goal-id goal) goals)))
+      (ros-warn (remove-goal lisp-action-client)
+                "Trying to remove goal `~a' which is unknown."
+                (goal-id goal))))
 
 (defun make-goal-id ()
-  (remove #\. (format nil "~a_GOAL_~10,5f" *ros-node-name* (ros-time))))
+  (remove #\. (format nil "~a_GOAL_~10,5$" *ros-node-name* (ros-time))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; State management
@@ -210,6 +213,7 @@ current state, based on `transitions'."
   transition of simple client state has been made."
   (check-type goal client-goal-handle)
   (let* ((old-client-state (simple-state goal))
+         (old-action-state (action-state goal))
          (possible-new-client-states (find-new-states
                                       *action-client-transitions*
                                       old-client-state))
@@ -222,7 +226,8 @@ current state, based on `transitions'."
       (setf new-client-state :done
             new-msg-state :lost))
     (set-client-goal-states goal new-client-state new-msg-state)
-    (unless (eq old-client-state new-client-state)
+    (unless (and (eq old-client-state new-client-state)
+                 (eq old-action-state new-msg-state))
       (action-client-transition new-client-state goal)))
   ;; Something interesting might have happened. Pulse the wait condition.
   (with-recursive-lock ((slot-value goal 'mutex))
@@ -333,7 +338,7 @@ current state, based on `transitions'."
                                :goal-pub (advertise (action-topic action-name "goal")
                                                     (action-type action-type "Goal"))
                                :cancel-pub (advertise (action-topic action-name "cancel")
-                                                      "actionlib_msgs/GoalId"))))
+                                                      "actionlib_msgs/GoalID"))))
     (subscribe (action-topic action-name "status") "actionlib_msgs/GoalStatusArray"
                (partial #'client-status-callback client))
     (subscribe (action-topic action-name "feedback") (action-type action-type "Feedback")
