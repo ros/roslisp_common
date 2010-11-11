@@ -23,7 +23,9 @@
   (make-instance 'point-stamped
                  :frame-id frame-id
                  :stamp stamp
-                 :3d-vector 3d-vector))
+                 :x (x 3d-vector)
+                 :y (y 3d-vector)
+                 :z (z 3d-vector)))
 
 (defun make-stamped-transform (frame-id child-frame-id stamp translation rotation)
   (make-instance 'stamped-transform
