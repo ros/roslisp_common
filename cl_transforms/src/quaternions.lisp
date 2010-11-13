@@ -12,7 +12,19 @@
    (w :initarg :w :reader w :type quaternion-coefficient))
   (:documentation "Represents a quaternion w, (x, y, z).  Must be treated as immutable.  The quaternion objects can take in real numbers as well, which are implicitly converted to a quaternion."))
 
-(deftype gen-quaternion () '(or quaternion real))
+(defmethod x ((q vector))
+  (aref q 0))
+
+(defmethod y ((q vector))
+  (aref q 1))
+
+(defmethod z ((q vector))
+  (aref q 2))
+
+(defmethod w ((q vector))
+  (aref q 3))
+
+(deftype gen-quaternion () '(or quaternion (vector quaternion-coefficient 4) real))
 
 (defun make-quaternion (x y z w)
   "Create a quaternion.  x, y, z is the vector part and w is the scalar."
