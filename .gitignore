@@ -3,6 +3,3 @@
 *.swp
 build
 *.fasl
-# VIM and EMACS temporal files
-*~
-*.swp
