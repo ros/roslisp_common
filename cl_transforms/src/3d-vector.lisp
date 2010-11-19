@@ -1,7 +1,7 @@
 
 (in-package :cl-transforms)
 
-(deftype vector-coefficient () '(or fixnum float))
+(deftype vector-coefficient () '(or fixnum float double-float))
 
 (defclass 3d-vector ()
   ((x :initarg :x :reader x :type vector-coefficient)
