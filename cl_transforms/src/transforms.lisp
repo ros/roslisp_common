@@ -42,3 +42,9 @@
   (declare (type transform trans) (type point p))
   (v+ (translation trans) (rotate (rotation trans) p)))
 
+(defgeneric transform (tr x)
+  (:method ((tr transform) (p 3d-vector))
+    (transform-point tr p))
+  (:method ((tr transform) (p vector))
+    (assert (= 3 (length p)))
+    (transform-point tr p)))

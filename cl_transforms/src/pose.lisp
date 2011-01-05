@@ -38,3 +38,7 @@
 
 (defun transform-pose (tr p)
   (transformed-identity (transform* tr (reference-transform p))))
+
+
+(defmethod transform ((tr transform) (p pose))
+  (transform-pose tr p))

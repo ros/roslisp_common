@@ -31,6 +31,9 @@
                      (- (* (cos phi) (cos the) (sin psi)) (* (sin phi) (sin the) (cos psi)))
                      (+ (* (cos phi) (cos the) (cos psi)) (* (sin phi) (sin the) (sin psi))))))
 
+(defun get-yaw (q)
+  (nth-value 1 (quaternion->axis-angle q)))
+
 (defun yaw (angle)
   (axis-angle->quaternion #(0 0 1) angle))
 
