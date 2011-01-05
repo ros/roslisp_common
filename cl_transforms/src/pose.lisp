@@ -2,11 +2,22 @@
 
 (defclass pose ()
   ((origin :type point :reader origin :initarg :origin)
-   (orientation :type quaternion :reader orientation :initarg :orientation))
-  (:documentation "Represents a 6 dof pose, consisting of an origin in R^3 and an orientation, represented as a quaternion"))
+   (orientation :type gen-quaternion :reader orientation :initarg :orientation))
+  (:documentation "Represents a 6 dof pose, consisting of an origin in R^3 and an orientation, represented as a normalized quaternion"))
 
 (defun make-pose (origin orientation)
   (make-instance 'pose :origin origin :orientation orientation))
+
+(defmethod initialize-instance :after ((p pose) &key (validate-args :warn))
+  (when validate-args
+    (with-slots (orientation) p
+      (unless (is-normalized orientation)
+        (if (eq validate-args :warn)
+            (progn
+              (setq orientation (normalize orientation))
+              (warn "Normalized orientation component to ~a" orientation)
+              )
+            (error "Orientation component ~a not normalized" orientation))))))
 
 (defmethod print-object ((obj pose) strm)
   (print-unreadable-object (obj strm :type t)

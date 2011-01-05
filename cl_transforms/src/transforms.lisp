@@ -13,10 +13,16 @@
     (with-slots (translation rotation) obj
       (format strm "~{~<~%   ~a~>~}" (list translation rotation)))))
 
-(defmethod initialize-instance :after ((tr transform) &key (validate-args t))
+(defmethod initialize-instance :after ((tr transform) &key (validate-args :warn))
   (when validate-args
-    (assert (is-normalized (rotation tr)) nil
-            "Rotation component ~a is not normalized" (rotation tr))))
+    (with-slots (rotation) tr
+      (unless (is-normalized rotation)
+        (if (eq validate-args :warn)
+            (progn
+              (setq rotation (normalize rotation))
+              (warn "Normalized rotation component to ~a" rotation)
+              )
+            (error "Rotation component ~a not normalized" rotation))))))
 
 (defun transform-inv (trans)
   (let ((q-inv (q-inv (rotation trans))))
