@@ -37,6 +37,14 @@
   (:method ((transform transform))
     transform))
 
+(defun transform->pose (transform)
+  (declare (type transform transform))
+  (make-pose (translation transform) (rotation transform)))
+
+(defun pose->transform (pose)
+  (declare (type pose pose))
+  (reference-transform pose))
+
 (defun transformed-identity (tr)
   "return the result of transforming the identity pose by a transform"
   (make-pose (translation tr) (rotation tr)))
