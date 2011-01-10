@@ -28,9 +28,14 @@
   (make-pose (make-3d-vector x y 0.0)
              (axis-angle->quaternion (make-3d-vector 0 0 1) theta)))
 
-(defun reference-transform (pose)
-  "Return the transform that takes in the coordinates of a point in the pose's frame, and returns the coordinates in the reference frame"
-  (make-transform (origin pose) (orientation pose)))
+(defgeneric reference-transform (pose)
+  (:documentation "Return the transform that takes in the coordinates
+  of a point in the pose's frame, and returns the coordinates in the
+  reference frame")
+  (:method ((pose pose))
+    (make-transform (origin pose) (orientation pose)))
+  (:method ((transform transform))
+    transform))
 
 (defun transformed-identity (tr)
   "return the result of transforming the identity pose by a transform"
