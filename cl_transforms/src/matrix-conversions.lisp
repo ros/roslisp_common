@@ -36,10 +36,11 @@
                                     (aref matrix 2 2)
                                     (- (aref matrix 0 0))
                                     (- (aref matrix 1 1)))))))
-             (make-quaternion (/ (+ (aref matrix 0 2) (aref matrix 2 0)) s)
-                              (/ (+ (aref matrix 1 2) (aref matrix 2 1)) s)
-                              (* 0.25 s)
-                              (/ (- (aref matrix 1 0) (aref matrix 0 1)) s)))))))
+             (normalize
+              (make-quaternion (/ (+ (aref matrix 0 2) (aref matrix 2 0)) s)
+                               (/ (+ (aref matrix 1 2) (aref matrix 2 1)) s)
+                               (* 0.25 s)
+                               (/ (- (aref matrix 1 0) (aref matrix 0 1)) s))))))))
 
 (defun matrix->transform (matrix)
   "Converts a homogenous 4x4 matrix to a pose object."
