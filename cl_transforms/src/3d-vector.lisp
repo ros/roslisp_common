@@ -1,12 +1,16 @@
 
 (in-package :cl-transforms)
 
-(deftype vector-coefficient () '(or fixnum float))
+(deftype vector-coefficient () '(or fixnum float double-float))
 
 (defclass 3d-vector ()
   ((x :initarg :x :reader x :type vector-coefficient)
    (y :initarg :y :reader y :type vector-coefficient)
    (z :initarg :z :reader z :type vector-coefficient)))
+
+(deftype point ()
+  '(or 3d-vector (vector vector-coefficient 3)))
+
 
 (defmethod x ((v vector))
   (aref v 0))
@@ -16,9 +20,6 @@
 
 (defmethod z ((v vector))
   (aref v 2))
-
-(deftype point ()
-  '(or 3d-vector (vector * 3)))
 
 (defun make-3d-vector (x y z)
   (make-instance '3d-vector :x x :y y :z z))
