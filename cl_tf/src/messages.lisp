@@ -73,3 +73,45 @@
          (make-stamped-transform frame-id child-frame-id stamp
                                  (translation transform)
                                  (rotation transform))))))
+
+(defun msg->pose-stamped (msg)
+  (with-fields ((frame-id (frame_id header))
+                (stamp (stamp header))
+                (x (x position pose))
+                (y (y position pose))
+                (z (z position pose))
+                (ax (x orientation pose))
+                (ay (y orientation pose))
+                (az (z orientation pose))
+                (aw (w orientation pose)))
+      msg
+    (make-pose-stamped
+     frame-id stamp
+     (make-3d-vector x y z)
+     (make-quaternion ax ay az aw))))
+
+(defun pose-stamped->msg (pose)
+  (make-message
+   "geometry_msgs/PoseStamped"
+   (frame_id header) (frame-id pose)
+   (stamp header) (stamp pose)
+   (x position pose) (x (origin pose))
+   (y position pose) (y (origin pose))
+   (z position pose) (z (origin pose))
+   (x orientation pose) (x (orientation pose))
+   (y orientation pose) (y (orientation pose))
+   (z orientation pose) (z (orientation pose))
+   (w orientation pose) (w (orientation pose))))
+
+(defun pose->msg (frame-id stamp pose)
+  (make-message
+   "geometry_msgs/PoseStamped"
+   (frame_id header) frame-id
+   (stamp header) stamp
+   (x position pose) (x (origin pose))
+   (y position pose) (y (origin pose))
+   (z position pose) (z (origin pose))
+   (x orientation pose) (x (orientation pose))
+   (y orientation pose) (y (orientation pose))
+   (z orientation pose) (z (orientation pose))
+   (w orientation pose) (w (orientation pose))))

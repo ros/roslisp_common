@@ -3,23 +3,26 @@
 (defparameter *tolerance* 1e-6)
 
 
-
 (defun axis-angle->quaternion (axis angle)
   "Return quaternion corresponding to rotation about axis by angle"
   (declare (type point axis)
            (type quaternion-coefficient angle))
   (let ((c (cos (/ angle 2)))
-        (s (sin (/ angle 2))))
+        (s (sin (/ angle 2)))
+        (axis (normalize-axis axis)))
     (make-quaternion (* s (x axis))
                      (* s (y axis))
                      (* s (z axis))
                      c)))
 
 (defun quaternion->axis-angle (q)
-  "convert quaterion to axis and angle"
+  "convert quaternion to axis and angle.  Assumes q is normalized."
   (values
     (make-3d-vector (x q) (y q) (z q))
-    (* 2 (acos (w q)))))
+    ;; If we take the acos of a number >1 we get a complex
+    ;; number. Numbers can become bigger than 1 due to numerical
+    ;; inaccuracies. We fix this by truncating the number if it is >1
+    (* 2 (acos (if (> (w q) 1.0d0) 1.0d0 (w q))))))
 
 (defun euler->quaternion (&key (ax 0.0) (ay 0.0) (az 0.0))
   "create a quaternion from euler angles"
@@ -30,6 +33,9 @@
                      (+ (* (cos phi) (sin the) (cos psi)) (* (sin phi) (cos the) (sin psi)))
                      (- (* (cos phi) (cos the) (sin psi)) (* (sin phi) (sin the) (cos psi)))
                      (+ (* (cos phi) (cos the) (cos psi)) (* (sin phi) (sin the) (sin psi))))))
+
+(defun get-yaw (q)
+  (nth-value 1 (quaternion->axis-angle q)))
 
 (defun yaw (angle)
   (axis-angle->quaternion #(0 0 1) angle))
@@ -42,6 +48,18 @@ This guarantees that Q represents a rotation."
       (error "Attempted to normalize quaternion ~a with norm ~a" q n))
     (make-instance 'quaternion :x (/ (x q) n) :y (/ (y q) n)
                    :z (/ (z q) n) :w (/ (w q) n))))
+
+(defun normalize-axis (axis)
+  "Normalize the axis vector (if necessary)"
+  (declare (type point axis))
+  (with-readers (x y z) axis
+    (let ((squared-norm (+ (* x x) (* y y) (* z z))))
+      (cond 
+        ((close-to squared-norm 1.0 *tolerance*)  axis)
+        ((<= squared-norm 0) (error "Can't normalize ~a" axis))
+        (t (let ((norm (sqrt squared-norm)))
+             (make-3d-vector (/ x norm) (/ y norm) (/ z norm))))))))
+
 
 (defun is-normalized (q)
   (declare (type gen-quaternion q))
