@@ -379,14 +379,15 @@ current state, based on `transitions'."
              (loop until (connected-to-server client) do
                (condition-wait (slot-value client 'condition)
                                (slot-value client 'mutex))))))
-    (handler-case
-        (if timeout
-            (sb-ext:with-timeout timeout
-              (wait))
+    (handler-bind
+        ((sb-ext:timeout (lambda (c)
+                           (declare (ignore c))
+                           (when timeout
+                             (return-from wait-for-server nil)))))
+      (if timeout
+          (sb-ext:with-timeout timeout
             (wait))
-      (sb-ext:timeout (c)
-        (declare (ignore c))
-        (return-from wait-for-server nil)))
+          (wait)))
     ;; Give the sockets time to settle down.
     (sleep 2)
     t))
