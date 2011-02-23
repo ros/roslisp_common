@@ -157,6 +157,20 @@
   server, otherwise NIL."))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Utilities
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defmacro with-timeout-handler (expires handler &body body)
+  "Like sbcl's timeout macro but save. Instead of signaling a timeout
+condition, handler is executed."
+  (with-gensyms (timer body-fun)
+    `(flet ((,body-fun () ,@body))
+       (let ((,timer (sb-ext:make-timer ,handler)))
+         (sb-ext:schedule-timer ,timer ,expires)
+         (unwind-protect (,body-fun)
+           (sb-ext:unschedule-timer ,timer))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Bookkeeping functions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -378,16 +392,14 @@ current state, based on `transitions'."
            (with-recursive-lock ((slot-value client 'mutex))
              (loop until (connected-to-server client) do
                (condition-wait (slot-value client 'condition)
-                               (slot-value client 'mutex))))))
-    (handler-bind
-        ((sb-ext:timeout (lambda (c)
-                           (declare (ignore c))
-                           (when timeout
-                             (return-from wait-for-server nil)))))
-      (if timeout
-          (sb-ext:with-timeout timeout
-            (wait))
-          (wait)))
+                               (slot-value client 'mutex)))))
+         (handle-timeout ()
+           (return-from wait-for-server nil)))
+    (if timeout
+        (with-timeout-handler timeout
+            #'handle-timeout
+          (wait))
+        (wait))
     ;; Give the sockets time to settle down.
     (sleep 2)
     t))
@@ -406,19 +418,15 @@ current state, based on `transitions'."
 
     (let ((start-time (ros-time)))
       (loop do
-        (handler-case
-            (sb-ext:with-timeout *action-server-timeout*
-              (if timeout
-                  (handler-case
-                      (sb-ext:with-timeout (- (+ start-time timeout)
-                                              (ros-time))
-                        (wait))
-                    (sb-ext:timeout (c)
-                      (declare (ignore c))
-                      (return-from wait-for-result nil)))
-                  (return-from wait-for-result (wait))))
-          (sb-ext:timeout (e)
-            (declare (ignore e))))))))
+        (block nil
+          (with-timeout-handler *action-server-timeout*
+              (lambda () (return))
+            (if timeout
+                (with-timeout-handler (- (+ start-time timeout)
+                                         (ros-time))
+                    (lambda () (return-from wait-for-result nil))
+                  (wait)
+                  (return-from wait-for-result (wait))))))))))
 
 (defmethod call-goal ((client action-client) goal &key timeout feedback-cb)
   (let ((mutex (make-mutex))
@@ -439,34 +447,34 @@ current state, based on `transitions'."
            (progn
              (setf goal-handle (send-goal client goal #'result-callback #'feedback-callback))
              (loop do
-               (handler-case
-                   (sb-ext:with-timeout *action-server-timeout*
-                     (with-mutex (mutex)
-                       (cond ((not (connected-to-server client))
-                              (error 'server-lost
-                                     :format-control "Client lost connection to server."))
-                             (result-data
-                              (return-from call-goal (apply #'values result-data)))
-                             (current-feedback
-                              (when feedback-cb
-                                (funcall feedback-cb current-feedback))
-                              (restart-case 
-                                  (signal 'feedback-signal
-                                          :goal goal-handle
-                                          :feedback current-feedback)
-                                (abort-goal (&optional result)
-                                  :report "Preempt the goal."
-                                  (return-from call-goal (values result :aborted))))
-                              (setf current-feedback nil))
-                             ((and timeout (<= (- (+ start-time timeout) (ros-time))
-                                               0))
-                              (return-from call-goal (values nil :timeout))))
-                       (if timeout
-                           (sb-ext:with-timeout (- (+ start-time timeout)
-                                                   (ros-time))
-                             (condition-wait condition mutex))
-                           (condition-wait condition mutex))))
-                 (sb-ext:timeout (e)
-                   (declare (ignore e))))))
+               (block nil
+                 (with-timeout-handler *action-server-timeout*
+                     (lambda () (return))
+                   (with-mutex (mutex)
+                     (cond ((not (connected-to-server client))
+                            (error 'server-lost
+                                   :format-control "Client lost connection to server."))
+                           (result-data
+                            (return-from call-goal (apply #'values result-data)))
+                           (current-feedback
+                            (when feedback-cb
+                              (funcall feedback-cb current-feedback))
+                            (restart-case 
+                                (signal 'feedback-signal
+                                        :goal goal-handle
+                                        :feedback current-feedback)
+                              (abort-goal (&optional result)
+                                :report "Preempt the goal."
+                                (return-from call-goal (values result :aborted))))
+                            (setf current-feedback nil))
+                           ((and timeout (<= (- (+ start-time timeout) (ros-time))
+                                             0))
+                            (return-from call-goal (values nil :timeout))))
+                     (if timeout
+                         (with-timeout-handler (- (+ start-time timeout)
+                                                  (ros-time))
+                             (lambda () (return))
+                           (condition-wait condition mutex))
+                         (condition-wait condition mutex)))))))
         (unless (or (not goal-handle) (eq (simple-state goal-handle) :done))
           (cancel-goal goal-handle))))))
