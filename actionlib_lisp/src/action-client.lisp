@@ -347,6 +347,9 @@ current state, based on `transitions'."
 (defun make-action-client (action-name action-type)
   (check-type action-name string)
   (check-type action-type string)
+  (assert (action-package action-type) nil
+          "Package for action `~a' doesn't seem to be loaded"
+          action-type)
   (let ((client (make-instance 'action-client
                                :action-type action-type
                                :goal-pub (advertise (action-topic action-name "goal")

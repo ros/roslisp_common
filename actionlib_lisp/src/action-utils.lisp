@@ -57,6 +57,16 @@
     (assert pair () "Could not find status code for `~a'" status)
     (car pair)))
 
+(defun action-package (msg-type)
+  (etypecase msg-type
+    (symbol (symbol-package msg-type))
+    (string
+       (destructuring-bind (pkg-name type) (roslisp-utils:tokens
+                                            (string-upcase msg-type)
+                                            :separators '(#\/))
+         (declare (ignore type))
+         (find-package (intern (concatenate 'string pkg-name "-MSG") 'keyword))))))
+
 (defun make-status (status goal)
   (make-msg "actionlib_msgs/GoalStatus"
             (id goal_id) goal
