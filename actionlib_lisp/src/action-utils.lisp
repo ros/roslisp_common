@@ -72,21 +72,27 @@
             (id goal_id) goal
             status (symbol-code '<GoalStatus> status)))
 
+(defun str-has-suffix (str suffix)
+  (and (> (length str) (length suffix))
+       (equal (subseq str (- (length str) (length suffix)))
+              suffix)))
+
 (defun action-topic (a suffix)
   (concatenate 'string a "/" suffix))
 
 (defun action-type (a suffix)
-  (assert (equal (subseq a (- (length a) (length "Action")))
-                 "Action")
+  (assert (str-has-suffix a "Action")
           nil
           "The action type is invalid. Actions always have the suffix 'Action'")
   (concatenate 'string a suffix))
 
-(defun action-goal-type (a)
-  (assert (equal (subseq a (- (length a) (length "Action")))
-                 "Action")
+(defun action-msg-type (a suffix)
+  (assert (str-has-suffix a "Action")
           nil
           "The action type is invalid. Actions always have the suffix 'Action'")
   (concatenate 'string
                (subseq a 0 (- (length a) (length "Action")))
-               "Goal"))
+               suffix))
+
+(defun action-goal-type (a)
+  (action-msg-type a "Goal"))

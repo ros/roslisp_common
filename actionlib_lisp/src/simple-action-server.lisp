@@ -66,12 +66,15 @@
 
 (defmethod initialize-instance :after ((as action-server) &rest args &key action snapshot)
   (declare (ignorable args))
-  (unless snapshot
-    (check-type action string)
-    (set-result-type (action-type action "Result") as)
-    (set-feedback-type (action-type action "Feedback") as)
-    (set-result-msg-type (action-type action "ActionResult") as)
-    (set-feedback-msg-type (action-type action "ActionFeedback") as)))
+  (let ((action (if (str-has-suffix action "Action")
+                    action
+                    (concatenate 'string action "Action"))))
+    (unless snapshot
+      (check-type action string)
+      (set-result-type (action-msg-type action "Result") as)
+      (set-feedback-type (action-msg-type action "Feedback") as)
+      (set-result-msg-type (action-msg-type action "ActionResult") as)
+      (set-feedback-msg-type (action-msg-type action "ActionFeedback") as))))
 
 (defvar *action-server* nil
   "Dynamically bound, in action server callback threads, to the corresponding action server.")
@@ -346,7 +349,9 @@ The arguments are as in roslisp:make-message for the result type of the action: 
   "Start an action server.  ACTION-NAME is the base name of the associated ros topics.  ACTION-TYPE is the name of the action type (e.g., MY_PKG/MY_ACTION_TYPE).  EXEC-CALLBACK is a function of a single argument, the goal message.  See def-exec-callback for conditions on this function.  The callbacks of the action will always happen on a separate thread, but the update loop will happen on the current thread (and therefore block until the node stops running).  For nonblocking behavior, use the SEPARATE-THREAD key."
   (declare (string action-name action-type) (function exec-callback))
   (flet ((action-type (suffix)
-           (concatenate 'string action-type "Action" suffix))
+           (if (str-has-suffix action-type "Action")
+               (concatenate 'string action-type suffix)
+               (concatenate 'string action-type "Action" suffix)))
          (action-topic (suffix)
            (concatenate 'string action-name "/" suffix)))
     
