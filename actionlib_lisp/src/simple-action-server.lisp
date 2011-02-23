@@ -349,9 +349,11 @@ The arguments are as in roslisp:make-message for the result type of the action: 
   "Start an action server.  ACTION-NAME is the base name of the associated ros topics.  ACTION-TYPE is the name of the action type (e.g., MY_PKG/MY_ACTION_TYPE).  EXEC-CALLBACK is a function of a single argument, the goal message.  See def-exec-callback for conditions on this function.  The callbacks of the action will always happen on a separate thread, but the update loop will happen on the current thread (and therefore block until the node stops running).  For nonblocking behavior, use the SEPARATE-THREAD key."
   (declare (string action-name action-type) (function exec-callback))
   (flet ((action-type (suffix)
-           (if (str-has-suffix action-type "Action")
-               (concatenate 'string action-type suffix)
-               (concatenate 'string action-type "Action" suffix)))
+           (cond ((str-has-suffix action-type "Action")
+                  (concatenate 'string action-type suffix))
+                 (t
+                  (warn "Using deprecated version of action type. Please specify the type with 'Action' suffix")
+                  (concatenate 'string action-type "Action" suffix))))
          (action-topic (suffix)
            (concatenate 'string action-name "/" suffix)))
     
