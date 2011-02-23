@@ -344,6 +344,10 @@ current state, based on `transitions'."
 (defmethod action-client-transition ((state (eql :done)) goal)
   (maybe-finish-goal goal))
 
+(defmacro make-action-goal (client &rest args)
+  `(make-message (action-goal-type (client-action-type ,client))
+                 ,@args))
+
 (defun make-action-client (action-name action-type)
   (check-type action-name string)
   (check-type action-type string)

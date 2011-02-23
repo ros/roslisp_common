@@ -76,4 +76,17 @@
   (concatenate 'string a "/" suffix))
 
 (defun action-type (a suffix)
+  (assert (equal (subseq a (- (length a) (length "Action")))
+                 "Action")
+          nil
+          "The action type is invalid. Actions always have the suffix 'Action'")
   (concatenate 'string a suffix))
+
+(defun action-goal-type (a)
+  (assert (equal (subseq a (- (length a) (length "Action")))
+                 "Action")
+          nil
+          "The action type is invalid. Actions always have the suffix 'Action'")
+  (concatenate 'string
+               (subseq a 0 (- (length a) (length "Action")))
+               "Goal"))
