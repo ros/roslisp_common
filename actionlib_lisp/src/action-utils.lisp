@@ -48,7 +48,7 @@
 
 (defmethod goal-id ((g ros-message))
   "Takes in a FooActionGoal message and returns the id string"
-  (with-fields ((id (id goal_id))) g
+  (with-fields ((id (:id :goal_id))) g
     id))
 
 (defmethod get-status-symbol ((status <GoalStatus>))

@@ -118,7 +118,7 @@
   "Return the stored goal message corresponding to this id"
   (let ((m (gethash id (goals as))))
     (assert m nil "Couldn't find goal with id ~a" id)
-    (with-fields (goal) m
+    (with-fields ((goal :goal)) m
       goal)))
 
 (defun goals-deactivated-before (as time)
