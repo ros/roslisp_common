@@ -51,6 +51,7 @@
    :simple-state :result :goal-id :make-action-client
    :send-goal :cancel-goal :wait-for-server
    :connected-to-server :wait-for-result :call-goal
-   :feedback-signal :abort-goal :feedback)
+   :feedback-signal :abort-goal :feedback
+   :make-action-goal)
   (:import-from :priority-queue
                 :enqueue :dequeue-highest :make-priority-queue :num-entries))
