@@ -103,7 +103,7 @@
    (z orientation pose) (z (orientation pose))
    (w orientation pose) (w (orientation pose))))
 
-(defun pose->msg (frame-id stamp pose)
+(defun pose->stamped-msg (frame-id stamp pose)
   (make-message
    "geometry_msgs/PoseStamped"
    (frame_id header) frame-id
@@ -115,3 +115,14 @@
    (y orientation pose) (y (orientation pose))
    (z orientation pose) (z (orientation pose))
    (w orientation pose) (w (orientation pose))))
+
+(defun pose->msg (pose)
+  (make-message
+   "geometry_msgs/Pose"
+   (x position) (x (origin pose))
+   (y position) (y (origin pose))
+   (z position) (z (origin pose))
+   (x orientation) (x (orientation pose))
+   (y orientation) (y (orientation pose))
+   (z orientation) (z (orientation pose))
+   (w orientation) (w (orientation pose))))
