@@ -90,6 +90,19 @@
      (make-3d-vector x y z)
      (make-quaternion ax ay az aw))))
 
+(defun msg->pose (msg)
+  (with-fields ((x (x position))
+                (y (y position))
+                (z (z position))
+                (ax (x orientation))
+                (ay (y orientation))
+                (az (z orientation))
+                (aw (w orientation)))
+      msg
+    (make-pose
+     (make-3d-vector x y z)
+     (make-quaternion ax ay az aw))))
+
 (defun pose-stamped->msg (pose)
   (make-message
    "geometry_msgs/PoseStamped"
