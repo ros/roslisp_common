@@ -439,8 +439,8 @@ current state, based on `transitions'."
                 (with-timeout-handler (- (+ start-time timeout)
                                          (ros-time))
                     (lambda () (return-from wait-for-result nil))
-                  (wait)
-                  (return-from wait-for-result (wait))))))))))
+                  (wait))
+                (return-from wait-for-result (wait)))))))))
 
 (defmethod call-goal ((client action-client) goal &key timeout feedback-cb)
   (let ((mutex (make-mutex))
