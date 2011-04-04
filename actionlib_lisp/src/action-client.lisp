@@ -147,6 +147,13 @@
   the caller's thread for every feedback. Also raises the signal
   FEEDBACK-SIGNAL for every feedback."))
 
+(defgeneric send-goal-and-wait (client goal &key exec-timeout)
+  (:documentation "Sends the goal and waits for termination. This
+  method is similar to the C++ and Python equivalents. It is
+  implemented as a wrapper around CALL-GOAL.")
+  (:method ((client action-client) goal &key exec-timeout)
+    (call-goal client goal :timeout exec-timeout)))
+
 (defgeneric connected-to-server (client)
   (:method ((client action-client))
     (with-recursive-lock ((slot-value client 'mutex))
