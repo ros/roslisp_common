@@ -1,10 +1,11 @@
 <package>
-  <description brief="actionlib_lisp">
+  <description brief="actionlib_lisp - an implenetation of actionlib in Common Lisp">
 
-     actionlib_lisp
+     actionlib_lisp is a native implementation of the famous actionlib
+     in Common Lisp. It provides a client and a simple server.
 
   </description>
-  <author>Bhaskara Marthi</author>
+  <author>Bhaskara Marthi, Lorenz Moesenlechner</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/actionlib_lisp</url>
