@@ -62,14 +62,14 @@
 
 (defun tf-message->transforms (tf-msgs)
   "Return the transform that corresponds to a tf message."
-  (loop for msg across (transforms-val tf-msgs)
+  (loop for msg across (transforms tf-msgs)
         collecting
      (with-fields ((frame-id (frame_id header))
                    (stamp (stamp header))
                    (child-frame-id child_frame_id))
          msg
        (let ((transform (tf-transform->transform
-                         (geometry_msgs-msg:transform-val msg))))
+                         (geometry_msgs-msg:transform msg))))
          (make-stamped-transform frame-id child-frame-id stamp
                                  (translation transform)
                                  (rotation transform))))))

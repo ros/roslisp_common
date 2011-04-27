@@ -52,7 +52,7 @@
     id))
 
 (defmethod get-status-symbol ((status <GoalStatus>))
-  (let ((pair (rassoc (status-val status)
+  (let ((pair (rassoc (status status)
                       (symbol-codes '<GoalStatus>))))
     (assert pair () "Could not find status code for `~a'" status)
     (car pair)))
