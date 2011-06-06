@@ -22,7 +22,7 @@
   (make-instance 'quaternion :x x :y y :z z :w w))
 
 (defmethod print-object ((q quaternion) str)
-  (print-unreadable-object (q str :type t) (format str "v: (~a, ~a, ~a), w: ~a" (x q) (y q) (z q) (w q))))
+  (print-unreadable-object (q str :type t) (format str "(~a ~a ~a ~a)" (x q) (y q) (z q) (w q))))
 
 (defun q= (q1 q2)
   "Equality check checks components"

@@ -24,9 +24,15 @@
 (defun make-3d-vector (x y z)
   (make-instance '3d-vector :x x :y y :z z))
 
+(defun make-identity-vector (&optional (type-template 0.0d0))
+  (make-3d-vector
+   (float 0.0d0 type-template)
+   (float 0.0d0 type-template)
+   (float 0.0d0 type-template)))
+
 (defmethod print-object ((v 3d-vector) strm)
   (print-unreadable-object (v strm :type t)
-    (format strm "(~a, ~a, ~a)" (x v) (y v) (z v))))
+    (format strm "(~a ~a ~a)" (x v) (y v) (z v))))
 
 (defun v-norm (v)
   "Returns the magnitude of the vector"

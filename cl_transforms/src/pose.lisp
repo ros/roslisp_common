@@ -8,6 +8,11 @@
 (defun make-pose (origin orientation)
   (make-instance 'pose :origin origin :orientation orientation))
 
+(defun make-identity-pose (&optional (type-template 0.0d0))
+  (make-pose
+   (make-identity-vector type-template)
+   (make-identity-rotation type-template)))
+
 (defmethod initialize-instance :after ((p pose) &key (validate-args :warn))
   (when validate-args
     (with-slots (orientation) p

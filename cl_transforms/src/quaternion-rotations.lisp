@@ -2,6 +2,12 @@
 
 (defparameter *tolerance* 1e-6)
 
+(defun make-identity-rotation (&optional (type-template 0.0d0))
+  (make-quaternion
+   (float 0.0d0 type-template)
+   (float 0.0d0 type-template)
+   (float 0.0d0 type-template)
+   (float 1.0d0 type-template)))
 
 (defun axis-angle->quaternion (axis angle)
   "Return quaternion corresponding to rotation about axis by angle"
