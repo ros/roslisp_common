@@ -1,9 +1,16 @@
 
 (in-package :cl-transforms)
 
-(deftype quaternion-coefficient () '(or fixnum float))
+(deftype quaternion-coefficient () '(or float double-float))
 
 (defparameter *tolerance* 1e-6)
+(defparameter *default-quaternion-coefficient-type* 'double-float)
+
+(declaim (inline ensure-quaternion-coefficient-type))
+(defun ensure-quaternion-coefficient-type (val)
+  (ecase *default-quaternion-coefficient-type*
+    (single-float (float val))
+    (double-float (float val 0.0d0))))
 
 (defclass quaternion ()
   ((x :initarg :x :reader x :type quaternion-coefficient)
@@ -19,7 +26,11 @@
 
 (defun make-quaternion (x y z w)
   "Create a quaternion.  x, y, z is the vector part and w is the scalar."
-  (make-instance 'quaternion :x x :y y :z z :w w))
+  (make-instance 'quaternion
+    :x (ensure-quaternion-coefficient-type x)
+    :y (ensure-quaternion-coefficient-type y)
+    :z (ensure-quaternion-coefficient-type z)
+    :w (ensure-quaternion-coefficient-type w)))
 
 (defmethod print-object ((q quaternion) str)
   (print-unreadable-object (q str :type t) (format str "(~a ~a ~a ~a)" (x q) (y q) (z q) (w q))))
