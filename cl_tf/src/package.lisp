@@ -17,6 +17,7 @@
               :msg->pose :msg->pose-stamped :pose-stamped->msg :pose->msg
               :stamped :stamped-transform :pose-stamped :point-stamped
               :wait-for-transform :tf-cache-error :tf-connectivity-error
+              :tf-lookup-error
               :frame-id :stamp :child-frame-id :source-frame :target-frame
               :frame
               ,@(let ((r nil))
