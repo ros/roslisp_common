@@ -374,7 +374,7 @@ current state, based on `transitions'."
   (when (state-change-callback goal)
     (funcall (state-change-callback goal) state)))
 
-(defmacro make-action-goal (client &rest args)
+(defmacro make-action-goal (client &body args)
   `(make-message (action-goal-type (client-action-type ,client))
                  ,@args))
 
