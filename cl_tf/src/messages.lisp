@@ -14,20 +14,21 @@
 
 (defmethod print-object ((tr stamped-transform) strm)
   (print-unreadable-object (tr strm :type t)
-    (with-slots (frame-id stamp translation rotation) tr
-      (format strm "~<~%   FRAME-ID: ~a STAMP: ~a~>~%~{   ~<~a~>~^~%~}"
-              frame-id stamp (list translation rotation)))))
+    (with-slots (frame-id child-frame-id stamp translation rotation)
+        tr
+      (format strm "~<~%   FRAME-ID: \"~a\", CHILD-FRAME-ID: \"~a\", STAMP: ~a~>~%~{   ~<~a~>~^~%~}"
+              frame-id child-frame-id stamp (list translation rotation)))))
 
 (defmethod print-object ((p pose-stamped) strm)
   (print-unreadable-object (p strm :type t)
     (with-slots (frame-id stamp origin orientation) p
-      (format strm "~<~%   FRAME-ID: ~a STAMP: ~a~>~%~{   ~<~a~>~^~%~}"
+      (format strm "~<~%   FRAME-ID: \"~a\", STAMP: ~a~>~%~{   ~<~a~>~^~%~}"
               frame-id stamp (list origin orientation)))))
 
 (defmethod print-object ((p point-stamped) strm)
   (print-unreadable-object (p strm :type t)
     (with-slots (frame-id stamp x y z) p
-      (format strm "~<~%   FRAME-ID: ~a STAMP: ~a~>~%   ~<V: (~a ~a ~a)~>"
+      (format strm "~<~%   FRAME-ID: \"~a\" STAMP: ~a~>~%   ~<V: (~a ~a ~a)~>"
               frame-id stamp x y z))))
 
 (defun make-pose-stamped (frame-id stamp translation rotation)
@@ -157,3 +158,10 @@
    (y orientation) (y (orientation pose))
    (z orientation) (z (orientation pose))
    (w orientation) (w (orientation pose))))
+
+(defun stamped-transform->pose-stamped (transform)
+  (with-slots (child-frame-id stamp)
+      transform
+    (change-class (make-identity-pose) 'pose-stamped
+                  :frame-id child-frame-id
+                  :stamp stamp)))
