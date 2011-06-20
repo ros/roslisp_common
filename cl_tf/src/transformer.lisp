@@ -32,7 +32,8 @@
   (sb-thread:with-mutex ((slot-value tf 'lock))
     (handler-case
         (let ((target-frame (ensure-fully-qualified-name target-frame))
-                  (source-frame (ensure-fully-qualified-name source-frame)))
+              (source-frame (ensure-fully-qualified-name source-frame))
+              (time (ensure-null-time time)))
           (or (equal target-frame source-frame)
               (let ((target-root (get-transforms-to-root (transforms tf) target-frame time))
                     (source-root (get-transforms-to-root (transforms tf) source-frame time)))
@@ -56,7 +57,8 @@
   (check-type target-frame string)
   (check-type source-frame string)
   (let ((target-frame (ensure-fully-qualified-name target-frame))
-        (source-frame (ensure-fully-qualified-name source-frame)))
+        (source-frame (ensure-fully-qualified-name source-frame))
+        (time (ensure-null-time time)))
     (when (equal target-frame source-frame)
       (return-from lookup-transform
         (make-stamped-transform target-frame source-frame (ros-time)
@@ -100,7 +102,8 @@
         (lock (sb-thread:make-mutex))
         (waiter-name (gensym))
         (target-frame (ensure-fully-qualified-name target-frame))
-        (source-frame (ensure-fully-qualified-name source-frame)))
+        (source-frame (ensure-fully-qualified-name source-frame))
+        (time (ensure-null-time time)))
     (check-transform-exists tf target-frame)
     (check-transform-exists tf source-frame)
     (flet ((on-set-transform ()
@@ -124,7 +127,8 @@
 (defmethod transform-pose ((tf transformer) &key target-frame pose time)
   (check-type target-frame string)
   (check-type pose pose-stamped)
-  (let ((target-frame (ensure-fully-qualified-name target-frame)))
+  (let ((target-frame (ensure-fully-qualified-name target-frame))
+        (time (ensure-null-time time)))
     (check-transform-exists tf target-frame)
     (let ((transform (lookup-transform
                       tf
@@ -141,7 +145,8 @@
 (defmethod transform-point ((tf transformer) &key target-frame point time)
   (check-type target-frame string)
   (check-type point point-stamped)
-  (let ((target-frame (ensure-fully-qualified-name target-frame)))
+  (let ((target-frame (ensure-fully-qualified-name target-frame))
+        (time (ensure-null-time time)))
     (check-transform-exists tf target-frame)
     (let ((transform (lookup-transform
                       tf
@@ -158,7 +163,8 @@
 (defun get-transforms-to-root (transforms frame-id time &optional result)
   "Returns the list of transforms from `frame-id' up to the root of
   the tree."
-  (let ((current-cache (gethash frame-id transforms)))
+  (let ((current-cache (gethash frame-id transforms))
+        (time (ensure-null-time time)))
     (if current-cache
         (let ((current-tf (get-cached-transform (gethash frame-id transforms) time)))
           (get-transforms-to-root transforms (frame-id current-tf)
@@ -184,6 +190,14 @@
   (if (eql (elt frame-id 0) #\/)
       frame-id
       (concatenate 'string "/" frame-id)))
+
+(defun ensure-null-time (time)
+  "Makes sure that time is NIL if it is either NIL or 0"
+  (cond ((null time) time)
+        ((and (numberp time)
+              (= time 0.0))
+         nil)
+        (t time)))
 
 (defun check-transform-exists (transformer frame-id)
   (unless (gethash frame-id (transforms transformer))
