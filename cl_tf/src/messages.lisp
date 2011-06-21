@@ -12,6 +12,25 @@
 
 (defclass point-stamped (3d-vector stamped) ())
 
+(defmethod print-object ((tr stamped-transform) strm)
+  (print-unreadable-object (tr strm :type t)
+    (with-slots (frame-id child-frame-id stamp translation rotation)
+        tr
+      (format strm "~<~%   FRAME-ID: \"~a\", CHILD-FRAME-ID: \"~a\", STAMP: ~a~>~%~{   ~<~a~>~^~%~}"
+              frame-id child-frame-id stamp (list translation rotation)))))
+
+(defmethod print-object ((p pose-stamped) strm)
+  (print-unreadable-object (p strm :type t)
+    (with-slots (frame-id stamp origin orientation) p
+      (format strm "~<~%   FRAME-ID: \"~a\", STAMP: ~a~>~%~{   ~<~a~>~^~%~}"
+              frame-id stamp (list origin orientation)))))
+
+(defmethod print-object ((p point-stamped) strm)
+  (print-unreadable-object (p strm :type t)
+    (with-slots (frame-id stamp x y z) p
+      (format strm "~<~%   FRAME-ID: \"~a\" STAMP: ~a~>~%   ~<V: (~a ~a ~a)~>"
+              frame-id stamp x y z))))
+
 (defun make-pose-stamped (frame-id stamp translation rotation)
   (make-instance 'pose-stamped
                  :frame-id frame-id
@@ -62,14 +81,14 @@
 
 (defun tf-message->transforms (tf-msgs)
   "Return the transform that corresponds to a tf message."
-  (loop for msg across (transforms-val tf-msgs)
+  (loop for msg across (transforms tf-msgs)
         collecting
      (with-fields ((frame-id (frame_id header))
                    (stamp (stamp header))
                    (child-frame-id child_frame_id))
          msg
        (let ((transform (tf-transform->transform
-                         (geometry_msgs-msg:transform-val msg))))
+                         (geometry_msgs-msg:transform msg))))
          (make-stamped-transform frame-id child-frame-id stamp
                                  (translation transform)
                                  (rotation transform))))))
@@ -87,6 +106,19 @@
       msg
     (make-pose-stamped
      frame-id stamp
+     (make-3d-vector x y z)
+     (make-quaternion ax ay az aw))))
+
+(defun msg->pose (msg)
+  (with-fields ((x (x position))
+                (y (y position))
+                (z (z position))
+                (ax (x orientation))
+                (ay (y orientation))
+                (az (z orientation))
+                (aw (w orientation)))
+      msg
+    (make-pose
      (make-3d-vector x y z)
      (make-quaternion ax ay az aw))))
 
@@ -126,3 +158,10 @@
    (y orientation) (y (orientation pose))
    (z orientation) (z (orientation pose))
    (w orientation) (w (orientation pose))))
+
+(defun stamped-transform->pose-stamped (transform)
+  (with-slots (child-frame-id stamp)
+      transform
+    (change-class (make-identity-pose) 'pose-stamped
+                  :frame-id child-frame-id
+                  :stamp stamp)))

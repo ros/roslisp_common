@@ -92,6 +92,13 @@
               :documentation "The active callback that gets called
               when the goal gets active. It is a function object
               without any parameters.")
+   (state-change-cb :reader state-change-callback :initarg :state-change-cb
+                    :initform nil
+                    :documentation "Callback that gets called whenever
+                    the state of the goal transitions on the status
+                    topic. The function has to take exactly one
+                    parameter, the new goal state as a simple client
+                    state (:pending, :active or :done).")
    (mutex :initform (make-mutex :name (string (gensym "ACTION-GOAL-"))))
    (condition :initform (make-waitqueue :name (string (gensym "ACTION-GOAL-"))))))
 
@@ -115,7 +122,9 @@
   `new-simple-state' is either :PENDING, :ACTIVE or :DONE.
   `goal' is the goal, already containing the new goal state."))
 
-(defgeneric send-goal (client goal-msg done-cb &optional feedback-cb active-cb)
+(defgeneric send-goal (client goal-msg &optional
+                              done-cb feedback-cb active-cb
+                              state-change-cb)
   (:documentation "Sends a goal to the action server. 
 
    `client' is an instance of ACTION-CLIENT. 
@@ -126,7 +135,13 @@
    `feedback-cb' is a function that takes exactly one parameter, the
    feedback message of the goal.
 
-   `active-cb' is a function with no parameters."))
+   `active-cb' is a function with no parameters.
+
+   `state-change-cb' is a function with one parameter that is called
+   whenever the state of the goal transitions. The parameter is
+   indicating the new status. Please note that this state is the the
+   simple client state, i.e. either :pending, :active or :done. A done
+   transition can be performed _before_ a result has been received."))
 
 (defgeneric cancel-goal (goal)
   (:documentation "Cancels a goal."))
@@ -139,13 +154,22 @@
   (:documentation "Blocks until the goal's result is ready and returns
   it. Returns NIL after `timeout'"))
 
-(defgeneric call-goal (client goal &key timeout feedback-cb)
+(defgeneric call-goal (client goal &key timeout result-timeout feedback-cb)
   (:documentation "Calls the goal and blocks until a result is
   available or the timeout occurs. If the timeout occurs, returns the
   values NIL and :TIMEOUT. Otherwise, returns the result and the
   terminal action-state. If `feedback-cb' is specified, calls it in
   the caller's thread for every feedback. Also raises the signal
   FEEDBACK-SIGNAL for every feedback."))
+
+(defgeneric send-goal-and-wait (client goal &key exec-timeout result-timeout feedback-cb)
+  (:documentation "Sends the goal and waits for termination. This
+  method is similar to the C++ and Python equivalents. It is
+  implemented as a wrapper around CALL-GOAL.")
+  (:method ((client action-client) goal &key exec-timeout result-timeout feedback-cb)
+    (call-goal client goal
+               :timeout exec-timeout :result-timeout result-timeout
+               :feedback-cb feedback-cb)))
 
 (defgeneric connected-to-server (client)
   (:method ((client action-client))
@@ -259,17 +283,19 @@ current state, based on `transitions'."
   callback in that case. Completely finished means that the goal must
   be in :done state and a result must be available or the goal must be
   in state :lost."
-  (let (fun result state)
+  (let (fun result state done?)
     (with-recursive-lock ((slot-value goal 'mutex))
       (when (and (or (eq (action-state goal) :lost)
                      (result goal))
                  (eq (simple-state goal)
                      :done))
+        (setf done? t)
         (setf fun (done-callback goal)
               result (result goal)
               state (action-state goal))))
+    (when done?
+      (remove-goal (client goal) goal))
     (when fun
-      (remove-goal (client goal) goal)
       (funcall fun state result))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -344,7 +370,11 @@ current state, based on `transitions'."
 (defmethod action-client-transition ((state (eql :done)) goal)
   (maybe-finish-goal goal))
 
-(defmacro make-action-goal (client &rest args)
+(defmethod action-client-transition :after ((state symbol) goal)
+  (when (state-change-callback goal)
+    (funcall (state-change-callback goal) state)))
+
+(defmacro make-action-goal (client &body args)
   `(make-message (action-goal-type (client-action-type ,client))
                  ,@args))
 
@@ -368,7 +398,8 @@ current state, based on `transitions'."
                (partial #'client-result-callback client))
     client))
 
-(defmethod send-goal ((client action-client) goal-msg done-cb &optional feedback-cb active-cb)
+(defmethod send-goal ((client action-client) goal-msg &optional
+                      done-cb feedback-cb active-cb state-change-cb)
   (assert (connected-to-server client) ()
           "Not connected to an action server. Cannot send goal.")
   (with-slots (mutex goals goal-pub action-type seq-nr) client
@@ -377,6 +408,7 @@ current state, based on `transitions'."
                                 :done-cb done-cb
                                 :feedback-cb feedback-cb                                 
                                 :active-cb active-cb
+                                :state-change-cb state-change-cb
                                 :client client
                                 :goal-id (make-goal-id)
                                 :timestamp now)))
@@ -414,8 +446,9 @@ current state, based on `transitions'."
 (defmethod wait-for-result ((goal client-goal-handle) &optional timeout)
   (flet ((wait ()
            (with-recursive-lock ((slot-value goal 'mutex))
-             (loop until (and goal (result goal)
-                              (eq (simple-state goal) :done))
+             (loop until (eq (action-state goal) :lost) ; Early exit when the goal is lost
+                   until (and goal (result goal)
+                               (eq (simple-state goal) :done))
                    unless (connected-to-server (client goal)) do
                      (error 'server-lost
                             :format-control "Client lost connection to action server.")
@@ -431,28 +464,28 @@ current state, based on `transitions'."
             (if timeout
                 (with-timeout-handler (- (+ start-time timeout)
                                          (ros-time))
-                    (lambda () (return-from wait-for-result nil))
-                  (wait)
-                  (return-from wait-for-result (wait))))))))))
+                    (lambda () (return-from wait-for-result (values nil :timeout)))
+                  (return-from wait-for-result (values (wait) (action-state goal))))
+                (return-from wait-for-result (values (wait) (action-state goal))))))))))
 
-(defmethod call-goal ((client action-client) goal &key timeout feedback-cb)
+(defmethod call-goal ((client action-client) goal &key timeout result-timeout feedback-cb)
   (let ((mutex (make-mutex))
         (condition (make-waitqueue))
         (current-feedback nil)
-        (result-data nil)
+        (terminated nil)
         (goal-handle nil)
         (start-time (ros-time)))
     (flet ((feedback-callback (feedback)
              (with-mutex (mutex)
                (setf current-feedback feedback)
                (condition-broadcast condition)))
-           (result-callback (status result)
-             (with-mutex (mutex)
-               (setf result-data (list result status))
+           (state-change-callback (new-state)
+             (when (eql new-state :done)
+               (setf terminated t)
                (condition-broadcast condition))))
       (unwind-protect
            (progn
-             (setf goal-handle (send-goal client goal #'result-callback #'feedback-callback))
+             (setf goal-handle (send-goal client goal nil #'feedback-callback nil #'state-change-callback))
              (loop do
                (block nil
                  (with-timeout-handler *action-server-timeout*
@@ -461,8 +494,8 @@ current state, based on `transitions'."
                      (cond ((not (connected-to-server client))
                             (error 'server-lost
                                    :format-control "Client lost connection to server."))
-                           (result-data
-                            (return-from call-goal (apply #'values result-data)))
+                           (terminated
+                            (return-from call-goal (wait-for-result goal-handle result-timeout)))
                            (current-feedback
                             (when feedback-cb
                               (funcall feedback-cb current-feedback))

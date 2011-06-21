@@ -8,6 +8,11 @@
 (defun make-transform (translation rotation)
   (make-instance 'transform :translation translation :rotation rotation))
 
+(defun make-identity-transform ()
+  (make-transform
+   (make-identity-vector)
+   (make-identity-rotation)))
+
 (defmethod print-object ((obj transform) strm)
   (print-unreadable-object (obj strm :type t)
     (with-slots (translation rotation) obj

@@ -1,7 +1,15 @@
 
 (in-package :cl-transforms)
 
-(deftype vector-coefficient () '(or fixnum float double-float))
+(deftype vector-coefficient () '(or float double-float))
+
+(defparameter *default-vector-coefficient-type* 'double-float)
+
+(declaim (inline ensure-vector-coefficient-type))
+(defun ensure-vector-coefficient-type (val)
+  (ecase *default-vector-coefficient-type*
+    (single-float (float val))
+    (double-float (float val 0.0d0))))
 
 (defclass 3d-vector ()
   ((x :initarg :x :reader x :type vector-coefficient)
@@ -22,11 +30,17 @@
   (aref v 2))
 
 (defun make-3d-vector (x y z)
-  (make-instance '3d-vector :x x :y y :z z))
+  (make-instance '3d-vector
+    :x (ensure-vector-coefficient-type x)
+    :y (ensure-vector-coefficient-type y)
+    :z (ensure-vector-coefficient-type z)))
+
+(defun make-identity-vector ()
+  (make-3d-vector 0 0 0))
 
 (defmethod print-object ((v 3d-vector) strm)
   (print-unreadable-object (v strm :type t)
-    (format strm "(~a, ~a, ~a)" (x v) (y v) (z v))))
+    (format strm "(~a ~a ~a)" (x v) (y v) (z v))))
 
 (defun v-norm (v)
   "Returns the magnitude of the vector"

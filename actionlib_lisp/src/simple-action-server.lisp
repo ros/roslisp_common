@@ -352,7 +352,7 @@ The arguments are as in roslisp:make-message for the result type of the action: 
            (cond ((str-has-suffix action-type "Action")
                   (concatenate 'string action-type suffix))
                  (t
-                  (warn "Using deprecated version of action type. Please specify the type with 'Action' suffix")
+                  (warn "Using deprecated version of action type. Please specify the type with 'Action' suffix: ~a" action-type)
                   (concatenate 'string action-type "Action" suffix))))
          (action-topic (suffix)
            (concatenate 'string action-name "/" suffix)))
