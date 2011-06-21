@@ -89,11 +89,13 @@
   (with-slots (transforms set-transform-callbacks lock) tf
     (sb-thread:with-mutex (lock)
       (let ((cache (gethash (child-frame-id transform) transforms)))
-        (unless cache
+        (when (or (not cache) (eql cache 'parent))
           (setf cache (make-instance 'transform-cache))
           (setf (gethash (ensure-fully-qualified-name (child-frame-id transform))
                          transforms) cache))
-        (cache-transform cache transform)))
+        (cache-transform cache transform))
+      (unless (gethash (frame-id transform) transforms)
+        (setf (gethash (frame-id transform) transforms) 'parent)))
     (unless suppress-callbacks
       (execute-set-callbacks tf))))
 
@@ -165,7 +167,7 @@
   the tree."
   (let ((current-cache (gethash frame-id transforms))
         (time (ensure-null-time time)))
-    (if current-cache
+    (if (and current-cache (typep current-cache 'transform-cache))
         (let ((current-tf (get-cached-transform (gethash frame-id transforms) time)))
           (get-transforms-to-root transforms (frame-id current-tf)
                                   time (cons current-tf result)))
