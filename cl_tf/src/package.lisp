@@ -14,10 +14,12 @@
               :make-pose-stamped :make-point-stamped
               :make-stamped-transform :transform->stamped-transform
               :tf-transform->transform :tf-message->transforms
-              :msg->pose-stamped :pose-stamped->msg :pose->msg
+              :msg->pose :msg->pose-stamped :pose-stamped->msg :pose->msg
               :stamped :stamped-transform :pose-stamped :point-stamped
               :wait-for-transform :tf-cache-error :tf-connectivity-error
-              :frame-id :stamp :child-frame-id
+              :tf-lookup-error
+              :frame-id :stamp :child-frame-id :source-frame :target-frame
+              :frame
               ,@(let ((r nil))
                   (do-external-symbols (s :cl-transforms r) (push s r)))))
 

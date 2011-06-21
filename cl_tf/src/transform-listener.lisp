@@ -17,5 +17,4 @@
   (execute-set-callbacks tf))
 
 (defmethod destroy ((tf transform-listener))
-  ;; (roslisp:unsubscribe (slot-value tf 'subscriber))
-  nil)
+  (roslisp:unsubscribe (slot-value tf 'subscriber)))

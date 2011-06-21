@@ -49,7 +49,7 @@
    :*action-server-timeout*
    :server-lost
    :simple-state :result :goal-id :make-action-client
-   :send-goal :cancel-goal :wait-for-server
+   :send-goal :send-goal-and-wait :cancel-goal :wait-for-server
    :connected-to-server :wait-for-result :call-goal
    :feedback-signal :abort-goal :feedback
    :make-action-goal)
