@@ -93,6 +93,16 @@
                                  (translation transform)
                                  (rotation transform))))))
 
+(defun copy-pose-stamped (ps &key origin orientation)
+  "Copies a pose-stamped. If either `origin' or `orientation' is
+  specified, replaces the corresponding entry in the new pose."
+  (with-slots (stamp frame-id)
+      ps
+    (make-pose-stamped
+     frame-id stamp
+     (or origin (origin ps))
+     (or orientation (orientation ps)))))
+
 (defun msg->pose-stamped (msg)
   (with-fields ((frame-id (frame_id header))
                 (stamp (stamp header))

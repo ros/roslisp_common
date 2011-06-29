@@ -14,6 +14,7 @@
               :make-pose-stamped :make-point-stamped
               :make-stamped-transform :transform->stamped-transform
               :tf-transform->transform :tf-message->transforms
+              :copy-pose-stamped
               :msg->pose :msg->pose-stamped :pose-stamped->msg :pose->msg
               :stamped :stamped-transform :pose-stamped :point-stamped
               :wait-for-transform :tf-cache-error :tf-connectivity-error
