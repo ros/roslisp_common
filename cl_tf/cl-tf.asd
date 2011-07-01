@@ -12,6 +12,7 @@
              (:file "transformer" :depends-on ("package" "transform-cache" "messages"))
              (:file "transform-listener"
                     :depends-on ("package" "messages" "transformer"))
+             (:file "broadcaster" :depends-on ("package" "messages"))
              ;; (:file "transform-broadcaster"
              ;;        :depends-on ("package" "messages" "transformer"))
              ))))

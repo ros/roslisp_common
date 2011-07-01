@@ -79,6 +79,25 @@
          rotation
        (make-quaternion x y z w)))))
 
+(defun transform->tf (tr)
+  (make-message "tf/tfMessage" :transforms (vector (transform->msg tr))))
+
+(defun to-vector3 (trans)
+  (make-msg "geometry_msgs/Vector3" :x (x trans) :y (y trans) :z (z trans)))
+
+(defun to-quaternion-msg (rot)
+  (make-msg "geometry_msgs/Quaternion" :x (x rot) :y (y rot) :z (z rot) :w (w rot))
+  )
+
+(defun transform->msg (tr)
+  (with-slots (frame-id child-frame-id stamp translation rotation) tr
+   (make-message "geometry_msgs/TransformStamped"
+                 (:frame_id :header) frame-id
+                 (:stamp :header) stamp
+                 :child_frame_id child-frame-id
+                 (:translation :transform) (to-vector3 translation)
+                 (:rotation :transform) (to-quaternion-msg rotation))))
+
 (defun tf-message->transforms (tf-msgs)
   "Return the transform that corresponds to a tf message."
   (loop for msg across (transforms tf-msgs)
