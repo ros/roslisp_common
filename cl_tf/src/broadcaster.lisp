@@ -20,5 +20,4 @@
   (if new-thread
       (sb-thread:make-thread
        #'(lambda () (send-static-transform-blocking broadcaster tr :interval interval)))
-      (send-static-transform-blocking broadcaster tr :interval interval)
-      ))
+      (send-static-transform-blocking broadcaster tr :interval interval)))
