@@ -185,7 +185,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defmacro with-timeout-handler (expires handler &body body)
-  "Like sbcl's timeout macro but save. Instead of signaling a timeout
+  "Like sbcl's timeout macro but safe. Instead of signaling a timeout
 condition, handler is executed."
   (with-gensyms (timer body-fun)
     `(flet ((,body-fun () ,@body))
