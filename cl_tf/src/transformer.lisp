@@ -94,8 +94,8 @@
           (setf (gethash (ensure-fully-qualified-name (child-frame-id transform))
                          transforms) cache))
         (cache-transform cache transform))
-      (unless (gethash (frame-id transform) transforms)
-        (setf (gethash (frame-id transform) transforms) 'parent)))
+      (unless (gethash (ensure-fully-qualified-name (frame-id transform)) transforms)
+        (setf (gethash (ensure-fully-qualified-name (frame-id transform)) transforms) 'parent)))
     (unless suppress-callbacks
       (execute-set-callbacks tf))))
 
