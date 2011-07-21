@@ -314,7 +314,7 @@ current state, based on `transitions'."
             PERFORM-STATE-TRANSITION."
            (perform-state-transition (get-goal client goal-status-msg)
                                      (get-status-symbol goal-status-msg))))
-    (let ((status-list (map 'list #'identity (status_list-val status-array-msg))))
+    (let ((status-list (map 'list #'identity (status_list status-array-msg))))
       (with-recursive-lock ((slot-value client 'mutex))
         (let ((lost-goals (find-lost-goals status-list)))
           (loop for lost-goal in lost-goals do
