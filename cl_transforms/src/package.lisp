@@ -8,6 +8,7 @@
            :rotate :axis-angle->quaternion :quaternion->axis-angle :yaw :get-yaw
            :euler->quaternion :matrix->quaternion :normalize
            :is-normalized :rotate :angle-between-quaternions
+           :normalize-angle
            :transform :make-transform :make-identity-transform
            :transform-inv :transform* :transform-point :translation :rotation
            :point :pose :make-pose :make-identity-pose
