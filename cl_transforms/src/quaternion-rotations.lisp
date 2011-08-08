@@ -110,14 +110,14 @@ This guarantees that Q represents a rotation."
     (values angle axis)))
 
 (defun normalize-angle (angle)
-  "Ensures that `angle' is within the interval [0;PI)."
+  "Ensures that `angle' is within the interval [-PI;PI)."
   (let ((2pi (* pi 2)))
-    (cond ((< angle 0)
-           (normalize-angle
-            (- angle  (* (1- (truncate (/ angle 2pi)))
-                         2pi))))
-          ((>= angle 2pi)
+    (cond ((< angle (- pi))
            (normalize-angle
             (- angle (* (truncate (/ angle 2pi))
+                        2pi))))
+          ((>= angle pi)
+           (normalize-angle
+            (- angle (* (1+ (truncate (/ angle 2pi)))
                         2pi))))
           (t angle))))
