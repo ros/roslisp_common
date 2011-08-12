@@ -367,7 +367,7 @@ The arguments are as in roslisp:make-message for the result type of the action: 
       (make-thread (callback-loop as) 
                    :name (format nil "~a-callback-loop" action-name))
       (subscribe (action-topic "goal") (action-type "Goal") (partial #'add-goal as))
-      (subscribe (action-topic "cancel") "actionlib_msgs/GoalId"
+      (subscribe (action-topic "cancel") "actionlib_msgs/GoalID"
                  #'(lambda (m) (declare (ignore m)) (process-cancel-request as)))
       (if separate-thread
           (make-thread (update-loop as status-pub)
