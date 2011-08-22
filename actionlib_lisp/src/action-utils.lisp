@@ -96,3 +96,7 @@
 
 (defun action-goal-type (a)
   (action-msg-type a "Goal"))
+
+;; Needed to prevent problems with older and newer sbcl versions
+(defun lisp-version-number ()
+  (parse-integer (remove #\. (lisp-implementation-version))))

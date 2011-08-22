@@ -471,6 +471,17 @@ current state, based on `transitions'."
                   (return-from wait-for-result (values (wait) (action-state goal))))
                 (return-from wait-for-result (values (wait) (action-state goal))))))))))
 
+;; The condition THREAD-DEADLOCk is not defined in older SBCL
+;; versions. The deadlock handler does nothing in case of sbcl being
+;; too old.
+
+(defmacro with-deadlock-handler (body &body handler)
+  (if (> (lisp-version-number) 1048)
+      `(handler-case ,body
+         (,(find-symbol "THREAD-DEADLOCK" (find-package :sb-thread)) ()
+           ,@handler))
+      body))
+
 (defmethod call-goal ((client action-client) goal &key timeout result-timeout feedback-cb)
   (let ((mutex (make-mutex))
         (condition (make-waitqueue))
@@ -479,12 +490,13 @@ current state, based on `transitions'."
         (goal-handle nil)
         (start-time (ros-time)))
     (flet ((feedback-callback (feedback)
-             (handler-case
+             (with-deadlock-handler
                  (with-mutex (mutex)
                    (setf current-feedback feedback)
                    (condition-broadcast condition))
-               (sb-thread:thread-deadlock ()
-                 nil)))
+               ;; Let's ignore deadlocks and just wait for another
+               ;; feedback
+               nil))
            (state-change-callback (new-state)
              (when (eql new-state :done)
                (setf terminated t)
@@ -496,7 +508,7 @@ current state, based on `transitions'."
                (block nil
                  (with-timeout-handler *action-server-timeout*
                      (lambda () (return))
-                   (handler-case
+                   (with-deadlock-handler
                        (with-mutex (mutex)
                          (cond ((not (connected-to-server client))
                                 (error 'server-lost
@@ -523,8 +535,7 @@ current state, based on `transitions'."
                                  (lambda () (return))
                                (condition-wait condition mutex))
                              (condition-wait condition mutex)))
-                     (sb-thread:thread-deadlock ()
-                       ;; Let's ignore deadlocks and just retry
-                       (return)))))))
+                     ;; Let's ignore deadlocks and just retry
+                     (return))))))
         (unless (or (not goal-handle) (eq (simple-state goal-handle) :done))
           (cancel-goal goal-handle))))))
