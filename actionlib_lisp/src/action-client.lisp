@@ -426,7 +426,7 @@ current state, based on `transitions'."
 
 (defmethod cancel-goal ((goal client-goal-handle))
   (with-slots (cancel-pub) (client goal)
-    (publish cancel-pub (make-instance 'actionlib_msgs-msg:<goalid>
+    (publish cancel-pub (make-instance 'actionlib_msgs-msg:goalid
                                        :id (goal-id goal)))))
 
 (defmethod wait-for-server ((client action-client) &optional timeout)
@@ -501,41 +501,46 @@ current state, based on `transitions'."
              (when (eql new-state :done)
                (setf terminated t)
                (condition-broadcast condition))))
-      (unwind-protect
-           (progn
-             (setf goal-handle (send-goal client goal nil #'feedback-callback nil #'state-change-callback))
-             (loop do
-               (block nil
-                 (with-timeout-handler *action-server-timeout*
-                     (lambda () (return))
-                   (with-deadlock-handler
-                       (with-mutex (mutex)
-                         (cond ((not (connected-to-server client))
-                                (error 'server-lost
-                                       :format-control "Client lost connection to server."))
-                               (terminated
-                                (return-from call-goal (wait-for-result goal-handle result-timeout)))
-                               (current-feedback
-                                (when feedback-cb
-                                  (funcall feedback-cb current-feedback))
-                                (restart-case 
-                                    (signal 'feedback-signal
-                                            :goal goal-handle
-                                            :feedback current-feedback)
-                                  (abort-goal (&optional result)
-                                    :report "Preempt the goal."
-                                    (return-from call-goal (values result :aborted))))
-                                (setf current-feedback nil))
-                               ((and timeout (<= (- (+ start-time timeout) (ros-time))
-                                                 0))
-                                (return-from call-goal (values nil :timeout))))
-                         (if timeout
-                             (with-timeout-handler (- (+ start-time timeout)
-                                                      (ros-time))
-                                 (lambda () (return))
-                               (condition-wait condition mutex))
-                             (condition-wait condition mutex)))
-                     ;; Let's ignore deadlocks and just retry
-                     (return))))))
-        (unless (or (not goal-handle) (eq (simple-state goal-handle) :done))
-          (cancel-goal goal-handle))))))
+      (handler-case
+          (unwind-protect
+               (progn
+                 (setf goal-handle (send-goal client goal nil #'feedback-callback nil #'state-change-callback))
+                 (loop do
+                   (block nil
+                     (with-timeout-handler *action-server-timeout*
+                         (lambda ()
+                           (return))
+                       (with-deadlock-handler
+                           (with-mutex (mutex)
+                             (cond ((not (connected-to-server client))
+                                    (error 'server-lost
+                                           :format-control "Client lost connection to server."))
+                                   (terminated
+                                    (return-from call-goal (wait-for-result goal-handle result-timeout)))
+                                   (current-feedback
+                                    (when feedback-cb
+                                      (funcall feedback-cb current-feedback))
+                                    (restart-case 
+                                        (signal 'feedback-signal
+                                                :goal goal-handle
+                                                :feedback current-feedback)
+                                      (abort-goal (&optional result)
+                                        :report "Preempt the goal."
+                                        (return-from call-goal (values result :aborted))))
+                                    (setf current-feedback nil))
+                                   ((and timeout (<= (- (+ start-time timeout) (ros-time))
+                                                     0))
+                                    (return-from call-goal (values nil :timeout))))
+                             (if timeout
+                                 (with-timeout-handler (- (+ start-time timeout)
+                                                          (ros-time))
+                                     (lambda () (return))
+                                   (condition-wait condition mutex))
+                                 (condition-wait condition mutex)))
+                         ;; Let's ignore deadlocks and just retry
+                         (format t "deadlock in main ~a~%" sb-thread:*current-thread*)
+                         (return))))))
+            (unless (or (not goal-handle) (eq (simple-state goal-handle) :done))
+              (cancel-goal goal-handle)))
+        (server-lost (e)
+          (error e))))))
