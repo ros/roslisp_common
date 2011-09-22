@@ -38,6 +38,10 @@
 (defun make-identity-vector ()
   (make-3d-vector 0 0 0))
 
+(defun copy-3d-vector (v)
+  (with-slots (x y z) v
+    (make-3d-vector x y z)))
+
 (defmethod print-object ((v 3d-vector) strm)
   (print-unreadable-object (v strm :type t)
     (format strm "(~a ~a ~a)" (x v) (y v) (z v))))

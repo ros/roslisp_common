@@ -13,6 +13,12 @@
    (make-identity-vector)
    (make-identity-rotation)))
 
+(defun copy-transform (trans)
+  (with-slots (translation rotation) trans
+    (make-transform
+     (copy-3d-vector translation)
+     (copy-quaternion rotation))))
+
 (defmethod print-object ((obj transform) strm)
   (print-unreadable-object (obj strm :type t)
     (with-slots (translation rotation) obj
