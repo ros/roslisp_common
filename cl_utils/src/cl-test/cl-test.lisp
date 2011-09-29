@@ -1,7 +1,8 @@
 (defpackage :cl-test
   (:use :cl :cl-utils)
-  (:export :check-true :check-equal :check-error :check-randomized :load-relative :*lhs* :*rhs* :*lhf* :*rhf* :*print-forms*
-	   :srs :rrs :*saved-random-state* :*break-on-errors*))
+  (:export :check-true :check-equal :check-error :check-randomized :load-relative 
+	   :*lhs* :*rhs* :*lhf* :*rhf* :*print-forms* :srs :rrs 
+	   :*saved-random-state* :*break-on-errors* :defp :defc))
 
 (in-package :cl-test)
 
@@ -10,6 +11,19 @@
 (defvars *lhs* *rhs* *lhf* *rhf*)
 (defvar *print-forms* nil "Whether to print out what's being tested before testing it")
 (defvar *break-on-errors* t "Whether to signal an error upon a failed test, or just print a message")
+
+(defmacro defp (&body args)
+  "defp VAR1 VAL1 ... VARn VALn does a defparameter for each pair"
+  (cons 'progn (mapcar (partial #'cons 'defparameter) (groups-of-size args 2))))
+
+(defmacro define-constant (var val)
+  "If VAR isn't bound yet, defconstant it to VAL, else to its old value"
+  `(defconstant ,var (if (boundp ',var) (symbol-value ',var) ,val)))
+
+(defmacro defc (&body args)
+  "defc VAR1 VAL1 ... VARn VALn does a defconstant for each pair that handles reloads for things like lists and strings.  It also "
+  (cons 'progn (mapcar (partial #'cons 'define-constant) (groups-of-size args 2))))
+	   
 
 (defun signal-error (str &rest args)
   (if *break-on-errors* 
