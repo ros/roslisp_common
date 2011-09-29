@@ -6,7 +6,7 @@
   (let ((fn (event-function event)))
     (reduce #'+ dist :key #'(lambda (pair)
 			      (dsbind (item . prob) pair
-				(declare (float prob))
+				(declare ((or float rational) prob))
 				(if (funcall fn item) prob 0.0))))))
 
 (defmethod expectation ((dist list) (rv function))
@@ -25,14 +25,9 @@
        when (funcall fn x)
        collect (cons x (/ (cdr pair) norm)))))
 
-(defvar *num-samples* 0)
-(defvar *num-large* 0)
-
 (defmethod sample ((dist list))
-  (incf *num-samples*)
   (let ((p (random 1.0))
 	(s 0.0))
-    (when (> p .99999) (incf *num-large*))
     (dolist (pair dist (progn (warn "Unexpectedly reached end with s=~a, p=~a when sampling from ~a; using last element" s p dist)
 			      (caar (last dist))))
       (dsbind (item . prob) pair
@@ -49,12 +44,3 @@
       (_f / (cdr pair) total))))
   
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Internal
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defun event-function (event)
-  (typecase event
-    (function event)
-    (list #'(lambda (x) (member x event :test #'equal)))
-    (otherwise (partial #'equal event))))
