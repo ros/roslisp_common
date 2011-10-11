@@ -62,7 +62,7 @@
    :blocks
 
    ;; Arrays
-   :make-adjustable-vector
+   :make-adjustable-vector :do-vec
 
    ;; Iteration
    :do-iterator :map-iterator :realize :iterator :take :range :take-until :concat
