@@ -13,9 +13,14 @@
     (values (sqrt (/ (reduce #'+ v :key #'(lambda (x) (expt (- x m) 2))) (length v))) m)))
   
 (defun mean (v)
+  "Mean of numbers in v."
   (/ (reduce #'+ v) (length v)))
 
 (defun quantile (&rest args)
+  "quantile [Q] V.  Return smallest element of V that is greater than a Q proportion of them.
+
+Q defaults to 0.5.
+"
   (condlet (((rest args) (q (first args)) (v (second args)))
 	    (t (q .5) (v (first args))))
     (let ((k (floor (* (length v) q))))
