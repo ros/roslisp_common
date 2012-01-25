@@ -126,11 +126,11 @@
                          :source-frame source-frame)))
         (remove-set-callback tf waiter-name)))))
 
-(defmethod transform-pose ((tf transformer) &key target-frame pose time)
+(defmethod transform-pose ((tf transformer) &key target-frame pose)
   (check-type target-frame string)
   (check-type pose pose-stamped)
   (let ((target-frame (ensure-fully-qualified-name target-frame))
-        (time (ensure-null-time time)))
+        (time (ensure-null-time (stamp pose))))
     (check-transform-exists tf target-frame)
     (let ((transform (lookup-transform
                       tf
@@ -144,11 +144,11 @@
                     :frame-id target-frame
                     :stamp (stamp transform)))))
 
-(defmethod transform-point ((tf transformer) &key target-frame point time)
+(defmethod transform-point ((tf transformer) &key target-frame point)
   (check-type target-frame string)
   (check-type point point-stamped)
   (let ((target-frame (ensure-fully-qualified-name target-frame))
-        (time (ensure-null-time time)))
+        (time (ensure-null-time (stamp point))))
     (check-transform-exists tf target-frame)
     (let ((transform (lookup-transform
                       tf
