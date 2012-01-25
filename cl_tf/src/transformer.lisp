@@ -99,32 +99,41 @@
     (unless suppress-callbacks
       (execute-set-callbacks tf))))
 
-(defmethod wait-for-transform ((tf transformer) &key target-frame source-frame time)
+(defmethod wait-for-transform ((tf transformer) &key target-frame source-frame time timeout)
   (let ((cond-var (sb-thread:make-waitqueue))
         (lock (sb-thread:make-mutex))
         (waiter-name (gensym))
         (target-frame (ensure-fully-qualified-name target-frame))
         (source-frame (ensure-fully-qualified-name source-frame))
         (time (ensure-null-time time)))
-    (check-transform-exists tf target-frame)
-    (check-transform-exists tf source-frame)
     (flet ((on-set-transform ()
              (sb-thread:with-mutex (lock)
-               (sb-thread:condition-broadcast cond-var))))
-      (unwind-protect
-           (unless (can-transform
-                         tf :time time
-                         :target-frame target-frame
-                         :source-frame source-frame)
-             (add-set-callback tf waiter-name #'on-set-transform)
+               (sb-thread:condition-broadcast cond-var)))
+           (do-wait-for-transform ()
              (loop
                do (sb-thread:with-mutex (lock)
                     (sb-thread:condition-wait cond-var lock))
                until (can-transform
-                         tf :time time
+                      tf :time time
                          :target-frame target-frame
-                         :source-frame source-frame)))
-        (remove-set-callback tf waiter-name)))))
+                         :source-frame source-frame)
+               finally (return t))))
+      (or (can-transform
+                    tf :time time
+                       :target-frame target-frame
+                       :source-frame source-frame)
+          (unwind-protect
+               (progn
+                 (add-set-callback tf waiter-name #'on-set-transform)
+                 (if timeout
+                     (let ((timer (sb-ext:make-timer
+                                   (lambda ()
+                                     (return-from wait-for-transform nil)))))
+                       (sb-ext:schedule-timer timer timeout)
+                       (unwind-protect (do-wait-for-transform)
+                         (sb-ext:unschedule-timer timer)))
+                     (do-wait-for-transform)))
+            (remove-set-callback tf waiter-name))))))
 
 (defmethod transform-pose ((tf transformer) &key target-frame pose)
   (check-type target-frame string)
