@@ -7,8 +7,16 @@
 (defgeneric destroy (obj))
 
 (defmethod initialize-instance :after ((tf transform-listener) &key)
-  (setf (slot-value tf 'subscriber)
-        (subscribe "/tf" "tf/tfMessage" (lambda (msg) (tf-listener-callback tf msg)))))
+  (with-slots (subscriber tf-prefix) tf
+    (setf subscriber (subscribe
+                      "/tf" "tf/tfMessage"
+                      (lambda (msg)
+                        (tf-listener-callback tf msg))))
+    (setf tf-prefix (get-param "~tf_prefix" "/"))
+    (unless (eql (elt tf-prefix 0) #\/)
+      (setf tf-prefix (concatenate 'string "/" tf-prefix)))
+    (unless (eql (elt tf-prefix (1- (length tf-prefix))) #\/)
+      (setf tf-prefix (concatenate 'string tf-prefix "/")))))
 
 (defun tf-listener-callback (tf msg)
   (mapc (lambda (transform)

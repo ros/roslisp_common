@@ -12,7 +12,8 @@
   ((transforms :initform (make-hash-table :test 'equal)
                :reader transforms)
    (set-transform-callbacks :initform nil)
-   (lock :initform (sb-thread:make-mutex))))
+   (lock :initform (sb-thread:make-mutex))
+   (tf-prefix :initarg :tf-prefix :initform "/" :reader tf-prefix)))
 
 (defgeneric can-transform (tf &key target-frame source-frame time))
 
@@ -31,8 +32,8 @@
   (check-type source-frame string)
   (sb-thread:with-mutex ((slot-value tf 'lock))
     (handler-case
-        (let ((target-frame (ensure-fully-qualified-name target-frame))
-              (source-frame (ensure-fully-qualified-name source-frame))
+        (let ((target-frame (ensure-fully-qualified-name target-frame (tf-prefix tf)))
+              (source-frame (ensure-fully-qualified-name source-frame (tf-prefix tf)))
               (time (ensure-null-time time)))
           (or (equal target-frame source-frame)
               (let ((target-root (get-transforms-to-root (transforms tf) target-frame time))
@@ -56,8 +57,8 @@
 (defmethod lookup-transform ((tf transformer) &key target-frame source-frame time)
   (check-type target-frame string)
   (check-type source-frame string)
-  (let ((target-frame (ensure-fully-qualified-name target-frame))
-        (source-frame (ensure-fully-qualified-name source-frame))
+  (let ((target-frame (ensure-fully-qualified-name target-frame (tf-prefix tf)))
+        (source-frame (ensure-fully-qualified-name source-frame (tf-prefix tf)))
         (time (ensure-null-time time)))
     (when (equal target-frame source-frame)
       (return-from lookup-transform
@@ -88,14 +89,19 @@
 (defmethod set-transform ((tf transformer) (transform stamped-transform) &key suppress-callbacks)
   (with-slots (transforms set-transform-callbacks lock) tf
     (sb-thread:with-mutex (lock)
-      (let ((cache (gethash (child-frame-id transform) transforms)))
-        (when (or (not cache) (eql cache 'parent))
-          (setf cache (make-instance 'transform-cache))
-          (setf (gethash (ensure-fully-qualified-name (child-frame-id transform))
-                         transforms) cache))
-        (cache-transform cache transform))
-      (unless (gethash (ensure-fully-qualified-name (frame-id transform)) transforms)
-        (setf (gethash (ensure-fully-qualified-name (frame-id transform)) transforms) 'parent)))
+      (let ((frame-id (ensure-fully-qualified-name (frame-id transform) (tf-prefix tf)))
+             (child-frame-id (ensure-fully-qualified-name (child-frame-id transform) (tf-prefix tf))))
+        (let ((cache (gethash child-frame-id transforms)))
+          (when (or (not cache) (eql cache 'parent))
+            (setf cache (make-instance 'transform-cache))
+            (setf (gethash (ensure-fully-qualified-name child-frame-id (tf-prefix tf))
+                           transforms) cache))
+          (cache-transform
+           cache (make-stamped-transform
+                  frame-id child-frame-id (stamp transform)
+                  (translation transform) (rotation transform))))
+        (unless (gethash frame-id transforms)
+          (setf (gethash frame-id transforms) 'parent))))
     (unless suppress-callbacks
       (execute-set-callbacks tf))))
 
@@ -103,8 +109,8 @@
   (let ((cond-var (sb-thread:make-waitqueue))
         (lock (sb-thread:make-mutex))
         (waiter-name (gensym))
-        (target-frame (ensure-fully-qualified-name target-frame))
-        (source-frame (ensure-fully-qualified-name source-frame))
+        (target-frame (ensure-fully-qualified-name target-frame (tf-prefix tf)))
+        (source-frame (ensure-fully-qualified-name source-frame (tf-prefix tf)))
         (time (ensure-null-time time)))
     (flet ((on-set-transform ()
              (sb-thread:with-mutex (lock)
@@ -138,7 +144,7 @@
 (defmethod transform-pose ((tf transformer) &key target-frame pose)
   (check-type target-frame string)
   (check-type pose pose-stamped)
-  (let ((target-frame (ensure-fully-qualified-name target-frame))
+  (let ((target-frame (ensure-fully-qualified-name target-frame (tf-prefix tf)))
         (time (ensure-null-time (stamp pose))))
     (check-transform-exists tf target-frame)
     (let ((transform (lookup-transform
@@ -156,7 +162,7 @@
 (defmethod transform-point ((tf transformer) &key target-frame point)
   (check-type target-frame string)
   (check-type point point-stamped)
-  (let ((target-frame (ensure-fully-qualified-name target-frame))
+  (let ((target-frame (ensure-fully-qualified-name target-frame (tf-prefix tf)))
         (time (ensure-null-time (stamp point))))
     (check-transform-exists tf target-frame)
     (let ((transform (lookup-transform
@@ -177,9 +183,8 @@
   ;; We need to ensure the fully qualified name for every frame along
   ;; the tree because not every tf publisher might publish the fully
   ;; qualified id.
-  (let* ((frame-id (ensure-fully-qualified-name frame-id))
-         (current-cache (gethash frame-id transforms))
-         (time (ensure-null-time time)))
+  (let ((current-cache (gethash frame-id transforms))
+        (time (ensure-null-time time)))
     (if (and current-cache (typep current-cache 'transform-cache))
         (let ((current-tf (get-cached-transform (gethash frame-id transforms) time)))
           (get-transforms-to-root transforms (frame-id current-tf)
@@ -199,12 +204,12 @@
     (setf set-transform-callbacks (remove name set-transform-callbacks
                                           :key #'car))))
 
-(defun ensure-fully-qualified-name (frame-id)
-  "Makes sure that the first character in `frame-id' is a '/'"
-  (declare (type string frame-id))
+(defun ensure-fully-qualified-name (frame-id &optional (tf-prefix "/"))
+  "Makes sure that the first character in `frame-id' is set to `tf-prefix'"
+  (declare (type string frame-id tf-prefix))
   (if (eql (elt frame-id 0) #\/)
       frame-id
-      (concatenate 'string "/" frame-id)))
+      (concatenate 'string tf-prefix frame-id)))
 
 (defun ensure-null-time (time)
   "Makes sure that time is NIL if it is either NIL or 0"
