@@ -174,8 +174,12 @@
 (defun get-transforms-to-root (transforms frame-id time &optional result)
   "Returns the list of transforms from `frame-id' up to the root of
   the tree."
-  (let ((current-cache (gethash frame-id transforms))
-        (time (ensure-null-time time)))
+  ;; We need to ensure the fully qualified name for every frame along
+  ;; the tree because not every tf publisher might publish the fully
+  ;; qualified id.
+  (let* ((frame-id (ensure-fully-qualified-name frame-id))
+         (current-cache (gethash frame-id transforms))
+         (time (ensure-null-time time)))
     (if (and current-cache (typep current-cache 'transform-cache))
         (let ((current-tf (get-cached-transform (gethash frame-id transforms) time)))
           (get-transforms-to-root transforms (frame-id current-tf)
