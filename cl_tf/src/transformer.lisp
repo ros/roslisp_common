@@ -89,12 +89,12 @@
 (defmethod set-transform ((tf transformer) (transform stamped-transform) &key suppress-callbacks)
   (with-slots (transforms set-transform-callbacks lock) tf
     (sb-thread:with-mutex (lock)
-      (let ((frame-id (ensure-fully-qualified-name (frame-id transform) (tf-prefix tf)))
-             (child-frame-id (ensure-fully-qualified-name (child-frame-id transform) (tf-prefix tf))))
+      (let ((frame-id (ensure-fully-qualified-name (frame-id transform)))
+            (child-frame-id (ensure-fully-qualified-name (child-frame-id transform))))
         (let ((cache (gethash child-frame-id transforms)))
           (when (or (not cache) (eql cache 'parent))
             (setf cache (make-instance 'transform-cache))
-            (setf (gethash (ensure-fully-qualified-name child-frame-id (tf-prefix tf))
+            (setf (gethash (ensure-fully-qualified-name child-frame-id)
                            transforms) cache))
           (cache-transform
            cache (make-stamped-transform
