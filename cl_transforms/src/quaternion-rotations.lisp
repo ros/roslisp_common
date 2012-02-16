@@ -40,8 +40,10 @@
                      (- (* (cos phi) (cos the) (sin psi)) (* (sin phi) (sin the) (cos psi)))
                      (+ (* (cos phi) (cos the) (cos psi)) (* (sin phi) (sin the) (sin psi))))))
 
-(defun get-yaw (q)
-  (nth-value 1 (quaternion->axis-angle q)))
+(defun get-yaw (quaternion)
+  (with-slots (x y z w) quaternion
+    (atan (* 2 (+ (* x y) (* w z)))
+          (+ (* w w) (* x x) (* -1 y y) (* -1 z z)))))
 
 (defun yaw (angle)
   (axis-angle->quaternion #(0 0 1) angle))
