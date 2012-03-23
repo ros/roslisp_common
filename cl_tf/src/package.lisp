@@ -16,10 +16,10 @@
               tf-transform->transform tf-message->transforms
               copy-pose-stamped msg->pose msg->pose-stamped
               pose-stamped->msg pose->msg stamped stamped-transform
-              pose-stamped point-stamped wait-for-transform
-              tf-cache-error tf-connectivity-error tf-lookup-error
-              frame-id stamp child-frame-id source-frame target-frame
-              frame
+              pose->pose-stamped pose-stamped point-stamped
+              wait-for-transform tf-cache-error tf-connectivity-error
+              tf-lookup-error frame-id stamp child-frame-id
+              source-frame target-frame frame
               make-transform-broadcaster send-transform
               send-static-transform-blocking send-static-transform
               ,@(let ((r nil))

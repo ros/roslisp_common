@@ -188,6 +188,13 @@
    (z orientation) (z (orientation pose))
    (w orientation) (w (orientation pose))))
 
+(defun pose->pose-stamped (frame-id stamp pose)
+  (make-instance 'pose-stamped
+    :frame-id frame-id
+    :stamp stamp
+    :origin (origin pose)
+    :orientation (orientation pose)))
+
 (defun stamped-transform->pose-stamped (transform)
   (with-slots (child-frame-id stamp)
       transform
