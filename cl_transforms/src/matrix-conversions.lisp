@@ -6,7 +6,7 @@
 (defun matrix->quaternion (matrix)
   "Converts a 3x3 rotation matrix to a quaternion."
   (let ((trace (+ (aref matrix 0 0) (aref matrix 1 1) (aref matrix 2 2) 1.0)))
-    (cond ((< trace +epsilon+)
+    (cond ((> trace +epsilon+)
            (let ((s (/ 0.5 (sqrt trace))))
              (make-quaternion (* (- (aref matrix 2 1) (aref matrix 1 2)) s)
                               (* (- (aref matrix 0 2) (aref matrix 2 0)) s)
