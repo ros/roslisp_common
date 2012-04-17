@@ -26,9 +26,13 @@
   (values
     (make-3d-vector (x q) (y q) (z q))
     ;; If we take the acos of a number >1 we get a complex
-    ;; number. Numbers can become bigger than 1 due to numerical
-    ;; inaccuracies. We fix this by truncating the number if it is >1
-    (* 2 (acos (if (> (w q) 1.0d0) 1.0d0 (w q))))))
+    ;; number. Numbers can become greater than 1 due to numerical
+    ;; inaccuracies. We fix this by truncating the number if it is
+    ;; >1. Handling of numbers <1 accordingly.
+    (let ((w-normalized (cond ((> (w q) 1.0d0) 1.0d0)
+                              ((< (w q) -1.0d0) -1.0d0)
+                              (t (w q)))))
+      (* 2 (acos w-normalized)))))
 
 (defun euler->quaternion (&key (ax 0.0) (ay 0.0) (az 0.0))
   "create a quaternion from euler angles"
