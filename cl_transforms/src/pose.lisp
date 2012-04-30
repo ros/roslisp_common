@@ -13,11 +13,11 @@
    (make-identity-vector)
    (make-identity-rotation)))
 
-(defun copy-pose (pose)
+(defun copy-pose (pose &key new-origin new-orientation)
   (with-slots (origin orientation) pose
     (make-pose
-     (copy-3d-vector origin)
-     (copy-quaternion orientation))))
+     (or new-origin (copy-3d-vector origin))
+     (or new-orientation (copy-quaternion orientation)))))
 
 (defmethod initialize-instance :after ((p pose) &key (validate-args :warn))
   (when validate-args
