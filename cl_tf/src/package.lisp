@@ -22,6 +22,6 @@
               source-frame target-frame frame
               make-transform-broadcaster send-transform
               send-static-transform-blocking send-static-transform
+              msg->point-stamped point-stamped->msg msg->point point->msg
               ,@(let ((r nil))
                   (do-external-symbols (s :cl-transforms r) (push s r)))))
-

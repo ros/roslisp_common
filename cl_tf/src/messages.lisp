@@ -188,6 +188,42 @@
    (z orientation) (z (orientation pose))
    (w orientation) (w (orientation pose))))
 
+(defun msg->point-stamped (point-stamped-message)
+  (declare (type geometry_msgs-msg:pointstamped
+                 point-stamped-message))
+  (with-fields ((frame-id (frame_id header))
+                (stamp (stamp header))
+                (x (x point))
+                (y (y point))
+                (z (z point)))
+      point-stamped-message
+    (make-point-stamped
+     frame-id stamp
+     (cl-transforms:make-3d-vector x y z))))
+
+(defun point-stamped->msg (point-stamped)
+  (declare (type point-stamped point-stamped))
+  (make-message
+   "geometry_msgs/PointStamped"
+   (stamp header) (stamp point-stamped)
+   (frame_id header) (frame-id point-stamped)
+   (x point) (x point-stamped)
+   (y point) (y point-stamped)
+   (z point) (z point-stamped)))
+
+(defun msg->point (point-message)
+  (declare (type geometry_msgs-msg:point point-message))
+  (with-fields (x y z) point-message
+    (make-3d-vector x y z)))
+
+(defun point->msg (point)
+  (declare (type 3d-vector point))
+  (make-message
+   "geometry_msgs/Point"
+   x (x point)
+   z (y point)
+   z (z point)))
+
 (defun pose->pose-stamped (frame-id stamp pose)
   (make-instance 'pose-stamped
     :frame-id frame-id
