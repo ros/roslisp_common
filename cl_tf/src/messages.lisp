@@ -221,7 +221,7 @@
   (make-message
    "geometry_msgs/Point"
    x (x point)
-   z (y point)
+   y (y point)
    z (z point)))
 
 (defun pose->pose-stamped (frame-id stamp pose)
