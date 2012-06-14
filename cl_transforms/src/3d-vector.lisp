@@ -38,9 +38,10 @@
 (defun make-identity-vector ()
   (make-3d-vector 0 0 0))
 
-(defun copy-3d-vector (v)
-  (with-slots (x y z) v
-    (make-3d-vector x y z)))
+(defun copy-3d-vector (v &key x y z)
+  (with-slots ((old-x x) (old-y y) (old-z z)) v
+    (make-3d-vector
+     (or x old-x) (or y old-y) (or z old-z))))
 
 (defmethod print-object ((v 3d-vector) strm)
   (print-unreadable-object (v strm :type t)

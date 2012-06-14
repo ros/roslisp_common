@@ -32,9 +32,10 @@
     :z (ensure-quaternion-coefficient-type z)
     :w (ensure-quaternion-coefficient-type w)))
 
-(defun copy-quaternion (q)
-  (with-slots (x y z w) q
-    (make-quaternion x y z w)))
+(defun copy-quaternion (q &key x y z w)
+  (with-slots ((old-x x) (old-y y) (old-z z) (old-w w)) q
+    (make-quaternion
+     (or x old-x) (or y old-y) (or z old-z) (or w old-w))))
 
 (defmethod print-object ((q quaternion) str)
   (print-unreadable-object (q str :type t) (format str "(~a ~a ~a ~a)" (x q) (y q) (z q) (w q))))
