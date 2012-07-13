@@ -71,7 +71,7 @@
          (loop for cache-entry across cache
                with latest-stamp = 0
                with latest-cache-entry = nil
-               when (> (newest-stamp cache-entry) latest-stamp)
+               when (>= (newest-stamp cache-entry) latest-stamp)
                  do (setf latest-stamp (newest-stamp cache-entry)
                           latest-cache-entry cache-entry)
                finally (return latest-cache-entry))
