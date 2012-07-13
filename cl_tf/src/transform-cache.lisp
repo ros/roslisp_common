@@ -40,6 +40,10 @@
   return the transformation with a time that is closest to
   `time'."))
 
+(defgeneric cache-empty (cache-entry)
+  (:method ((cache-entry cache-entry))
+    (eql (cache-fill-pointer cache-entry) 0)))
+
 (defmethod initialize-instance :after ((tf-cache transform-cache) &key)
   (setf (slot-value tf-cache 'cache)
         (make-array (slot-value tf-cache 'cache-size) :element-type 'cache-entry
@@ -51,8 +55,7 @@
     (declare (type (simple-array cache-entry 1) cache))
     (let* ((cache-entry-index (truncate (mod (stamp transform) cache-size)))
            (cache-entry (aref cache cache-entry-index)))
-      (when (> (- (stamp transform) (newest-stamp cache-entry))
-               1)
+      (when (> (- (stamp transform) (newest-stamp cache-entry)) 1)
         ;; When writing the first entry into a cache, we need to also
         ;; write it into the previous one to make interpolation
         ;; work. Otherwise, we cannot request transforms between the
@@ -70,8 +73,9 @@
         (get-cached-transform
          (loop for cache-entry across cache
                with latest-stamp = 0
-               with latest-cache-entry = nil
-               when (>= (newest-stamp cache-entry) latest-stamp)
+               with latest-cache-entry = cache-entry
+               when (and (>= (newest-stamp cache-entry) latest-stamp)
+                         (not (cache-empty cache-entry)))
                  do (setf latest-stamp (newest-stamp cache-entry)
                           latest-cache-entry cache-entry)
                finally (return latest-cache-entry))
@@ -100,7 +104,7 @@
   (let ((cache-size (array-dimension (transforms-cache cache-entry) 0))
         (cache (transforms-cache cache-entry)))
     (declare (type (simple-array (or null stamped-transform) 1) cache))
-    (unless (> (stamp transform) (newest-stamp cache-entry))
+    (unless (>= (stamp transform) (newest-stamp cache-entry))
       (ros-debug
        (cl-tf cache)
        "Transform `~a' to `~a'. Timestamp `~a' earlyer than newest timestamp `~a'. Ignoring transform."
@@ -119,6 +123,7 @@
 (defmethod get-cached-transform ((cache-entry cache-entry) time &key (interpolate t))
   (with-slots (newest-stamp fill-pointer transforms-cache) cache-entry
     (declare (type (simple-array * 1) transforms-cache))
+    (assert (not (cache-empty cache-entry)))
     (unless time
       ;; Early exit. When no time is specified, return the newest stamp
       (return-from get-cached-transform
