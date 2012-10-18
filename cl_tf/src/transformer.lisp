@@ -111,7 +111,7 @@
         (unless (gethash frame-id transforms)
           (setf (gethash frame-id transforms) 'parent))))
     (unless suppress-callbacks
-      (execute-set-callbacks tf))))
+      (execute-changed-callbacks tf))))
 
 (defmethod wait-for-transform ((tf transformer) &key target-frame source-frame time timeout)
   (let ((cond-var (sb-thread:make-waitqueue))
@@ -195,7 +195,7 @@
                                   time (cons current-tf result)))
         result)))
 
-(defun execute-set-callbacks (tf)
+(defun execute-changed-callbacks (tf)
   (with-slots (set-transform-callbacks) tf
     (map 'nil (cl-utils:compose #'funcall #'cdr) set-transform-callbacks)))
 

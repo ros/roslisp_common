@@ -12,6 +12,7 @@
               add-transforms-changed-callback
               remove-transforms-changed-callback
               with-transforms-changed-callback
+              execute-changed-callbacks
               transform-point
               stamped-transform pose-stamped point-stamped
               make-pose-stamped make-point-stamped
