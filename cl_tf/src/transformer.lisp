@@ -1,6 +1,14 @@
 
 (in-package :cl-tf)
 
+(defmacro with-transforms-changed-callback
+    ((tf callback &key (name (gensym "TRANSFORMS-CHANGED-CALLBACK-"))) &body body)
+  `(unwind-protect
+        (progn
+          (add-transforms-changed-callback ,tf ',name ,callback)
+          ,@body)
+     (remove-transforms-changed-callback ,tf ',name)))
+
 (define-condition tf-connectivity-error (error)
   ((source-frame :initarg :source-frame :reader source-frame)
    (target-frame :initarg :target-frame :reader target-frame)))
@@ -108,7 +116,6 @@
 (defmethod wait-for-transform ((tf transformer) &key target-frame source-frame time timeout)
   (let ((cond-var (sb-thread:make-waitqueue))
         (lock (sb-thread:make-mutex))
-        (waiter-name (gensym))
         (target-frame (ensure-fully-qualified-name target-frame (tf-prefix tf)))
         (source-frame (ensure-fully-qualified-name source-frame (tf-prefix tf)))
         (time (ensure-null-time time)))
@@ -128,18 +135,15 @@
                     tf :time time
                        :target-frame target-frame
                        :source-frame source-frame)
-          (unwind-protect
-               (progn
-                 (add-set-callback tf waiter-name #'on-set-transform)
-                 (if timeout
-                     (let ((timer (sb-ext:make-timer
-                                   (lambda ()
-                                     (return-from wait-for-transform nil)))))
-                       (sb-ext:schedule-timer timer timeout)
-                       (unwind-protect (do-wait-for-transform)
-                         (sb-ext:unschedule-timer timer)))
-                     (do-wait-for-transform)))
-            (remove-set-callback tf waiter-name))))))
+          (with-transforms-changed-callback (tf #'on-set-transform)
+            (if timeout
+                (let ((timer (sb-ext:make-timer
+                              (lambda ()
+                                (return-from wait-for-transform nil)))))
+                  (sb-ext:schedule-timer timer timeout)
+                  (unwind-protect (do-wait-for-transform)
+                    (sb-ext:unschedule-timer timer)))
+                (do-wait-for-transform)))))))
 
 (defmethod transform-pose ((tf transformer) &key target-frame pose)
   (check-type target-frame string)
@@ -195,11 +199,11 @@
   (with-slots (set-transform-callbacks) tf
     (map 'nil (cl-utils:compose #'funcall #'cdr) set-transform-callbacks)))
 
-(defun add-set-callback (tf name callback)
+(defun add-transforms-changed-callback (tf name callback)
   (with-slots (set-transform-callbacks) tf
     (pushnew (cons name callback) set-transform-callbacks)))
 
-(defun remove-set-callback (tf name)
+(defun remove-transforms-changed-callback (tf name)
   (with-slots (set-transform-callbacks) tf
     (setf set-transform-callbacks (remove name set-transform-callbacks
                                           :key #'car))))
