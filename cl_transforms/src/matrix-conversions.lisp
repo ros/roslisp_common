@@ -43,8 +43,9 @@
                                (/ (- (aref matrix 1 0) (aref matrix 0 1)) s))))))))
 
 (defun matrix->transform (matrix)
-  "Converts a homogenous 4x4 matrix to a pose object."
-  (assert (typep matrix '(array t (4 4))))
+  "Converts a homogenous 4x4 matrix to a pose object. `matrix' is a
+two-dimensional 4x4 array, row-major."
+  (assert (typep matrix '(array * (4 4))))
   (let ((rotation-submatrix
          (make-array '(3 3)
                      :initial-contents (loop for y from 0 below 3
