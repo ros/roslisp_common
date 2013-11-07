@@ -13,3 +13,6 @@ foreach(dir
       PATTERN ".svn" EXCLUDE
       PATTERN ".git" EXCLUDE)
 endforeach()
+
+install (FILES cl-tf.asd
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
