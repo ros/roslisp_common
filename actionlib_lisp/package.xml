@@ -1,0 +1,35 @@
+<package>
+  <name>actionlib_lisp</name>
+  <version>0.0.0</version>
+  <description>
+   actionlib_lisp is a native implementation of the famous actionlib
+   in Common Lisp. It provides a client and a simple server.
+  </description>
+
+  <author>Bhaskara Marthi</author>
+  <author email="moesenle@cs.tum.edu">Lorenz Moesenlechner</author>
+
+  <maintainer email="moesenle@cs.tum.edu">Lorenz Moesenlechner</maintainer>
+  <maintainer email="georg.bartels@cs.uni-bremen.de">Georg Bartels</maintainer>
+
+  <license>BSD</license>
+
+  <url type="website">http://wiki.ros.org/actionlib_lisp</url>
+  <url type="bugtracker">https://github.com/ros/roslisp_common/issues</url>
+  <url type="repository">https://github.com/ros/roslisp_common</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>sbcl</build_depend>
+  <build_depend>roslisp</build_depend>
+  <build_depend>cl_utils</build_depend>
+  <build_depend>actionlib_msgs</build_depend>
+
+  <run_depend>sbcl</run_depend> 
+  <run_depend>roslisp</run_depend> 
+  <run_depend>cl_utils</run_depend> 
+  <run_depend>actionlib_msgs</run_depend> 
+  <run_depend>message_runtime</run_depend>
+</package>
+
+

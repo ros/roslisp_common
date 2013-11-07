@@ -1,0 +1,31 @@
+<package>
+  <name>cl_tf</name>
+  <version>0.0.0</version>
+  <description>
+    Client implementation to use TF from Common Lisp
+  </description>
+
+  <author email="moesenle@cs.tum.edu">Lorenz Moesenlechner</author>
+
+  <maintainer email="moesenle@cs.tum.edu">Lorenz Moesenlechner</maintainer>
+  <maintainer email="georg.bartels@cs.uni-bremen.de">Georg Bartels</maintainer>
+
+  <license>BSD</license>
+
+  <url type="website">http://ros.org/wiki/cl_tf</url>
+  <url type="bugtracker">https://github.com/ros/roslisp_common/issues</url>
+  <url type="repository">https://github.com/ros/roslisp_common</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>sbcl</build_depend>
+  <build_depend>cl_transforms</build_depend>
+  <build_depend>roslisp</build_depend>
+  <build_depend>tf</build_depend>
+
+  <run_depend>sbcl</run_depend> 
+  <run_depend>cl_transforms</run_depend> 
+  <run_depend>roslisp</run_depend> 
+  <run_depend>tf</run_depend> 
+
+</package>
