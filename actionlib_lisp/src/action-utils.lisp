@@ -99,4 +99,4 @@
 
 ;; Needed to prevent problems with older and newer sbcl versions
 (defun lisp-version-number ()
-  (parse-integer (remove #\. (lisp-implementation-version))))
+  (parse-integer (remove #\. (lisp-implementation-version)) :junk-allowed t))
