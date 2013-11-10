@@ -1,0 +1,30 @@
+<package>
+  <name>roslisp_common</name>
+  <version>0.0.0</version>
+  <description>
+    Common libraries to control ROS based robots. This stack contains
+    an implementation of actionlib (client and server) in Common Lisp,
+    a transformation library and an implementation of tf in Common
+    Lisp.
+  </description>
+
+  <maintainer email="moesenle@cs.tum.edu">Lorenz Moesenlechner</maintainer>
+  <maintainer email="georg.bartels@cs.uni-bremen.de">Georg Bartels</maintainer>
+
+  <license>BSD</license>
+
+  <url type="website">http://ros.org/wiki/roslisp_common</url>
+  <url type="bugtracker">https://github.com/ros/roslisp_common/issues</url>
+  <url type="repository">https://github.com/ros/roslisp_common</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend>actionlib_lisp</run_depend> 
+  <run_depend>cl_tf</run_depend> 
+  <run_depend>cl_transforms</run_depend> 
+  <run_depend>cl_utils</run_depend> 
+
+  <export>
+    <metapackage/>
+  </export>
+</package>
