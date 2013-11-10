@@ -5,4 +5,5 @@
   :components
   ((:module "src"
             :components
-            ((:file "package")))))
+            ((:file "package")
+             (:file "buffer-client" :depends-on ("package"))))))
