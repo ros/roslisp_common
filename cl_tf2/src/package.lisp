@@ -2,4 +2,4 @@
 
 (defpackage :cl-tf2
   (:use #:common-lisp #:roslisp)
-  (:export buffer-client))
+  (:export buffer-client can-transform lookup-transform))
