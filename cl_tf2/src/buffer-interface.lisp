@@ -1,11 +1,7 @@
 (in-package :cl-tf2)
 
-(defgeneric can-transform (tf &key target-frame source-frame time timeout))
+(defgeneric can-transform (tf target-frame source-frame source-time timeout
+                                &optional target-time fixed-frame))
 
-(defgeneric can-transform (tf &key target-frame target-time source-frame source-time
-                                fixed-frame timeout))
-
-(defgeneric lookup-transform (tf &key target-frame source-frame time timeout))
-
-(defgeneric lookup-transform (tf &key target-frame target-time source-frame source-time
-                                  fixed-frame timeout))
+(defgeneric lookup-transform (tf target-frame source-frame source-time timeout
+                                   &optional target-time fixed-frame))
