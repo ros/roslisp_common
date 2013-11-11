@@ -5,9 +5,7 @@
            :initform (actionlib:make-action-client
                       "/tf2_buffer_server"
                       "tf2_msgs/LookupTransformAction") 
-           :reader client)
-   (frequency :initarg :frequency :initform 10 :reader frequency)
-   (timeout-padding :initarg :timeout-padding :initform 2 :reader timeout-padding)))
+           :reader client)))
 
 (defmethod can-transform ((tf buffer-client) target-frame source-frame 
                           &optional (source-time 0.0) (timeout 0.0)
