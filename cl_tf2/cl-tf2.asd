@@ -1,7 +1,7 @@
 ;;;; -*- Mode: LISP -*-
 
 (defsystem "cl-tf2"
-  :depends-on (actionlib)
+  :depends-on (actionlib tf2_msgs-msg)
   :components
   ((:module "src"
             :components
