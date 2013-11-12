@@ -19,8 +19,8 @@
 
 (defmethod to-msg ((data cl-transforms:transform))
   (make-msg "geometry_msgs/Transform"
-            :translation (cl-transforms:translation data)
-            :rotation (cl-transforms:rotation data)))
+            :translation (to-msg (cl-transforms:translation data))
+            :rotation (to-msg (cl-transforms:rotation data))))
 
 (defmethod to-msg ((data cl-transforms:quaternion))
   (make-msg "geometry_msgs/Quaternion"
@@ -38,13 +38,14 @@
 (defmethod from-msg ((msg geometry_msgs-msg:TransformStamped))
   (with-fields (header child_frame_id transform) msg
     (make-instance 'stamped-transform 
-                   :header header 
+                   :header (from-msg header)
                    :child-frame-id child_frame_id
-                   :transform transform)))
+                   :transform (from-msg transform))))
 
 (defmethod from-msg ((msg geometry_msgs-msg:Transform))
   (with-fields (translation rotation) msg
-    (make-instance 'cl-transforms :translation translation :rotation rotation)))
+    (make-instance 'cl-transforms:transform :translation (from-msg translation)
+                                            :rotation (from-msg rotation))))
 
 (defmethod from-msg ((msg std_msgs-msg:Header))
   (with-fields (stamp frame_id) msg
