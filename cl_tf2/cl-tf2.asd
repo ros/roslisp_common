@@ -27,6 +27,10 @@
 ;;; POSSIBILITY OF SUCH DAMAGE.
 
 (defsystem "cl-tf2"
+  :author "Georg Bartels <georg.bartels@cs.uni-bremen.de>"
+  :license "BSD"
+  :description "Common Lisp implementation of a TF2 client library."
+
   :depends-on (roslisp cl-transforms actionlib tf2_msgs-msg geometry_msgs-msg std_msgs-msg)
   :components
   ((:module "src"
