@@ -4,3 +4,15 @@ project(roslisp_utils)
 find_package(catkin REQUIRED)
 
 catkin_package()
+
+foreach(dir
+    asdf
+    src)
+  install(DIRECTORY ${dir}
+      DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+      PATTERN ".svn" EXCLUDE
+      PATTERN ".git" EXCLUDE)
+endforeach()
+
+install (FILES roslisp-utils.asd
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
