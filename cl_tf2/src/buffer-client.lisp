@@ -72,4 +72,4 @@
                  (roslisp-msg-protocol:symbol-code
                   'tf2_msgs-msg:tf2error :transform_error))
              (error 'tf2-transform-error () :description error_string))
-            (t transform)))))
+            (t (from-msg transform))))))

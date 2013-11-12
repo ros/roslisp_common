@@ -10,4 +10,6 @@
              (:file "datatypes" :depends-on ("package"))
              (:file "message-conversions" :depends-on ("package" "datatypes"))
              (:file "buffer-interface" :depends-on ("package"))
-             (:file "buffer-client" :depends-on ("package" "errors" "buffer-interface"))))))
+             (:file "buffer-client" :depends-on ("package" "errors" "datatypes"
+                                                           "message-conversions"
+                                                           "buffer-interface"))))))
