@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>roslisp_utils</name>
+  <name>roslisp_utilities</name>
   <version>0.0.0</version>
   <description>
     Some utility functionality to interact with ROS using roslisp.

@@ -28,13 +28,37 @@
 ;;; POSSIBILITY OF SUCH DAMAGE.
 ;;;
 
-(in-package :cl-user)
+(in-package :roslisp-utilities)
 
-(defpackage roslisp-utils
-    (:use :cl :roslisp)
-  (:export #:register-ros-init-function
-           #:register-ros-cleanup-function
-           #:startup-ros
-           #:shutdown-ros
-           #:lispify-ros-name
-           #:rosify-lisp-name))
+(defun lispify-ros-name (str &optional (package *package*))
+  "Returns a lispified symbol correstonding to the string
+  `str'. Lispification inserts - signs between camel-cased words and
+  makes all characters uppercase."
+  (labels ((char-ucase-p (c)
+             (find c "ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
+           (char-lcase-p (c)
+             (find c "abcdefghijklmnopqrstuvwxyz0123456789"))
+           (char-case (c)
+             (cond ((char-ucase-p c) :upper)
+                   ((char-lcase-p c) :lower)
+                   (t nil))))
+    (let ((s (make-string-output-stream)))
+      (loop for c across str
+            with case = (char-case (elt str 0))
+            when (and (eq case :lower)
+                      (eq (char-case c) :upper))
+              do (write-char #\- s)
+            do (write-char c s) (setf case (char-case c)))
+      (intern (string-upcase (get-output-stream-string s)) package))))
+
+(defun rosify-lisp-name (sym)
+  (with-output-to-string (strm)
+    (loop for ch across (symbol-name sym)
+          with upcase = t
+          if (eql ch #\-) do (setf upcase t)
+            else do
+              (progn
+                (if upcase
+                    (princ (char-upcase ch) strm)
+                    (princ (char-downcase ch) strm))
+                (setf upcase nil)))))
