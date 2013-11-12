@@ -14,5 +14,5 @@ foreach(dir
       PATTERN ".git" EXCLUDE)
 endforeach()
 
-install (FILES roslisp-utils.asd
+install (FILES roslisp-utilities.asd
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
