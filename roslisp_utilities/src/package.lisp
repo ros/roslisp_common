@@ -28,32 +28,13 @@
 ;;; POSSIBILITY OF SUCH DAMAGE.
 ;;;
 
-(in-package :roslisp-utils)
+(in-package :cl-user)
 
-(defvar *ros-init-functions* (make-hash-table :test 'eq))
-(defvar *ros-cleanup-functions* (make-hash-table :test 'eq))
-
-(defmacro register-ros-init-function (name)
-  `(setf (gethash ',name *ros-init-functions*)
-         (symbol-function ',name)))
-
-(defmacro register-ros-cleanup-function (name)
-  `(setf (gethash ',name *ros-cleanup-functions*)
-         (symbol-function ',name)))
-
-(defun startup-ros (&key
-                    (master-uri (make-uri "localhost" 11311) master-uri?)
-                    (name "cram_hl")
-                    (anonymous t))
-  (if master-uri?
-      (start-ros-node name :anonymous anonymous :master-uri master-uri)
-      (start-ros-node name :anonymous anonymous))
-  (loop for f being the hash-values of *ros-init-functions* do
-    (ros-info (rosnode) "ROS init ~a." f)
-    (funcall f)))
-
-(defun shutdown-ros ()
-  (loop for f being the hash-values of *ros-cleanup-functions* do
-    (ros-info (rosnode) "ROS cleanup ~a." f)
-    (funcall f))
-  (shutdown-ros-node))
+(defpackage roslisp-utilities
+    (:use :cl :roslisp)
+  (:export #:register-ros-init-function
+           #:register-ros-cleanup-function
+           #:startup-ros
+           #:shutdown-ros
+           #:lispify-ros-name
+           #:rosify-lisp-name))

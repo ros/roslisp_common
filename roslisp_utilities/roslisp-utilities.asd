@@ -1,7 +1,7 @@
 ;;;; -*- Mode: LISP -*-
 
-(defsystem "roslisp-utils"
-  :depends-on ("sbcl" "roslisp")
+(defsystem "roslisp-utilities"
+  :depends-on ("roslisp")
   :components
   ((:module "src"
             :components

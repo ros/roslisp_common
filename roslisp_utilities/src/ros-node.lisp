@@ -28,37 +28,32 @@
 ;;; POSSIBILITY OF SUCH DAMAGE.
 ;;;
 
-(in-package :roslisp-utils)
+(in-package :roslisp-utilities)
 
-(defun lispify-ros-name (str &optional (package *package*))
-  "Returns a lispified symbol correstonding to the string
-  `str'. Lispification inserts - signs between camel-cased words and
-  makes all characters uppercase."
-  (labels ((char-ucase-p (c)
-             (find c "ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
-           (char-lcase-p (c)
-             (find c "abcdefghijklmnopqrstuvwxyz0123456789"))
-           (char-case (c)
-             (cond ((char-ucase-p c) :upper)
-                   ((char-lcase-p c) :lower)
-                   (t nil))))
-    (let ((s (make-string-output-stream)))
-      (loop for c across str
-            with case = (char-case (elt str 0))
-            when (and (eq case :lower)
-                      (eq (char-case c) :upper))
-              do (write-char #\- s)
-            do (write-char c s) (setf case (char-case c)))
-      (intern (string-upcase (get-output-stream-string s)) package))))
+(defvar *ros-init-functions* (make-hash-table :test 'eq))
+(defvar *ros-cleanup-functions* (make-hash-table :test 'eq))
 
-(defun rosify-lisp-name (sym)
-  (with-output-to-string (strm)
-    (loop for ch across (symbol-name sym)
-          with upcase = t
-          if (eql ch #\-) do (setf upcase t)
-            else do
-              (progn
-                (if upcase
-                    (princ (char-upcase ch) strm)
-                    (princ (char-downcase ch) strm))
-                (setf upcase nil)))))
+(defmacro register-ros-init-function (name)
+  `(setf (gethash ',name *ros-init-functions*)
+         (symbol-function ',name)))
+
+(defmacro register-ros-cleanup-function (name)
+  `(setf (gethash ',name *ros-cleanup-functions*)
+         (symbol-function ',name)))
+
+(defun startup-ros (&key
+                    (master-uri (make-uri "localhost" 11311) master-uri?)
+                    (name "cram_hl")
+                    (anonymous t))
+  (if master-uri?
+      (start-ros-node name :anonymous anonymous :master-uri master-uri)
+      (start-ros-node name :anonymous anonymous))
+  (loop for f being the hash-values of *ros-init-functions* do
+    (ros-info (rosnode) "ROS init ~a." f)
+    (funcall f)))
+
+(defun shutdown-ros ()
+  (loop for f being the hash-values of *ros-cleanup-functions* do
+    (ros-info (rosnode) "ROS cleanup ~a." f)
+    (funcall f))
+  (shutdown-ros-node))
