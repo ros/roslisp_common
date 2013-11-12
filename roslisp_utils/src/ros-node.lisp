@@ -28,7 +28,7 @@
 ;;; POSSIBILITY OF SUCH DAMAGE.
 ;;;
 
-(in-package :cram-roslisp-common)
+(in-package :roslisp-utils)
 
 (defvar *ros-init-functions* (make-hash-table :test 'eq))
 (defvar *ros-cleanup-functions* (make-hash-table :test 'eq))

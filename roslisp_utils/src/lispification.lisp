@@ -28,7 +28,7 @@
 ;;; POSSIBILITY OF SUCH DAMAGE.
 ;;;
 
-(in-package :cram-roslisp-common)
+(in-package :roslisp-utils)
 
 (defun lispify-ros-name (str &optional (package *package*))
   "Returns a lispified symbol correstonding to the string
