@@ -23,6 +23,7 @@
   <run_depend>cl_tf</run_depend> 
   <run_depend>cl_transforms</run_depend> 
   <run_depend>cl_utils</run_depend> 
+  <run_depend>roslisp_utilities</run_depend> 
 
   <export>
     <metapackage/>
