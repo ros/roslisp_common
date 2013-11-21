@@ -1,6 +1,6 @@
 <package>
   <name>cl_utils</name>
-  <version>0.0.0</version>
+  <version>0.1.0</version>
   <description>
     Common Lisp utility libraries
   </description>
