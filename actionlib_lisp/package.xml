@@ -1,6 +1,6 @@
 <package>
   <name>actionlib_lisp</name>
-  <version>0.1.1</version>
+  <version>0.2.2</version>
   <description>
    actionlib_lisp is a native implementation of the famous actionlib
    in Common Lisp. It provides a client and a simple server.
