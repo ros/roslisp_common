@@ -14,7 +14,7 @@
 
   <license>BSD</license>
 
-  <!--url type="website">TODO</url-->
+  <url type="website">http://ros.org/wiki/roslisp_utilities</url>
   <url type="bugtracker">https://github.com/ros/roslisp_common/issues</url>
   <url type="repository">https://github.com/ros/roslisp_common</url>
 
