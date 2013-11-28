@@ -1,1 +1,0 @@
-../src/cl-extended-reals/extended-reals.asd
