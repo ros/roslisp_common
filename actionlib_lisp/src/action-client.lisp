@@ -159,8 +159,10 @@
   available or the timeout occurs. If the timeout occurs, returns the
   values NIL and :TIMEOUT. Otherwise, returns the result and the
   terminal action-state. If `feedback-cb' is specified, calls it in
-  the caller's thread for every feedback. Also raises the signal
-  FEEDBACK-SIGNAL for every feedback."))
+  the caller's thread for every feedback. Independently of `feedback-cb',
+  CALL-GOAL also raises the signal FEEDBACK-SIGNAL for every feedback message.
+  FEEDBACK-SIGNAL is associated to a restart-case ABORT-GOAL which is the
+  indended way of cancelling a goal based on the content of a feedback message."))
 
 (defgeneric send-goal-and-wait (client goal &key exec-timeout result-timeout feedback-cb)
   (:documentation "Sends the goal and waits for termination. This
