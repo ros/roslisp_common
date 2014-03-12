@@ -1,15 +1,14 @@
 <package>
   <name>actionlib_lisp</name>
-  <version>0.2.2</version>
+  <version>0.3.0</version>
   <description>
    actionlib_lisp is a native implementation of the famous actionlib
    in Common Lisp. It provides a client and a simple server.
   </description>
 
-  <author>Bhaskara Marthi</author>
-  <author email="moesenle@cs.tum.edu">Lorenz Moesenlechner</author>
+  <author>Jannik Buckelo</author>
+  <author email="jannkbu@tzi.de">Jannik Buckelo</author>
 
-  <maintainer email="moesenle@cs.tum.edu">Lorenz Moesenlechner</maintainer>
   <maintainer email="georg.bartels@cs.uni-bremen.de">Georg Bartels</maintainer>
 
   <license>BSD</license>
