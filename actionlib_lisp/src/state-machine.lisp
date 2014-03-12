@@ -1,28 +1,54 @@
 (in-package :actionlib)
 
-(defvar *state* :done)
-(defvar *done-transitions* (list :send-goal :waiting-for-goal-ack))
-(defvar *w-f-g-ack-transitions* (list :cancel-goal :waiting-for-cancel-ack
-                                      :pending :pending
-                                      :active :active))
-(defvar *pending-transitions* (list :active :active
-                                    :cancel-goal :waiting-for-cancel-ack
-                                    :recalling :recalling
-                                    :rejected :rejected))
-(defvar *active-transitions* (list :cancel-goal :waiting-for-cancel-ack
-                                   :preempting :preempting
-                                   :aborted :waiting-for-result
-                                   :succeeded :waiting-for-result))
-(defvar *state-transitions* (list :done *done-transitions*
-                                  :waiting-for-goal-ack *w-f-g-ack-transitions*
-                                  :pending *pending-transitions*
-                                  :active *active-transitions*))
+(defclass state-machine ()
+  ((current-state
+    :initarg :current-state
+    :initform :done)
+   (states
+    :initarg :states
+    :initform nil)))
 
-(defun transit (transition)
-  (setf *state* (getf (get-transitions *state*) transition)))
+(defclass state ()
+  ((name
+    :initarg :name)
+   (transitions
+    :initarg :transitions
+    :initform nil)))
 
-(defun get-transitions (state)
-  (getf *state-transitions* state))
+(defgeneric get-next-state (state signal)
 
-(defun set-state (state)
-  (setf *state* state))
+(defgeneric get-state (stm &optional state-name))
+
+(defgeneric add-state (stm state))
+
+(defgeneric add-states (stm states))
+
+(defmethod get-next-state ((state state-machine) signal)
+  (get-next-state (slot-value state 'current-state) signal))
+
+(defmethod get-next-state ((state state) signal)
+  (getf (slot-value state 'transitions) signal))
+
+(defmethod get-state ((stm state-machine) &optional state-name)
+  (if state-name 
+      (getf (slot-value stm 'states) state-name)
+      (slot-value stm 'current-state)))
+
+(defmethod add-state ((stm state-machine) (state state))
+  (push state (slot-value stm 'states)))
+
+(defun make-states (state-transitions)
+  (let ((result nil))
+    (loop for state-transition in state-transitions
+          do (push (make-instance 'state 
+                                  :name (first state-transition)
+                                  :transitions (second state-transition))
+                   result)
+             (push (first state-transition) result))
+    result))
+                            
+
+  
+  
+
+   
