@@ -6,5 +6,6 @@
   ((:module "src"
             :components
             ((:file "package")
-             (:file "state-machine" :depends-on ("package"))))))
-  
+             (:file "state-machine" :depends-on ("package"))
+             (:file "action-client-stm" :depends-on ("package" "state-machine"))
+             (:file "action-client" :depends-on ("package" "state-machine" "action-client-stm"))))))
