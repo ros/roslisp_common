@@ -6,5 +6,7 @@
   ((:module "test"
             :components
             ((:file "package")
-             (:file "state-machine-test" :depends-on ("package"))))))
+             (:file "state-machine-test" :depends-on ("package"))
+             (:file "action-client-stm-test" :depends-on ("package"))))))
+             
   

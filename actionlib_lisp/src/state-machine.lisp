@@ -3,39 +3,51 @@
 (defclass state-machine ()
   ((current-state
     :initarg :current-state
-    :initform :done)
+    :accessor current-state)
    (states
     :initarg :states
-    :initform nil)))
+    :initform nil
+    :accessor states)))
 
 (defclass state ()
   ((name
-    :initarg :name)
+    :initarg :name
+    :reader name)
    (transitions
     :initarg :transitions
-    :initform nil)))
+    :initform nil
+    :accessor transitions)))
 
-(defgeneric get-next-state (state signal)
+(defgeneric get-next-state (state signal))
 
 (defgeneric get-state (stm &optional state-name))
 
 (defgeneric add-state (stm state))
 
-(defgeneric add-states (stm states))
-
-(defmethod get-next-state ((state state-machine) signal)
-  (get-next-state (slot-value state 'current-state) signal))
+(defmethod get-next-state ((stm state-machine) signal)
+  (getf (states stm)
+        (get-next-state (get-state stm) signal)))
 
 (defmethod get-next-state ((state state) signal)
-  (getf (slot-value state 'transitions) signal))
+  (getf (transitions state) signal))
 
 (defmethod get-state ((stm state-machine) &optional state-name)
   (if state-name 
-      (getf (slot-value stm 'states) state-name)
-      (slot-value stm 'current-state)))
+      (getf (states stm) state-name)
+      (current-state stm)))
 
 (defmethod add-state ((stm state-machine) (state state))
-  (push state (slot-value stm 'states)))
+  (push state (states stm)))
+
+(defmethod process-signal ((stm state-machine) signal)
+  (let ((next-state (get-next-state stm signal)))
+    (if next-state
+        (setf (current-state stm) next-state))))
+
+(defmethod set-current-state ((stm state-machine) state-name)
+  (let ((state (get-state stm state-name)))
+    (if state
+        (setf (current-state stm) state))))
 
 (defun make-states (state-transitions)
   (let ((result nil))
@@ -46,6 +58,10 @@
                    result)
              (push (first state-transition) result))
     result))
+
+
+
+
                             
 
   
