@@ -1,62 +1,44 @@
 (in-package :actionlib)
 
 (defclass action-client ()
-  ((state-machine :initform (make-instance 'action-client-stm)
-                  :accessor state-machine)
-   (goal-handle :accessor goal-handle)
+  ((goal-manager :accessor goal-manager
+                 :initform nil)
+   (action-type :initarg :action-type
+                :accessor action-type)
    (goal-pub :initarg :goal-pub
              :accessor goal-pub)
    (cancel-pub :initarg :cancel-pub
                :accessor cancel-pub)
-   (action-type :initarg :action-type
-                :reader action-type)
-   (seq-nr :initform 0
-           :accessor seq-nr)))
+   (last-status-msg :accessor last-status-msg
+                    :initform nil))
 
-(defclass client-goal-handle ()
-  ((goal-id :reader goal-id 
-            :initarg :goal-id)
-   (timestamp :reader timestamp 
-              :initarg :timestamp
-              :initform (ros-time))
-   (result :reader result 
-           :initform nil
-           :documentation "The result of the goal or NIL.")
-   (done-cb :reader done-callback 
-            :initarg :done-cb
-            :documentation "The done callback of the goal. It must
-                            have type FUNCTION and takes exactly two parameter,
-                            the terminal state and the result of the action.")
-   (feedback-cb :reader feedback-callback 
-                :initarg :feedback-cb
-                :initform nil
-                :documentation "The feedback callback of the goal. It
-                                is of type FUNCTION and takes exactly one 
-                                parameter, the feedback of the action.")
-   (state-change-cb :reader state-change-callback 
-                    :initarg :state-change-cb
-                    :initform nil
-                    :documentation "Callback that gets called whenever
-                                   the state of the goal transitions on the status
-                                   topic.")))
+(defgeneric send-goal (client goal &optional transition-cb feedback-cb)
+  "Sends a goal to the action server.
+   `client' is an instance of ACTION-CLIENT.
+   `goal' is an instance of the Goal message.
+   `transitions-cb' Callback that gets called on every state transition
+   for the sent goal. It takes a CLIENT-GOAL-HANDLE as a parameter.
+   `feedback-cb' Callback that gets called evey time the client receives
+   feedback for the sent goal. It takes a CLIENT-GOAL-HANDLE and an 
+   instance of the feedback message as arguments.")
 
-(defgeneric send-goal (client goal-msg &optional
-                                         done-cb feedback-cb active-cb
-                                         state-change-cb)
-  (:documentation "Sends a goal to the action server.
+(defgeneric cancel-all-goals (client)
+  "Cancels all goals currently running on the action server.")
 
-`client' is an instance of ACTION-CLIENT.
+(defgeneric cancel-at-and-before-time (client time)
+  "Cancels all goals currently running on the action server that
+   were stamped at or before `time'.")
 
-`done-cb' is a function that takes exactly two parameters, the
-final status and the result of the goal
-`feedback-cb' is a function that takes exactly one parameter, the
-feedback message of the goal.
+(defgeneric wait-for-action-server-to-start (client &optional timeout)
+  "Waits for the action server to connect to this client or until the 
+   timeout is reached")
 
-`active-cb' is a function with no parameters.
+(defgeneric is-connected (client)
+  "Returns true if the cleint is connected to an action server,
+   NIL otherwise.")
 
-`state-change-cb' is a function with one parameter that is called
-whenever the state of the goal transitions. The parameter is
-indicating the new status."))
+
+;;;Implementation
 
 (defun feedback-callback (client msg)
   (format t "FEEDBACK: ~a~%" msg))
