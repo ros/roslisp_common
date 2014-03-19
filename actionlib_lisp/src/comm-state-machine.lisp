@@ -1,6 +1,6 @@
 (in-package :actionlib)
 
-(defclass action-client-stm (state-machine)
+(defclass comm-state-machine (state-machine)
   ((current-state
     :initform (make-instance 'state 
                              :name :done
@@ -54,6 +54,41 @@
                                            :succeeded :waiting-for-result
                                            :aborted :waiting-for-result
                                            :receive :done))
-                             (:waiting-for-result (:receive :done)))))))
+                             (:waiting-for-result (:receive :done)))))
+   (goal :initarg :goal)
+   (transition-cb :initarg :transition-cb
+                  :initform nil
+                  :reader transition-cb)
+   (feedback-cb :initarg :feedback-cb
+                :initform nil
+                :reader :feedback-cb)
+   (send-goal-fn :initarg :send-goal-fn
+                 :reader send-goal-fn)
+   (send-cancel-fn :initarg :send-cancel-fn
+                   :reader send-cancel-fn)
+   (latest-goal-status :initform nil
+                       :accessor latest-goal-status)
+   (latest-result :initform nil
+                  :accessor latest-result)))
 
-                             
+(defgeneric update-status (csm state-name))
+
+(defgeneric update-result (csm action-result))
+
+(defgeneric update-feedback (csm action-feedback))
+
+
+;;;Implementation
+
+(defmethod process-signal ((csm comm-state-machine) signal)
+  nil
+  (call-next-method))
+
+(defmethod update-status ((csm comm-state-machine) state-name)
+  nil)
+
+(defmethod update-result ((csm comm-state-machine) action-result)
+  nil)
+
+(defmethod update-feedback ((csm comm-state-machine)action-feedback)
+  nil)
