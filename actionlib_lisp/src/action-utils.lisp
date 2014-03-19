@@ -1,5 +1,9 @@
 (in-package :actionlib)
 
+(defmacro make-action-goal-msg (client &body args)
+  `(make-message (action-goal-type (action-type ,client))
+                 ,@args))
+
 (defun str-has-suffix (str suffix)
   (and (> (length str) (length suffix))
        (equal (subseq str (- (length str) (length suffix)))

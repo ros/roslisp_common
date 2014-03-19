@@ -52,12 +52,15 @@
 (defun make-states (state-transitions)
   (let ((result nil))
     (loop for state-transition in state-transitions
-          do (push (make-instance 'state 
-                                  :name (first state-transition)
-                                  :transitions (second state-transition))
+          do (push (make-state state-transition)
                    result)
              (push (first state-transition) result))
     result))
+
+(defun make-state (state-transition)
+  (make-instance 'state 
+                 :name (first state-transition)
+                 :transitions (second state-transition)))
 
 
 
