@@ -58,10 +58,10 @@
             :reader goal-id)
    (transition-cb :initarg :transition-cb
                   :initform nil
-                  :reader transition-cb)
+                  :accessor transition-cb)
    (feedback-cb :initarg :feedback-cb
                 :initform nil
-                :reader :feedback-cb)
+                :accessor :feedback-cb)
    (send-goal-fn :initarg :send-goal-fn
                  :reader send-goal-fn)
    (send-cancel-fn :initarg :send-cancel-fn
@@ -69,29 +69,31 @@
    (latest-goal-status :initform :waiting-for-goal-ack
                        :accessor latest-goal-status)
    (latest-result :initform nil
-                  :accessor latest-result)))
+                  :accessor latest-result)
+   (latest-feedback :initform nil
+                    :accessor latest-feedback)))
 
-(defgeneric transition-to (csm goal-handle signal))
+(defgeneric transition-to (csm signal))
 
-(defgeneric update-status (csm goal-handle state-name))
+(defgeneric update-status (csm state-name))
 
-(defgeneric update-result (csm goal-handle action-result))
+(defgeneric update-result (csm action-result))
 
-(defgeneric update-feedback (csm goal-handle action-feedback))
+(defgeneric update-feedback (csm action-feedback))
 
 
 ;;;Implementation
 
-(defmethod transition-to ((csm comm-state-machine) goal-handle signal)
+(defmethod transition-to ((csm comm-state-machine) signal)
   (if (process-signal csm signal)
-      (if transition-cb
-          (funcall transition-cb goal-handle))))
+      (if (transition-cb csm)
+          (funcall (transition-cb csm)))))
 
-(defmethod update-status ((csm comm-state-machine) goal-handle state-name)
+(defmethod update-status ((csm comm-state-machine) state-name)
   nil)
 
-(defmethod update-result ((csm comm-state-machine) goal-handle action-result)
+(defmethod update-result ((csm comm-state-machine) action-result)
   nil)
 
-(defmethod update-feedback ((csm comm-state-machine) goal-handle action-feedback)
+(defmethod update-feedback ((csm comm-state-machine) action-feedback)
   nil)

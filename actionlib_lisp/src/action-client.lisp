@@ -54,7 +54,6 @@
 
 (defun make-action-client (action-name action-type)
   (let ((client (make-instance 'action-client
-                               :action-type action-type
                                :goal-pub (advertise (make-action-topic action-name "goal")
                                                     (make-action-type action-type "Goal"))
                                :cancel-pub (advertise (make-action-topic action-name "cancel")
