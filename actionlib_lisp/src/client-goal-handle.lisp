@@ -1,7 +1,7 @@
 (in-package :actionlib)
 
 (defclass client-goal-handle ()
-  ((comm-state-machine :initarg comm-state-machine
+  ((comm-state-machine :initarg :comm-state-machine
                        :reader csm)))
 
 (defgeneric goal-id (goal-handle)
@@ -31,16 +31,12 @@
 
 ;;;Implementation
 
-(defun make-cancel-msg (goal-handle)
-  nil)
-
 (defmethod goal-id ((goal-handle client-goal-handle))
   (goal-id (csm goal-handle)))
 
 (defmethod cancel ((goal-handle client-goal-handle))
-  (funcall (send-cancel-fn (csm goal-handle)) 
-           (make-cancel-msg goal-handle))
-  (transition-to (csm goal-handle) goal-handle :cancel-goal))
+  (funcall (send-cancel-fn (csm goal-handle)))
+  (transition-to (csm goal-handle) :cancel-goal))
 
 (defmethod comm-state ((goal-handle client-goal-handle))
   (name (get-state (csm goal-handle))))

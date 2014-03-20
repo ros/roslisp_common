@@ -38,14 +38,14 @@
          (header (get-header manager))
          (csm (make-instance 'comm-state-machine 
                              :goal-id goal-id
-                             :transition-cb transition-cb
-                             :feedback-cb feedback-cb
                              :send-goal-fn (send-goal-fn manager)
-                             :send-cancel-fn (cancel-fn manager))))
+                             :send-cancel-fn (cancel-fn manager)))
+         (goal-handle (make-instance 'client-goal-handle
+                                     :comm-state-machine csm)))
+    (setf (transition-cb csm) #'(lambda () (funcall transition-cb goal-handle)))
+    (setf (feedback-cb csm) #'(lambda () (funcall feedback-cb goal-handle)))
     (funcall (send-goal-fn manager) (make-action-goal manager goal-id))  
-    (push csm (statuses manager))
-    (make-instance 'client-goal-handler
-                   :comm-state-machine csm)))
+    (push csm (statuses manager))))
 
 (defmethod update-statuses ((manager goal-manager) status-array)
   nil)
