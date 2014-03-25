@@ -1,17 +1,15 @@
 (in-package :actionlib)
 
 (defclass goal-manager ()
-  ((id :initform 0)
-   (action-type :initarg :action-type
-                :accessor action-type)
+  ((last-id :initform 0
+            :accessor last-id)
    (cancel-fn :initarg :cancel-fn
               :reader cancel-fn)
-   (send-goal-fn :initarg :send-goal-fn
-                 :reader send-goal-fn)
-   (statuses :initform nil
-             :accessor statuses)))
+   (goals :initform nil
+          :accessor goals)))
 
-(defgeneric init-goal (manager goal-msg &optional transition-cb feedback-cb))
+(defgeneric init-goal (manager goal-msg &optional transition-cb feedback-cb)
+  (:documentation "Returns goal id"))
 
 (defgeneric update-statuses (manager status-array))
 
@@ -23,32 +21,30 @@
 ;;;Implementation
 
 (defun generate-goal-id (manager)
-  nil)
-
-(defun get-header (manager)
-  nil)
-
-(defun make-action-goal (manager goal-id)
-  nil)
+  (format nil "actionlib_lisp~a" (incf (last-id manager))))
 
 (defmethod init-goal ((manager goal-manager) goal-msg &optional
                                                         transition-cb
                                                         feedback-cb)
-  (let* ((goal-id (generate-goal-id manger))
-         (header (get-header manager))
+  (let* ((goal-id (generate-goal-id manager))
+         (goal-handle (make-instance 'client-goal-handle))
          (csm (make-instance 'comm-state-machine 
                              :goal-id goal-id
-                             :send-goal-fn (send-goal-fn manager)
-                             :send-cancel-fn (cancel-fn manager)))
-         (goal-handle (make-instance 'client-goal-handle
-                                     :comm-state-machine csm)))
-    (setf (transition-cb csm) #'(lambda () (funcall transition-cb goal-handle)))
-    (setf (feedback-cb csm) #'(lambda () (funcall feedback-cb goal-handle)))
-    (funcall (send-goal-fn manager) (make-action-goal manager goal-id))  
-    (push csm (statuses manager))))
+                             :send-cancel-fn (cancel-fn manager)
+                             :transition-cb #'(lambda () (funcall transition-cb goal-handle))
+                             :feedback-cb #'(lambda () (funcall feedback-cb goal-handle))
+                             :send-cancel-fn #'(lambda () (funcall (cancel-fn manager) goal-id)))))
+    (setf (csm goal-handle) csm)
+    (push csm (goals manager))
+    goal-handle))
 
 (defmethod update-statuses ((manager goal-manager) status-array)
-  nil)
+  (with-fields ((status-list status_list)) status-array
+    (loop for goal-status being the elements of status-list
+          do (with-fields (status (id (id goal_id))) goal-status
+               ;;suche csm mit goal-id id
+               ;;update-status
+               ))))
 
 (defmethod update-results ((manager goal-manager) action-results)
   nil)
