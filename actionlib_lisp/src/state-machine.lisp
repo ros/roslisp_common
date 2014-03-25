@@ -26,6 +26,8 @@
 
 (defgeneric set-current-state (stm state))
 
+(defgeneric process-signal (stm signal))
+
 (defmethod get-next-state ((stm state-machine) signal)
   (getf (states stm)
         (get-next-state (get-state stm) signal)))

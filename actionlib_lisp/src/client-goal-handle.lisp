@@ -1,8 +1,10 @@
 (in-package :actionlib)
 
+(defvar *terminal-states* '(:rejected :recalled :aborted :succeeded :preempted :lost))
+
 (defclass client-goal-handle ()
   ((comm-state-machine :initarg :comm-state-machine
-                       :reader csm)))
+                       :accessor csm)))
 
 (defgeneric goal-id (goal-handle)
   (:documentation "Returns the id of the goal."))
@@ -32,7 +34,7 @@
 ;;;Implementation
 
 (defmethod goal-id ((goal-handle client-goal-handle))
-  (goal-id (csm goal-handle)))
+  (get-goal-id (csm goal-handle)))
 
 (defmethod cancel ((goal-handle client-goal-handle))
   (funcall (send-cancel-fn (csm goal-handle)))
@@ -48,5 +50,9 @@
   (latest-result (csm goal-handle)))
 
 (defmethod terminal-state ((goal-handle client-goal-handle))
-  (if (equal (name (get-state (csm goal-handle))) :done)
-      (latest-goal-status (csm goal-handle))))
+  (let ((state (name (get-state (csm goal-handle))))
+        (status (goal-status goal-handle)))
+    (if (and (equal state :done)
+             (member status *terminal-states*))
+        status)))
+      
