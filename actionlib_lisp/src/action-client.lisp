@@ -13,11 +13,11 @@
            :accessor seq)
    (last-status-msg :initform nil
                     :accessor last-status-msg)
-   (connected :initform nil
-              :reader is-connected
-              :accessor connected
-              :documentation "Returns true if the client is 
-               connected to an action server, NIL otherwise."))
+   (last-connection :initform nil
+                    :accessor last-connection)
+   (connection-timeout :initform 2
+                       :initarg :connection-timeout
+                       :reader connection-timeout))
   (:documentation "TODO"))
 
 (defgeneric send-goal (client goal &optional transition-cb feedback-cb)
@@ -39,34 +39,44 @@
   (:documentation "Cancels all goals currently running on the action
                    server that were stamped at or before `time'."))
 
-(defgeneric wait-for-action-server-to-start (client &optional timeout)
+(defgeneric wait-for-server (client &optional timeout)
   (:documentation "Waits for the action server to connect to this client
-                   or until the timeout is reached"))
+                   or until the timeout is reached. Returns true if the client
+                   is connected to the action server or NIL if the timeout is
+                   reached."))
+
+(defgeneric is-connected (client)
+  ( :documentation "Returns true if the client is connected to an action 
+                    server, NIL otherwise."))
 
 
 ;;;Implementation
 
 (defun feedback-callback (client msg)
+  (setf (last-connection client) (ros-time))
   (update-feedbacks (goal-manager client) msg))
 
 (defun status-callback (client msg)
+  (setf (last-connection client) (ros-time))
   (setf (last-status-msg client) msg)
-  (if (not (connected client))
-      (setf (connected client) t))
   (update-statuses (goal-manager client) msg))
 
 (defun result-callback (client msg)
+  (setf (last-connection client) (ros-time))
   (update-results (goal-manager client) msg))
-
-(defun get-cancel-fn (goal-id)
-  (format t "Cancel ~a~%" goal-id))
 
 (defun next-seq (client)
   (incf (seq client)))
 
+(defun send-cancel-msg (client goal-id)
+  (format t "Cancel ~a~%" goal-id)
+  (publish (cancel-pub client)
+           (make-message "actionlib_msgs/GoalID"
+                         stamp 0
+                         id goal-id)))
+
 (defun make-action-client (action-name action-type)
-  (let* ((goal-manager (make-instance 'goal-manager
-                                      :cancel-fn #'get-cancel-fn))
+  (let* ((goal-manager (make-instance 'goal-manager))
          (client (make-instance 'action-client
                                 :goal-manager goal-manager
                                 :action-type action-type
@@ -85,7 +95,8 @@
 (defmethod send-goal ((client action-client) goal-msg &optional 
                                                         transition-cb
                                                         feedback-cb)
-  (let ((goal-handle (init-goal (goal-manager client) transition-cb feedback-cb)))
+  (let ((goal-handle (init-goal (goal-manager client) transition-cb feedback-cb
+                                #'(lambda (goal-id) (send-cancel-msg client goal-id)))))
     (publish (goal-pub client)
              (make-message (make-action-type (action-type client) "Goal")
                            (stamp header) (ros-time)
@@ -96,10 +107,20 @@
     goal-handle))
 
 (defmethod cancel-all-goals ((client action-client))
-    (publish (cancel-pub client)
-             ;; Cancel all policy encoded by stamp=0 and id=""
-             (make-message "actionlib_msgs/GoalID"
-                           stamp 0
-                           id "")))
+    (send-cancel-msg client ""))
+
+(defmethod wait-for-server ((client action-client) &optional timeout)
+  (let ((start-time (ros-time)))
+    (loop while (and (not (is-connected client))
+                     (if timeout 
+                         (< (- (ros-time) start-time) timeout)
+                         t))
+          do (sleep 0.02)))
+  (is-connected client))
+
+(defmethod is-connected ((client action-client))
+  (if (last-connection client)
+      (< (- (ros-time) (last-connection client)) 
+         (connection-timeout client))))
 
 

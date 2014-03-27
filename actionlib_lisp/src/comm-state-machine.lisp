@@ -115,4 +115,4 @@
 (defmethod update-feedback ((csm comm-state-machine) action-feedback)
   (setf (latest-feedback csm) action-feedback)
   (if (feedback-cb csm)
-      (funcall (feedback-cb csm))))
+      (funcall (feedback-cb csm) action-feedback)))

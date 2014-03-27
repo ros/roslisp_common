@@ -1,53 +1,69 @@
 (in-package :actionlib)
 
 (defclass goal-manager ()
-  ((last-id :initform 0
-            :accessor last-id)
-   (cancel-fn :initarg :cancel-fn
-              :reader cancel-fn)
-   (goals :initform nil
+  ((goals :initform (make-hash-table :test #'equal)
           :accessor goals)))
 
-(defgeneric init-goal (manager goal-msg &optional transition-cb feedback-cb)
+(defgeneric init-goal (manager transition-cb feedback-cb cancel-fn)
   (:documentation "Returns goal id"))
 
 (defgeneric update-statuses (manager status-array))
 
-(defgeneric update-results (manager action-results))
+(defgeneric update-results (manager action-result))
 
 (defgeneric update-feedbacks (manager action-feedback))
 
 
 ;;;Implementation
+(defmacro goal-with-id (manager goal-id)
+  `(gethash ,goal-id (goals ,manager)))
 
-(defun generate-goal-id (manager)
-  (format nil "actionlib_lisp~a" (incf (last-id manager))))
+(defmacro with-id-and-status (status-msg &rest body)
+  ;(let ((hash-value (gensym)))
+  `(multiple-value-bind (id status-symbol) (status-msg->id-status ,status-msg)
+     (let* ((hash-value (goal-with-id manager id))
+            (csm (nth-value 0 hash-value)))
+       (when hash-value
+         ,@body))))
 
-(defmethod init-goal ((manager goal-manager) goal-msg &optional
-                                                        transition-cb
-                                                        feedback-cb)
-  (let* ((goal-id (generate-goal-id manager))
+(defun status-msg->id-status (status-msg)
+  (with-fields (status (id (id goal_id))) status-msg
+    (let ((status-symbol (car (rassoc status
+                                      (symbol-codes 'actionlib_msgs-msg:GoalStatus)))))
+      (values id status-symbol))))
+
+(defun generate-goal-id ()
+  (format nil "actionlib_lisp_~a" (ros-time)))
+
+(defmethod init-goal ((manager goal-manager) transition-cb feedback-cb cancel-fn)
+  (let* ((goal-id (generate-goal-id))
          (goal-handle (make-instance 'client-goal-handle))
          (csm (make-instance 'comm-state-machine 
                              :goal-id goal-id
-                             :send-cancel-fn (cancel-fn manager)
-                             :transition-cb #'(lambda () (funcall transition-cb goal-handle))
-                             :feedback-cb #'(lambda () (funcall feedback-cb goal-handle))
-                             :send-cancel-fn #'(lambda () (funcall (cancel-fn manager) goal-id)))))
+                             :transition-cb (if transition-cb 
+                                                #'(lambda () (funcall transition-cb goal-handle)))
+                             :feedback-cb (if feedback-cb
+                                              #'(lambda (feedback) 
+                                                  (funcall feedback-cb goal-handle feedback)))
+                             :send-cancel-fn #'(lambda () (funcall cancel-fn goal-id)))))
     (setf (csm goal-handle) csm)
-    (push csm (goals manager))
+    (setf (goal-with-id manager goal-id) csm)
     goal-handle))
 
 (defmethod update-statuses ((manager goal-manager) status-array)
   (with-fields ((status-list status_list)) status-array
     (loop for goal-status being the elements of status-list
-          do (with-fields (status (id (id goal_id))) goal-status
-               ;;suche csm mit goal-id id
-               ;;update-status
-               ))))
+          do (with-id-and-status goal-status
+               (update-status csm status-symbol)))))
 
-(defmethod update-results ((manager goal-manager) action-results)
-  nil)
+(defmethod update-results ((manager goal-manager) action-result)
+  (with-fields (status result) action-result
+    (with-id-and-status status
+      (update-status csm status-symbol)
+      (update-result csm result))))
 
 (defmethod update-feedbacks ((manager goal-manager) action-feedback)
-  nil)
+  (with-fields (status feedback) action-feedback
+    (with-id-and-status status
+      (update-status csm status-symbol)
+      (update-feedback csm feedback))))
