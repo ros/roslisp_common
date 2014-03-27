@@ -17,7 +17,9 @@
                     :accessor last-connection)
    (connection-timeout :initform 2
                        :initarg :connection-timeout
-                       :reader connection-timeout))
+                       :reader connection-timeout)
+   (mutex :initform (make-mutex :name "action-client-lock")
+                   :reader client-mutex))
   (:documentation "TODO"))
 
 (defgeneric send-goal (client goal &optional transition-cb feedback-cb)
@@ -53,17 +55,21 @@
 ;;;Implementation
 
 (defun feedback-callback (client msg)
-  (setf (last-connection client) (ros-time))
+  (update-last-connection client)
   (update-feedbacks (goal-manager client) msg))
 
 (defun status-callback (client msg)
-  (setf (last-connection client) (ros-time))
+  (update-last-connection client)  
   (setf (last-status-msg client) msg)
   (update-statuses (goal-manager client) msg))
 
 (defun result-callback (client msg)
-  (setf (last-connection client) (ros-time))
+  (update-last-connection client)
   (update-results (goal-manager client) msg))
+
+(defun update-last-connection (client)
+  (with-mutex ((client-mutex client))
+    (setf (last-connection client) (ros-time))))
 
 (defun next-seq (client)
   (incf (seq client)))

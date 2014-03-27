@@ -2,7 +2,10 @@
 
 (defclass goal-manager ()
   ((goals :initform (make-hash-table :test #'equal)
-          :accessor goals)))
+          :accessor goals)
+   (mutex :initform (make-mutex :name "goal-manager-lock")
+          :reader manager-mutex))
+  (:documentation "asdasd"))
 
 (defgeneric init-goal (manager transition-cb feedback-cb cancel-fn)
   (:documentation "Returns goal id"))
@@ -19,12 +22,13 @@
   `(gethash ,goal-id (goals ,manager)))
 
 (defmacro with-id-and-status (status-msg &rest body)
-  ;(let ((hash-value (gensym)))
-  `(multiple-value-bind (id status-symbol) (status-msg->id-status ,status-msg)
-     (let* ((hash-value (goal-with-id manager id))
-            (csm (nth-value 0 hash-value)))
-       (when hash-value
-         ,@body))))
+  (let ((hash-value (gensym)))
+   `(multiple-value-bind (id status-symbol) (status-msg->id-status ,status-msg)
+      (let* ((,hash-value (with-recursive-lock ((manager-mutex manager))
+                            (goal-with-id manager id)))
+             (csm (nth-value 0 ,hash-value)))
+        (when ,hash-value
+          ,@body)))))
 
 (defun status-msg->id-status (status-msg)
   (with-fields (status (id (id goal_id))) status-msg
@@ -33,7 +37,7 @@
       (values id status-symbol))))
 
 (defun generate-goal-id ()
-  (format nil "actionlib_lisp_~a" (ros-time)))
+  (format nil "a_lisp_~a_~a" *ros-node-name* (ros-time)))
 
 (defmethod init-goal ((manager goal-manager) transition-cb feedback-cb cancel-fn)
   (let* ((goal-id (generate-goal-id))
@@ -47,7 +51,8 @@
                                                   (funcall feedback-cb goal-handle feedback)))
                              :send-cancel-fn #'(lambda () (funcall cancel-fn goal-id)))))
     (setf (csm goal-handle) csm)
-    (setf (goal-with-id manager goal-id) csm)
+    (with-recursive-lock ((manager-mutex manager))
+      (setf (goal-with-id manager goal-id) csm))
     goal-handle))
 
 (defmethod update-statuses ((manager goal-manager) status-array)
