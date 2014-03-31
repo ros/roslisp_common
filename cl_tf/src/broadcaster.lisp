@@ -1,23 +1,39 @@
 (in-package :cl-tf)
 
-(defun make-transform-broadcaster ()
+(defun make-transform-broadcaster (&key (topic "/tf"))
   "Return a publisher that can be used with send-transform"
-  (advertise "/tf" "tf/tfMessage")  )
+  (advertise topic "tf/tfMessage"))
 
 (defun send-transform (broadcaster tr)
   "Send a stamped transform."
   (publish broadcaster (transform->tf tr)))
 
-(defun send-static-transform-blocking (broadcaster tr &key (interval 1.0))
-  (loop-at-most-every interval
-       (unless (eq (roslisp:node-status) :running)
-         (return))
-       (let ((m (modify-message-copy (transform->msg tr)
-                                     (:stamp :header) (ros-time))))
-         (publish-msg broadcaster :transforms (vector m)))))
+(defun send-transforms (broadcaster &rest transforms)
+  "Send stamped transforms."
+  (publish broadcaster (transforms->tf transforms)))
 
-(defun send-static-transform (broadcaster tr &key (interval 1.0) (new-thread t))
+(defun send-static-transforms-blocking (broadcaster interval &rest transforms)
+  (loop-at-most-every interval
+    (unless (eq (roslisp:node-status) :running) (return))
+    (publish-msg broadcaster 
+                 :transforms (map 'vector 
+                                  (lambda (transform) 
+                                    (modify-message-copy 
+                                     (transform->msg transform) 
+                                     (:stamp :header) (ros-time)))
+                                  transforms))))
+
+(defun send-static-transforms (broadcaster interval new-thread &rest transforms)
   (if new-thread
       (sb-thread:make-thread
-       #'(lambda () (send-static-transform-blocking broadcaster tr :interval interval)))
-      (send-static-transform-blocking broadcaster tr :interval interval)))
+       #'(lambda ()
+           (apply #'send-static-transforms-blocking
+                  broadcaster interval transforms)))
+      (apply #'send-static-transforms-blocking broadcaster
+             broadcaster interval transforms)))
+
+(defmacro with-tf-broadcasting ((broadcaster &rest transforms) &body body)
+  (let ((thread-var (gensym)))
+    `(let ((,thread-var (send-static-transforms ,broadcaster 0.01 t ,@transforms)))
+       (unwind-protect ,@body
+         (sb-thread:terminate-thread ,thread-var)))))

@@ -24,8 +24,8 @@
               wait-for-transform tf-cache-error tf-connectivity-error
               tf-lookup-error frame-id stamp child-frame-id
               source-frame target-frame frame
-              make-transform-broadcaster send-transform
-              send-static-transform-blocking send-static-transform
+              make-transform-broadcaster topic send-transform send-transforms
+              send-static-transforms-blocking send-static-transforms with-tf-broadcasting
               msg->point-stamped point-stamped->msg msg->point point->msg
               ,@(let ((r nil))
                   (do-external-symbols (s :cl-transforms r) (push s r)))))
