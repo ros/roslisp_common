@@ -79,6 +79,9 @@
          rotation
        (make-quaternion x y z w)))))
 
+(defun transforms->tf (transforms)
+  (make-message "tf/tfMessage" :transforms (map 'vector #'transform->msg transforms)))
+
 (defun transform->tf (tr)
   (make-message "tf/tfMessage" :transforms (vector (transform->msg tr))))
 
