@@ -79,8 +79,14 @@
    (latest-result :initform nil
                   :accessor latest-result)
    (latest-feedback :initform nil
-                    :accessor latest-feedback))
-   (:documentation "lala"))
+                    :accessor latest-feedback)
+   (stat-mutex :initform (make-mutex :name "status-lock")
+                 :reader status-mutex)
+   (res-mutex :initform (make-mutex :name "result-lock")
+                 :reader result-mutex)
+   (fb-mutex :initform (make-mutex :name "feedback-lock")
+                   :reader feedback-mutex))
+  (:documentation "lala"))
 
 (defgeneric transition-to (csm signal))
 
@@ -100,19 +106,22 @@
 
 (defmethod update-status ((csm comm-state-machine) status)
   (when (not (eql (latest-goal-status csm) status))
-    (setf (latest-goal-status csm) status)  
+    (with-mutex ((status-mutex csm))
+      (setf (latest-goal-status csm) status)  )
     ;; If the result came before the last status update
-    (if (eql (name (current-state csm)) :done)
+    (if (eql (name (get-current-state csm)) :done)
         (if (transition-cb csm)
-          (funcall (transition-cb csm))))
+            (funcall (transition-cb csm))))
     (if (get-next-state csm status)
         (transition-to csm status))))
       
 (defmethod update-result ((csm comm-state-machine) action-result)
-  (transition-to csm :receive)
-  (setf (latest-result csm) action-result))
+  (with-mutex ((result-mutex csm))
+    (setf (latest-result csm) action-result))
+  (transition-to csm :receive))
 
 (defmethod update-feedback ((csm comm-state-machine) action-feedback)
-  (setf (latest-feedback csm) action-feedback)
+  (with-mutex ((feedback-mutex csm))
+    (setf (latest-feedback csm) action-feedback))
   (if (feedback-cb csm)
       (funcall (feedback-cb csm) action-feedback)))

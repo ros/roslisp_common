@@ -18,8 +18,8 @@
    (connection-timeout :initform 2
                        :initarg :connection-timeout
                        :reader connection-timeout)
-   (mutex :initform (make-mutex :name "action-client-lock")
-                   :reader client-mutex))
+   (client-mutex :initform (make-mutex :name "action-client-lock")
+                 :reader ac-mutex))
   (:documentation "TODO"))
 
 (defgeneric send-goal (client goal &optional transition-cb feedback-cb)
@@ -68,7 +68,7 @@
   (update-results (goal-manager client) msg))
 
 (defun update-last-connection (client)
-  (with-mutex ((client-mutex client))
+  (with-mutex ((ac-mutex client))
     (setf (last-connection client) (ros-time))))
 
 (defun next-seq (client)
