@@ -7,7 +7,9 @@
    (states
     :initarg :states
     :initform nil
-    :accessor states)))
+    :accessor states)
+   (stm-mutex :initform (make-mutex :name "state-lock")
+              :reader state-mutex)))
 
 (defclass state ()
   ((name
@@ -24,9 +26,12 @@
 
 (defgeneric add-state (stm state))
 
+(defgeneric get-current-state (stm))
+
 (defgeneric set-current-state (stm state))
 
 (defgeneric process-signal (stm signal))
+
 
 (defmethod get-next-state ((stm state-machine) signal)
   (getf (states stm)
@@ -38,7 +43,7 @@
 (defmethod get-state ((stm state-machine) &optional state-name)
   (if state-name 
       (getf (states stm) state-name)
-      (current-state stm)))
+      (get-current-state stm)))
 
 (defmethod add-state ((stm state-machine) (state state))
   (push state (states stm)))
@@ -46,12 +51,21 @@
 (defmethod process-signal ((stm state-machine) signal)
   (let ((next-state (get-next-state stm signal)))
     (if next-state
-        (setf (current-state stm) next-state))))
+        (set-current-state stm next-state))))
+
+(defmethod get-current-state ((stm state-machine))
+  (with-mutex ((state-mutex stm))
+    (current-state stm)))
+
+(defmethod set-current-state ((stm state-machine) (state state))
+  (with-mutex ((state-mutex stm))
+    (setf (current-state stm) state)))
 
 (defmethod set-current-state ((stm state-machine) state-name)
   (let ((state (get-state stm state-name)))
     (if state
-        (setf (current-state stm) state))))
+        (with-mutex ((state-mutex stm))
+          (setf (current-state stm) state)))))
 
 (defun make-states (state-transitions)
   (let ((result nil))

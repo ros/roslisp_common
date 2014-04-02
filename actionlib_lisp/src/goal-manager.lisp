@@ -3,8 +3,8 @@
 (defclass goal-manager ()
   ((goals :initform (make-hash-table :test #'equal)
           :accessor goals)
-   (mutex :initform (make-mutex :name "goal-manager-lock")
-          :reader manager-mutex))
+   (manager-mutex :initform (make-mutex :name "goal-manager-lock")
+          :reader gm-mutex))
   (:documentation "asdasd"))
 
 (defgeneric init-goal (manager transition-cb feedback-cb cancel-fn)
@@ -24,7 +24,7 @@
 (defmacro with-id-and-status (status-msg &rest body)
   (let ((hash-value (gensym)))
    `(multiple-value-bind (id status-symbol) (status-msg->id-status ,status-msg)
-      (let* ((,hash-value (with-recursive-lock ((manager-mutex manager))
+      (let* ((,hash-value (with-recursive-lock ((gm-mutex manager))
                             (goal-with-id manager id)))
              (csm (nth-value 0 ,hash-value)))
         (when ,hash-value
@@ -51,7 +51,7 @@
                                                   (funcall feedback-cb goal-handle feedback)))
                              :send-cancel-fn #'(lambda () (funcall cancel-fn goal-id)))))
     (setf (csm goal-handle) csm)
-    (with-recursive-lock ((manager-mutex manager))
+    (with-recursive-lock ((gm-mutex manager))
       (setf (goal-with-id manager goal-id) csm))
     goal-handle))
 

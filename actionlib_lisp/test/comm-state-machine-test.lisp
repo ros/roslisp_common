@@ -139,19 +139,20 @@
       (assert-true my-place))))|#
 
 (defun set-state (csm state-name)
-  (actionlib::set-current-state csm (actionlib::get-state csm state-name)))
+  (actionlib::set-current-state csm state-name))
 
 (defun test-update-status (state status)
   (let* ((transition-received nil)
          (transition-cb #'(lambda () (setf transition-received t)))
          (csm (make-csm transition-cb nil nil))
-         (target-state (actionlib::get-next-state csm status)))
-        (when target-state
-          (init-callbacks)
-          (set-state csm state)
-          (actionlib::update-status csm status)
+         (target-state nil))
+    (set-state csm state)
+    (setf target-state (actionlib::get-next-state csm status))
+    (actionlib::update-status csm status)
+    (when target-state
           (assert-true transition-received)
-          (assert-equal (actionlib::get-state csm) target-state)
+          (assert-equal (actionlib::name target-state) 
+                        (actionlib::name (actionlib::get-state csm)))
           (assert-equal (actionlib::latest-goal-status csm) status))))
 
 (define-test update-status
