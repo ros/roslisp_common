@@ -54,11 +54,11 @@
         (set-current-state stm next-state))))
 
 (defmethod get-current-state ((stm state-machine))
-  (with-mutex ((state-mutex stm))
+  (with-recursive-lock ((state-mutex stm))
     (current-state stm)))
 
 (defmethod set-current-state ((stm state-machine) (state state))
-  (with-mutex ((state-mutex stm))
+  (with-recursive-lock ((state-mutex stm))
     (setf (current-state stm) state)))
 
 (defmethod set-current-state ((stm state-machine) state-name)

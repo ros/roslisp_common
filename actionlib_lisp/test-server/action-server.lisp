@@ -5,6 +5,8 @@
           :accessor goals)
    (seq :initform 0
         :accessor seq)
+   (publish-status :initform t
+                   :accessor publish-status)
    (feedback-pub :initform (advertise "/fibonacci/feedback"
                                       "actionlib_tutorials/FibonacciActionFeedback")
                  :accessor feedback-pub)
@@ -58,7 +60,8 @@
 (defun start-status-thread (server)
   (sb-thread:make-thread (lambda () 
                            (loop while t
-                                 do (send-status-msg server)
+                                 do (if (publish-status server)
+                                        (send-status-msg server))
                                     (sleep 0.5)))))
 
 (defun goal-callback (server msg)
@@ -105,8 +108,9 @@
 
 (defun lose-goal (server goal-id)
   (with-recursive-lock ((server-mutex server))
-    (remove-if #'(lambda (goal) (equal goal-id (goal-id goal)))
-               (goals server))))
+    (setf (goals server) 
+          (remove-if #'(lambda (goal) (equal goal-id (goal-id goal)))
+                     (goals server)))))
 
 (defun activate-goal (server goal-id)
   (let ((goal (get-goal server goal-id)))
