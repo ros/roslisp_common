@@ -58,12 +58,15 @@
                  (:waiting-for-result (:receive :done
                                        :lost :done)))))
 
-(defclass comm-state-machine (state-machine)
-  ((current-state :initform (getf *states* :waiting-for-goal-ack))
-   (states :initform *states*)
+(defclass comm-state-machine ()
+  ((stm :initform (make-instance 'state-machine 
+                                 :current-state (getf *states* :waiting-for-goal-ack)
+                                 :states *states*)
+        :accessor stm)
    (goal-id :initarg :goal-id
-            :reader get-goal-id
-            :documentation "lala")
+            :reader get-goal-id)
+   (start-time :initform (ros-time)
+               :accessor start-time)
    (transition-cb :initarg :transition-cb
                   :initform nil
                   :accessor transition-cb)
@@ -80,39 +83,47 @@
                   :accessor latest-result)
    (latest-feedback :initform nil
                     :accessor latest-feedback)
+   (stm-mutex :initform (make-mutex :name "state-machine-lock")
+              :reader stm-mutex)
    (stat-mutex :initform (make-mutex :name "status-lock")
                  :reader status-mutex)
    (res-mutex :initform (make-mutex :name "result-lock")
                  :reader result-mutex)
    (fb-mutex :initform (make-mutex :name "feedback-lock")
                    :reader feedback-mutex))
-  (:documentation "lala"))
+  (:documentation "Monitors the state of the communication between action-client
+                   and the server for one goal and executes the callbacks."))
 
-(defgeneric transition-to (csm signal))
+(defgeneric transition-to (csm signal)
+  (:documentation "Processes the signal and executes the transition-callback if
+                   necessary"))
 
-(defgeneric update-status (csm status))
+(defgeneric update-status (csm status)
+  (:documentation "Updates the state with the given status."))
 
-(defgeneric update-result (csm action-result))
+(defgeneric update-result (csm action-result)
+  (:documentation "Updates the state with the given result."))
 
-(defgeneric update-feedback (csm action-feedback))
+(defgeneric update-feedback (csm action-feedback)
+  (:documentation "Updates the state with the given feedback and executes the
+                   feedback callback."))
 
-
-;;;Implementation
+;;; Implementation
 
 (defmethod transition-to ((csm comm-state-machine) signal)
-  (if (process-signal csm signal)
+   ;; If the result came before the last status update
+  (if (eql (name (get-current-state (stm csm))) :done)
+      (if (transition-cb csm)
+          (funcall (transition-cb csm))))
+  (if (process-signal (stm csm) signal)
       (if (transition-cb csm)
           (funcall (transition-cb csm)))))
 
 (defmethod update-status ((csm comm-state-machine) status)
   (when (not (eql (latest-goal-status csm) status))
-    (with-mutex ((status-mutex csm))
-      (setf (latest-goal-status csm) status)  )
-    ;; If the result came before the last status update
-    (if (eql (name (get-current-state csm)) :done)
-        (if (transition-cb csm)
-            (funcall (transition-cb csm))))
-    (if (get-next-state csm status)
+    (with-recursive-lock ((status-mutex csm))
+      (setf (latest-goal-status csm) status))
+    (if (get-next-state (stm csm) status)
         (transition-to csm status))))
       
 (defmethod update-result ((csm comm-state-machine) action-result)
@@ -125,3 +136,7 @@
     (setf (latest-feedback csm) action-feedback))
   (if (feedback-cb csm)
       (funcall (feedback-cb csm) action-feedback)))
+
+(defmethod comm-state ((csm comm-state-machine))
+  (name (get-current-state (stm csm))))
+  

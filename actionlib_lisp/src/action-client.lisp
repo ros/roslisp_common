@@ -68,7 +68,7 @@
   (update-results (goal-manager client) msg))
 
 (defun update-last-connection (client)
-  (with-mutex ((ac-mutex client))
+  (with-recursive-lock ((ac-mutex client))
     (setf (last-connection client) (ros-time))))
 
 (defun next-seq (client)
@@ -125,7 +125,8 @@
   (is-connected client))
 
 (defmethod is-connected ((client action-client))
-  (if (last-connection client)
+  (if (with-recursive-lock ((ac-mutex client))
+        (last-connection client))
       (< (- (ros-time) (last-connection client)) 
          (connection-timeout client))))
 

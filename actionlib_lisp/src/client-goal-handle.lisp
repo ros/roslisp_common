@@ -40,9 +40,8 @@
   (transition-to (csm goal-handle) :cancel-goal)
   (funcall (send-cancel-fn (csm goal-handle))))
  
-
 (defmethod comm-state ((goal-handle client-goal-handle))
-  (name (get-state (csm goal-handle))))
+  (comm-state (csm goal-handle)))
 
 (defmethod goal-status ((goal-handle client-goal-handle))
   (latest-goal-status (csm goal-handle)))
