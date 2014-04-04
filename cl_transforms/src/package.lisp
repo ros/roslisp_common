@@ -16,5 +16,5 @@
            :make-2d-pose :transform-pose :reference-transform :origin :orientation
            :transform->pose :pose->transform
            :matrix->quaternion :matrix->transform :transform->matrix :pose->matrix
-           :slerp :interpolate-vector))
+           :slerp :interpolate-vector :invert-rot-matrix :transpose-rot-matrix))
 
