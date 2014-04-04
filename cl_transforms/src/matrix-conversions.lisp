@@ -3,6 +3,20 @@
 
 (defconstant +epsilon+ 0.000001)
 
+(defun invert-rot-matrix (matrix)
+  "Inverts a 3x3 rotation matrix."
+  (transpose-rot-matrix matrix))
+
+(defun transpose-rot-matrix (matrix)
+  "Transposes a 3x3 rotation matrix."
+  (assert (typep matrix '(array * (3 3))))
+  (make-array 
+   '(3 3) 
+   :initial-contents 
+   (loop for column from 0 below 3 
+         collecting (loop for row from 0 below 3 
+                          collecting (aref matrix row column)))))
+
 (defun matrix->quaternion (matrix)
   "Converts a 3x3 rotation matrix to a quaternion."
   (let ((trace (+ (aref matrix 0 0) (aref matrix 1 1) (aref matrix 2 2) 1.0)))
