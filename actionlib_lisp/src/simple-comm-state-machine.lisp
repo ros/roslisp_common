@@ -15,7 +15,8 @@
                                         :current-state (getf *simple-states* :pending)
                                         :states *simple-states*)
                :accessor simple-stm))
-  (:documentation "TODO"))
+  (:documentation "Like the comm-state-machine but it includes another state machine
+                   that summarizes the other states into pending, active and done."))
 
 (defmethod transition-to ((csm simple-comm-state-machine) signal)
   (when (and (process-signal (stm csm) signal)

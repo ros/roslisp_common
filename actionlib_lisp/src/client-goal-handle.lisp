@@ -12,10 +12,6 @@
 (defgeneric cancel (goal-handle)
   (:documentation "Sends the Server a message to cancel the goal."))
 
-(defgeneric comm-state (goal-handle)
-  (:documentation "Returns the state of the goal's communication
-                   state machine."))
-
 (defgeneric goal-status (goal-handle)
   (:documentation "Returns the status of the goal as defined in 
                    actionlib_msgs/GoalStatus."))

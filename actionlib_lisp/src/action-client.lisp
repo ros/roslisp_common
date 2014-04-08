@@ -48,11 +48,36 @@
                    reached."))
 
 (defgeneric is-connected (client)
-  ( :documentation "Returns true if the client is connected to an action 
-                    server, NIL otherwise."))
+  (:documentation "Returns true if the client is connected to an action 
+                   server, NIL otherwise."))
 
 
 ;;;Implementation
+
+(defun make-action-client (action-name action-type &key (simple t))
+  "Creates and retruns an action-client.
+   `acton-name' Name of the action.
+   `action-type' Type of the action. Must end with 'Action'.
+   `simple' If not NIL the states of the goal get summarized into
+            pending, active and done. Default is true."
+  (let* ((goal-manager (make-instance 'goal-manager
+                                      :csm-type (if simple
+                                                    'simple-comm-state-machine
+                                                    'comm-state-machine)))
+         (client (make-instance 'action-client
+                                :goal-manager goal-manager
+                                :action-type action-type
+                                :goal-pub (advertise (make-action-topic action-name "goal")
+                                                     (make-action-type action-type "Goal"))
+                                :cancel-pub (advertise (make-action-topic action-name "cancel")
+                                                       "actionlib_msgs/GoalID"))))
+    (subscribe (make-action-topic action-name "status") "actionlib_msgs/GoalStatusArray"
+               #'(lambda (msg) (status-callback client msg)))
+    (subscribe (make-action-topic action-name "feedback") (make-action-type action-type "Feedback")
+               #'(lambda (msg) (feedback-callback client msg)))
+    (subscribe (make-action-topic action-name "result") (make-action-type action-type "Result")
+               #'(lambda (msg) (result-callback client msg)))
+    client))
 
 (defun feedback-callback (client msg)
   (update-last-connection client)
@@ -80,26 +105,6 @@
            (make-message "actionlib_msgs/GoalID"
                          stamp 0
                          id goal-id)))
-
-(defun make-action-client (action-name action-type &key simple)
-  (let* ((goal-manager (make-instance 'goal-manager
-                                      :csm-type (if simple
-                                                    'simple-comm-state-machine
-                                                    'comm-state-machine)))
-         (client (make-instance 'action-client
-                                :goal-manager goal-manager
-                                :action-type action-type
-                                :goal-pub (advertise (make-action-topic action-name "goal")
-                                                     (make-action-type action-type "Goal"))
-                                :cancel-pub (advertise (make-action-topic action-name "cancel")
-                                                       "actionlib_msgs/GoalID"))))
-    (subscribe (make-action-topic action-name "status") "actionlib_msgs/GoalStatusArray"
-               #'(lambda (msg) (status-callback client msg)))
-    (subscribe (make-action-topic action-name "feedback") (make-action-type action-type "Feedback")
-               #'(lambda (msg) (feedback-callback client msg)))
-    (subscribe (make-action-topic action-name "result") (make-action-type action-type "Result")
-               #'(lambda (msg) (result-callback client msg)))
-    client))
 
 (defmethod send-goal ((client action-client) goal-msg &optional 
                                                         transition-cb
