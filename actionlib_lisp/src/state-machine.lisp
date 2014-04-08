@@ -20,20 +20,26 @@
     :initform nil
     :accessor transitions)))
 
-(defgeneric get-next-state (state signal))
+(defgeneric get-next-state (stm signal)
+  (:documentation "Returns the state that the transition for signal from the
+                   current state points to."))
 
-(defgeneric get-state (stm &optional state-name))
+(defgeneric get-state (stm &optional state-name)
+  (:documentation "Returns the state with the given name or the current state
+                   if state-name is NIL."))
 
-(defgeneric add-state (stm state))
+(defgeneric get-current-state (stm)
+  (:documentation "Returns the current state of the state machine."))
 
-(defgeneric get-current-state (stm))
-
-(defgeneric set-current-state (stm state))
+(defgeneric set-current-state (stm state-name)
+  (:documentation "Sets the current state of the state machine to the state with.
+                   the given name. Does nothing if there is no state with that name.
+                   Returns the state that the state machine was set to."))
 
 (defgeneric process-signal (stm signal)
   (:documentation "If the current state has a transition for the signal, sets the 
                    current state to the state following the transition. Returns
-                   the new state or nil if there is no transition for the signal."))
+                   the new state or NIL if there is no transition for the signal."))
 
 
 (defmethod get-next-state ((stm state-machine) signal)

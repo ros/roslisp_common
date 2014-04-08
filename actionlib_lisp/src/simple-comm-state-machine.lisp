@@ -4,8 +4,10 @@
   (make-states '((:done (:send-goal :pending))
                  (:pending (:active :active
                             :preempting :active
-                            :recieve :done))
-                 (:active (:recallng :pending
+                            :lost :done
+                            :receive :done))
+                 (:active (:recalling :pending
+                           :lost :done
                            :receive :done)))))
 
 (defclass simple-comm-state-machine (comm-state-machine)
