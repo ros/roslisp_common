@@ -12,7 +12,7 @@
         (assert-true (actionlib::terminal-state gh))
         (progn
           (assert-false (actionlib::terminal-state gh))
-          (actionlib::process-signal (actionlib::csm gh) :receive)
+          (actionlib::transition-to (actionlib::csm gh) :receive)
           (assert-equal status (actionlib::terminal-state gh))))))
 
 (defun invalid-terminal-state-test (status)
@@ -20,7 +20,7 @@
                            :comm-state-machine (make-csm nil nil nil))))
     (actionlib::update-status (actionlib::csm gh) status)
     (assert-false (actionlib::terminal-state gh))
-    (actionlib::process-signal (actionlib::csm gh) :receive)
+    (actionlib::transition-to (actionlib::csm gh) :receive)
     (assert-false (actionlib::terminal-state gh))))
   
 (define-test cancel

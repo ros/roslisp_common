@@ -1,8 +1,5 @@
 (in-package :actionlib-test)
 
-
-;;;;;; TODO ADD TRANSITIONS IF GOAL IS LOST
-
 (defparameter *valid-transitions* '(:send-goal :cancel-goal :pending :active 
                                     :recalling :preempting :rejected :aborted
                                     :succeeded :recalled :preempted :receive))
@@ -33,7 +30,7 @@
                                                 transition-name))))))
 
 (defun test-state-transition (state transition)
-  (let ((stm (make-instance 'actionlib::comm-state-machine))
+  (let ((stm (actionlib::stm (make-instance 'actionlib::comm-state-machine)))
         (target-state nil)
         (target-state-name nil))
     (actionlib::set-current-state stm state)
@@ -138,21 +135,21 @@
       ;; deine tests
       (assert-true my-place))))|#
 
-(defun set-state (csm state-name)
-  (actionlib::set-current-state csm state-name))
+(defun set-state (stm state-name)
+  (actionlib::set-current-state stm state-name))
 
 (defun test-update-status (state status)
   (let* ((transition-received nil)
          (transition-cb #'(lambda () (setf transition-received t)))
          (csm (make-csm transition-cb nil nil))
          (target-state nil))
-    (set-state csm state)
-    (setf target-state (actionlib::get-next-state csm status))
+    (set-state (actionlib::stm csm) state)
+    (setf target-state (actionlib::get-next-state (actionlib::stm csm) status))
     (actionlib::update-status csm status)
     (when target-state
           (assert-true transition-received)
           (assert-equal (actionlib::name target-state) 
-                        (actionlib::name (actionlib::get-state csm)))
+                        (actionlib::comm-state csm))
           (assert-equal (actionlib::latest-goal-status csm) status))))
 
 (define-test update-status
@@ -165,12 +162,12 @@
         do (let* ((transition-received nil)
                   (transition-cb #'(lambda () (setf transition-received t)))
                   (csm (make-csm transition-cb nil nil)))
-             (set-state csm state)
+             (set-state (actionlib::stm csm) state)
              (assert-false (actionlib::latest-result csm))
              (actionlib::update-result csm "test-result")
              (assert-true transition-received)
              (assert-equal (actionlib::latest-result csm) "test-result")
-             (assert-equal (actionlib::name (actionlib::get-state csm)) :done))))
+             (assert-equal (actionlib::comm-state csm) :done))))
 
 (define-test update-feedback
   (let* ((feedback-received nil)
@@ -187,7 +184,7 @@
     (actionlib::update-result csm "test-result")
     (actionlib::update-status csm :succeeded)
     (assert-equal (actionlib::latest-goal-status csm) :succeeded)
-    (assert-equal (actionlib::name (actionlib::get-state csm)) :done)))
+    (assert-equal (actionlib::comm-state csm) :done)))
 
 
     

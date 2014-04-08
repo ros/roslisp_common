@@ -50,7 +50,7 @@
   (latest-result (csm goal-handle)))
 
 (defmethod terminal-state ((goal-handle client-goal-handle))
-  (let ((state (name (get-state (csm goal-handle))))
+  (let ((state (comm-state (csm goal-handle)))
         (status (goal-status goal-handle)))
     (if (and (equal state :done)
              (member status *terminal-states*))
