@@ -1,6 +1,12 @@
 (in-package :actionlib)
 
-(defparameter *simple-states* nil)
+(defparameter *simple-states*
+  (make-states '((:done (:send-goal :pending))
+                 (:pending (:active :active
+                            :preempting :active
+                            :recieve :done))
+                 (:active (:recallng :pending
+                           :receive :done)))))
 
 (defclass simple-comm-state-machine (comm-state-machine)
   ((simple-stm :initform (make-instance 'state-machine 

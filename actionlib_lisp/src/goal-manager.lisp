@@ -13,6 +13,9 @@
                                  :documentation "Time in seconds to wait for server
                                                  to acknowledge the goal before
                                                  goal-status is set to lost.")
+   (csm-type :initform 'comm-state-machine
+             :initarg :csm-type
+             :reader csm-type)
    (hash-mutex :initform (make-mutex :name "goal-hash-table-lock")
                :reader hash-mutex)
    (id-mutex :initform (make-mutex :name "goal-ids-lock")
@@ -60,7 +63,7 @@
 (defmethod init-goal ((manager goal-manager) transition-cb feedback-cb cancel-fn)
   (let* ((goal-id (generate-goal-id))
          (goal-handle (make-instance 'client-goal-handle))
-         (csm (make-instance 'comm-state-machine 
+         (csm (make-instance (csm-type manager)
                              :goal-id goal-id
                              :transition-cb (if transition-cb 
                                                 #'(lambda () (funcall transition-cb goal-handle)))

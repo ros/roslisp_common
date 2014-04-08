@@ -81,8 +81,11 @@
                          stamp 0
                          id goal-id)))
 
-(defun make-action-client (action-name action-type)
-  (let* ((goal-manager (make-instance 'goal-manager))
+(defun make-action-client (action-name action-type &key simple)
+  (let* ((goal-manager (make-instance 'goal-manager
+                                      :csm-type (if simple
+                                                    'simple-comm-state-machine
+                                                    'comm-state-machine)))
          (client (make-instance 'action-client
                                 :goal-manager goal-manager
                                 :action-type action-type

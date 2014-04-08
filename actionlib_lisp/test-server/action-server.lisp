@@ -129,17 +129,27 @@
       (setf (status goal) :succeeded))
     (send-result server goal-id :succeeded)))
 
-(defun recall-goal (server goal-id)
+(defun recalled-goal (server goal-id)
   (let ((goal (get-goal server goal-id)))
     (with-recursive-lock ((goal-mutex goal))
       (setf (status goal) :recalled))
     (send-result server goal-id :recalled)))
 
-(defun preempt-goal (server goal-id)
+(defun recalling-goal (server goal-id)
+  (let ((goal (get-goal server goal-id)))
+    (with-recursive-lock ((goal-mutex goal))
+      (setf (status goal) :recalling))))
+
+(defun preempted-goal (server goal-id)
   (let ((goal (get-goal server goal-id)))
     (with-recursive-lock ((goal-mutex goal))
       (setf (status goal) :preempted))
     (send-result server goal-id :preempted)))
+
+(defun preempting-goal (server goal-id)
+  (let ((goal (get-goal server goal-id)))
+    (with-recursive-lock ((goal-mutex goal))
+      (setf (status goal) :preempting))))
 
 (defun reject-goal (server goal-id)
   (let ((goal (get-goal server goal-id)))
