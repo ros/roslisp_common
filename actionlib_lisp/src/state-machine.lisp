@@ -41,7 +41,6 @@
                    current state to the state following the transition. Returns
                    the new state or NIL if there is no transition for the signal."))
 
-
 (defmethod get-next-state ((stm state-machine) signal)
   (getf (states stm)
         (get-next-state (get-state stm) signal)))
@@ -53,9 +52,6 @@
   (if state-name 
       (getf (states stm) state-name)
       (get-current-state stm)))
-
-(defmethod add-state ((stm state-machine) (state state))
-  (push state (states stm)))
 
 (defmethod process-signal ((stm state-machine) signal)
   (let ((next-state (get-next-state stm signal)))

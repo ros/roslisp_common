@@ -108,6 +108,10 @@
   (:documentation "Updates the state with the given feedback and executes the
                    feedback callback."))
 
+(defgeneric comm-state (goal-handle)
+  (:documentation "Returns the state of the goal's communication
+                   state machine."))
+
 ;;; Implementation
 
 (defmethod transition-to ((csm comm-state-machine) signal)
