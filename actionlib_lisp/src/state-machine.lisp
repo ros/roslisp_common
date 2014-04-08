@@ -30,7 +30,10 @@
 
 (defgeneric set-current-state (stm state))
 
-(defgeneric process-signal (stm signal))
+(defgeneric process-signal (stm signal)
+  (:documentation "If the current state has a transition for the signal, sets the 
+                   current state to the state following the transition. Returns
+                   the new state or nil if there is no transition for the signal."))
 
 
 (defmethod get-next-state ((stm state-machine) signal)
