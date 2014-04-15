@@ -1,4 +1,32 @@
-(in-package :actionlib)
+;;; Copyright (c) 2014, Jannik Buckelo <jannikbu@cs.uni-bremen.de>
+;;; All rights reserved.
+;;;
+;;; Redistribution and use in source and binary forms, with or without
+;;; modification, are permitted provided that the following conditions are met:
+;;;
+;;; * Redistributions of source code must retain the above copyright
+;;; notice, this list of conditions and the following disclaimer.
+;;; * Redistributions in binary form must reproduce the above copyright
+;;; notice, this list of conditions and the following disclaimer in the
+;;; documentation and/or other materials provided with the distribution.
+;;; * Neither the name of the Institute for Artificial Intelligence/
+;;; Universitaet Bremen nor the names of its contributors may be used to
+;;; endorse or promote products derived from this software without specific
+;;; prior written permission.
+;;;
+;;; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+;;; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+;;; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+;;; ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+;;; LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+;;; CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+;;; SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+;;; INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+;;; CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+;;; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+;;; POSSIBILITY OF SUCH DAMAGE.
+
+(in-package :actionlib-lisp)
 
 (defclass action-client ()
   ((goal-manager :initarg :goal-manager
@@ -10,7 +38,7 @@
    (action-type :initarg :action-type
                 :accessor action-type)
    (seq-nr :initform 0
-           :accessor seq)
+           :accessor seq-nr)
    (last-status-msg :initform nil
                     :accessor last-status-msg)
    (last-connection :initform nil
@@ -18,8 +46,8 @@
    (connection-timeout :initform 2
                        :initarg :connection-timeout
                        :reader connection-timeout)
-   (client-mutex :initform (make-mutex :name "action-client-lock")
-                 :reader ac-mutex))
+   (client-mutex :initform (make-mutex :name (string (gensym "action-client-lock"))) 
+                 :reader client-mutex))
   (:documentation "TODO"))
 
 (defgeneric send-goal (client goal &optional transition-cb feedback-cb)
@@ -54,17 +82,22 @@
 
 ;;;Implementation
 
-(defun make-action-client (action-name action-type &key (simple t))
+;; TODO(Jannik): separate this into make-action-client and make-simple-action-client
+
+(defun make-action-client (action-name action-type)
   "Creates and retruns an action-client.
    `acton-name' Name of the action.
-   `action-type' Type of the action. Must end with 'Action'.
-   `simple' If not NIL the states of the goal get summarized into
-            pending, active and done. Default is true."
+   `action-type' Type of the action. Must end with 'Action'."
+  (create-action-client action-name action-type nil))
+
+(defun create-action-client (action-name action-type simple)
   (let* ((goal-manager (make-instance 'goal-manager
                                       :csm-type (if simple
                                                     'simple-comm-state-machine
                                                     'comm-state-machine)))
-         (client (make-instance 'action-client
+         (client (make-instance (if simple 
+                                    'action-client
+                                    'simple-action-client)
                                 :goal-manager goal-manager
                                 :action-type action-type
                                 :goal-pub (advertise (make-action-topic action-name "goal")
@@ -80,27 +113,31 @@
     client))
 
 (defun feedback-callback (client msg)
+  "Callback for the feeback of the action server"
   (update-last-connection client)
   (update-feedbacks (goal-manager client) msg))
 
 (defun status-callback (client msg)
+  "Callback for the status messages of the action server"
   (update-last-connection client)  
   (setf (last-status-msg client) msg)
   (update-statuses (goal-manager client) msg))
 
 (defun result-callback (client msg)
+  "Callback for the result message of the action server"
   (update-last-connection client)
   (update-results (goal-manager client) msg))
 
 (defun update-last-connection (client)
-  (with-recursive-lock ((ac-mutex client))
+  "Updates the time of the last communication with the action server"
+  (with-recursive-lock ((client-mutex client))
     (setf (last-connection client) (ros-time))))
 
-(defun next-seq (client)
-  (incf (seq client)))
-
 (defun send-cancel-msg (client goal-id)
-  (format t "Cancel ~a~%" goal-id)
+  "Publishes a msg with the goal-id on the cancel topic"
+  ; TODO(Jannik): make printing optional with key-parameter
+  ; disabled for now
+  ;(format t "Cancel ~a~%" goal-id)
   (publish (cancel-pub client)
            (make-message "actionlib_msgs/GoalID"
                          stamp 0
@@ -109,21 +146,24 @@
 (defmethod send-goal ((client action-client) goal-msg &optional 
                                                         transition-cb
                                                         feedback-cb)
+  "Sends a goal to the action server and returns the goal-handle"
   (let ((goal-handle (init-goal (goal-manager client) transition-cb feedback-cb
                                 #'(lambda (goal-id) (send-cancel-msg client goal-id)))))
     (publish (goal-pub client)
              (make-message (make-action-type (action-type client) "Goal")
                            (stamp header) (ros-time)
-                           (seq header) (next-seq client)
+                           (seq header) (incf (seq-nr client))
                            (stamp goal_id) (ros-time)
                            (id goal_id) (goal-id goal-handle)
                            goal goal-msg))
     goal-handle))
 
 (defmethod cancel-all-goals ((client action-client))
-    (send-cancel-msg client ""))
+  "Sends a cancel msg with an empty goal-id"
+  (send-cancel-msg client ""))
 
 (defmethod wait-for-server ((client action-client) &optional timeout)
+  "Loops until the client connects with the action server"
   (let ((start-time (ros-time)))
     (loop while (and (not (is-connected client))
                      (if timeout 
@@ -133,7 +173,8 @@
   (is-connected client))
 
 (defmethod is-connected ((client action-client))
-  (if (with-recursive-lock ((ac-mutex client))
+  "Checks if the client has recently heard anything from the action server"
+  (if (with-recursive-lock ((client-mutex client))
         (last-connection client))
       (< (- (ros-time) (last-connection client)) 
          (connection-timeout client))))

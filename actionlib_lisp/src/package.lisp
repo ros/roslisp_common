@@ -1,6 +1,7 @@
 (in-package :cl-user)
 
-(defpackage :actionlib
+(defpackage :actionlib-lisp
+  (:nicknames :actionlib)
   (:use :cl :roslisp :actionlib_msgs-msg :sb-thread)
   (:export :cancel :cancel-all-goals :cancel-at-before-time :comm-state
            :goal-id :goal-status :is-connected :make-action-goal
