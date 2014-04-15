@@ -1,10 +1,12 @@
+;; TODO(Jannik): add license header
+
 (in-package :actionlib)
 
 (defvar *terminal-states* '(:rejected :recalled :aborted :succeeded :preempted :lost))
 
 (defclass client-goal-handle ()
   ((comm-state-machine :initarg :comm-state-machine
-                       :accessor csm)))
+                       :accessor comm-state-machine)))
 
 (defgeneric goal-id (goal-handle)
   (:documentation "Returns the id of the goal."))
@@ -30,23 +32,23 @@
 ;;;Implementation
 
 (defmethod goal-id ((goal-handle client-goal-handle))
-  (get-goal-id (csm goal-handle)))
+  (get-goal-id (comm-state-machine goal-handle)))
 
 (defmethod cancel ((goal-handle client-goal-handle))
-  (transition-to (csm goal-handle) :cancel-goal)
-  (funcall (send-cancel-fn (csm goal-handle))))
+  (transition-to (comm-state-machine goal-handle) :cancel-goal)
+  (funcall (send-cancel-fn (comm-state-machine goal-handle))))
  
 (defmethod comm-state ((goal-handle client-goal-handle))
-  (comm-state (csm goal-handle)))
+  (comm-state (comm-state-machine goal-handle)))
 
 (defmethod goal-status ((goal-handle client-goal-handle))
-  (latest-goal-status (csm goal-handle)))
+  (latest-goal-status (comm-state-machine goal-handle)))
 
 (defmethod result ((goal-handle client-goal-handle))
-  (latest-result (csm goal-handle)))
+  (latest-result (comm-state-machine goal-handle)))
 
 (defmethod terminal-state ((goal-handle client-goal-handle))
-  (let ((state (comm-state (csm goal-handle)))
+  (let ((state (comm-state (comm-state-machine goal-handle)))
         (status (goal-status goal-handle)))
     (if (and (equal state :done)
              (member status *terminal-states*))

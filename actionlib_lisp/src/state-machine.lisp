@@ -1,4 +1,4 @@
-(in-package :actionlib)
+(in-package :actionlib-lisp)
 
 (defclass state-machine ()
   ((current-state

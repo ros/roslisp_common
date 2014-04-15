@@ -1,6 +1,6 @@
 ;;;; -*- Mode: LISP -*-
 
-(defsystem "actionlib"
+(defsystem "actionlib-lisp"
   :depends-on ("roslisp" "roslisp-utilities" "actionlib_msgs-msg" "actionlib_tutorials-msg")
   :components
   ((:module "src"
@@ -17,4 +17,5 @@
              (:file "action-client" :depends-on ("package" "comm-state-machine" 
                                                            "simple-comm-state-machine"
                                                            "client-goal-handle"
-                                                           "action-utils"))))))
+                                                           "action-utils"))
+             (:file "simple-action-client" :depends-on ("package" "action-client"))))))

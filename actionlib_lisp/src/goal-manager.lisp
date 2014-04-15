@@ -1,4 +1,4 @@
-(in-package :actionlib)
+(in-package :actionlib-lisp)
 
 (defclass goal-manager ()
   ((goals :initform (make-hash-table :test #'equal)
@@ -39,28 +39,20 @@
 
 
 ;;;Implementation
-(defmacro goal-with-id (manager goal-id)
-  `(gethash ,goal-id (goals ,manager)))
-
-(defmacro with-id-and-status (status-msg &rest body)
-  (let ((hash-value (gensym)))
-   `(multiple-value-bind (id status-symbol) (status-msg->id-status ,status-msg)
-      (let* ((,hash-value (with-recursive-lock ((hash-mutex manager))
-                            (goal-with-id manager id)))
-             (csm (nth-value 0 ,hash-value)))
-        (when ,hash-value
-          ,@body)))))
-
 (defun status-msg->id-status (status-msg)
+  "Gets a status msg and returns a the id and status"
   (with-fields (status (id (id goal_id))) status-msg
     (let ((status-symbol (car (rassoc status
                                       (symbol-codes 'actionlib_msgs-msg:GoalStatus)))))
       (values id status-symbol))))
 
 (defun generate-goal-id ()
+  "Generates a new goal-id"
+  ;; TODO(Jannik): chose something standard-compliant here
   (format nil "a_lisp_~a_~a" *ros-node-name* (ros-time)))
 
 (defmethod init-goal ((manager goal-manager) transition-cb feedback-cb cancel-fn)
+  "Creates a new comm-state-machine and goal-handle and returns the goal-handle"
   (let* ((goal-id (generate-goal-id))
          (goal-handle (make-instance 'client-goal-handle))
          (csm (make-instance (csm-type manager)
@@ -73,22 +65,27 @@
                              :send-cancel-fn #'(lambda () (funcall cancel-fn goal-id)))))
     (setf (csm goal-handle) csm)
     (with-recursive-lock ((hash-mutex manager))
-      (setf (goal-with-id manager goal-id) csm))
+      (setf (gethash goal-id (goals manager)) csm))
     (with-recursive-lock ((id-mutex manager))
       (push goal-id (goal-ids manager)))
     goal-handle))
 
 (defmethod update-statuses ((manager goal-manager) status-array)
+  "Updates the statuses of all goals that the goal-manager tracks. If the status 
+   array contains the goal-id of comm-state-machine, the state of the comm-state-machine
+   gets updated with the status else the comm-state-machine gets set to lost"
   (let ((goal-ids (with-recursive-lock ((id-mutex manager))
                     (copy-list (goal-ids manager)))))
     (with-fields ((status-list status_list)) status-array
       (loop for goal-status being the elements of status-list
-            do (with-id-and-status goal-status
-                 (setf goal-ids (remove id goal-ids :test #'equal))
-                 (update-status csm status-symbol)))
+            do (multiple-value-bind (id status-symbol) (status-msg->id-status goal-status)
+                 (multiple-value-bind (comm-state-machine has-state-machine-p) (gethash id (goals manager))
+                   (when has-state-machine-p
+                     (setf goal-ids (remove id goal-ids :test #'equal))
+                     (update-status comm-state-machine status-symbol)))))
       (loop for goal-id in goal-ids
             do (let ((csm (with-recursive-lock ((hash-mutex manager))
-                            (nth-value 0 (goal-with-id manager goal-id)))))
+                            (nth-value 0 (gethash ,goal-id (goals ,manager))))))
                  (when (or (not (eql (name (get-current-state (stm csm)))
                                      :waiting-for-goal-ack))
                            (> (- (ros-time) (start-time csm)) 
@@ -99,13 +96,22 @@
                    (update-status csm :lost)))))))
 
 (defmethod update-results ((manager goal-manager) action-result)
+  "Updates the comm-state-machine with the goal-id from the result message."
   (with-fields (status result) action-result
-    (with-id-and-status status
-      (update-status csm status-symbol)
-      (update-result csm result))))
-
+    (multiple-value-bind (id status-symbol) (status-msg->id-status status)
+      (multiple-value-bind (comm-state-machine has-state-machine-p) (gethash id (goals manager))
+        (when has-state-machine-p
+          (update-status csm status-symbol)
+          (update-result csm result))))))
+    
 (defmethod update-feedbacks ((manager goal-manager) action-feedback)
+  "Updates the comm-state-machine with the goal-id from the feedback message."
   (with-fields (status feedback) action-feedback
-    (with-id-and-status status
-      (update-status csm status-symbol)
-      (update-feedback csm feedback))))
+    (multiple-value-bind (id status-symbol) (status-msg->id-status status)
+      (multiple-value-bind (comm-state-machine has-state-machine-p) (gethash id (goals manager))
+        (when has-state-machine-p
+          (update-status csm status-symbol)
+          (update-feedback csm feedback))))))
+
+(defmethod cancel-all-goals ((manager goal-manager))
+  

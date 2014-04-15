@@ -1,4 +1,6 @@
-(in-package :actionlib)
+(in-package :actionlib-lisp)
+
+;; TODO(Jannik): add comments for all of these
 
 (defmacro make-action-goal-msg (client &body args)
   `(make-message (action-goal-type (action-type ,client))

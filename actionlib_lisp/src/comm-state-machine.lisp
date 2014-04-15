@@ -1,4 +1,4 @@
-(in-package :actionlib)
+(in-package :actionlib-lisp
 
 (defparameter *states* 
   ;;              State   Signal     Target-State
@@ -86,11 +86,11 @@
    (stm-mutex :initform (make-mutex :name "state-machine-lock")
               :reader stm-mutex)
    (stat-mutex :initform (make-mutex :name "status-lock")
-                 :reader status-mutex)
+                 :reader status-mutex) ;; TODO(Jannik): rename slot to status-mutex
    (res-mutex :initform (make-mutex :name "result-lock")
-                 :reader result-mutex)
+                 :reader result-mutex) ;; TODO(Jannik): rename slot to result-mutex
    (fb-mutex :initform (make-mutex :name "feedback-lock")
-                   :reader feedback-mutex))
+                   :reader feedback-mutex)) ;; TODO(Jannik): make slot and reader same
   (:documentation "Monitors the state of the communication between action-client
                    and the server for one goal and executes the callbacks."))
 
@@ -115,15 +115,18 @@
 ;;; Implementation
 
 (defmethod transition-to ((csm comm-state-machine) signal)
-   ;; If the result came before the last status update
-  (if (eql (name (get-current-state (stm csm))) :done)
-      (if (transition-cb csm)
-          (funcall (transition-cb csm))))
-  (if (process-signal (stm csm) signal)
-      (if (transition-cb csm)
-          (funcall (transition-cb csm)))))
+  "Tranists to the next state given the signal and calls the
+   transition-callback. If the result was processed before the 
+   last status update the transition-callback gets called even
+   if the state-machine doesn't change"
+  (if (and (or (eql (name (get-current-state (stm csm))) :done)
+               (process-signal (stm csm) signal))
+           (transition-cb csm))
+      (funcall (transition-cb csm))))
 
 (defmethod update-status ((csm comm-state-machine) status)
+  "If the status is not equal to the last status the comm-state-machine
+   gets updated with the new status"
   (when (not (eql (latest-goal-status csm) status))
     (with-recursive-lock ((status-mutex csm))
       (setf (latest-goal-status csm) status))
@@ -131,16 +134,21 @@
         (transition-to csm status))))
       
 (defmethod update-result ((csm comm-state-machine) action-result)
-  (with-mutex ((result-mutex csm))
+  "Updates the result of the comm-state-machine"
+  (with-recursive-lock ((result-mutex csm))
     (setf (latest-result csm) action-result))
   (transition-to csm :receive))
 
 (defmethod update-feedback ((csm comm-state-machine) action-feedback)
-  (with-mutex ((feedback-mutex csm))
+  "Updates the latest feedback of the comm-state-machine and calls 
+   the feedback-callback"
+  (with-recursive-lock ((feedback-mutex csm))
     (setf (latest-feedback csm) action-feedback))
   (if (feedback-cb csm)
       (funcall (feedback-cb csm) action-feedback)))
 
 (defmethod comm-state ((csm comm-state-machine))
+  "Returns the name of the current state of the comm-state-machine
+   as a symbol"
   (name (get-current-state (stm csm))))
   
