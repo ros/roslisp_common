@@ -50,7 +50,7 @@
                  :reader client-mutex))
   (:documentation "TODO"))
 
-(defgeneric send-goal (client goal &optional transition-cb feedback-cb)
+(defgeneric send-goal (client goal &key &allow-other-keys)
   (:documentation "Sends a goal to the action server.
                    `client' is an instance of ACTION-CLIENT.
                    `goal' is an instance of the Goal message.
@@ -92,12 +92,12 @@
 
 (defun create-action-client (action-name action-type simple)
   (let* ((goal-manager (make-instance 'goal-manager
-                                      :csm-type (if simple
-                                                    'simple-comm-state-machine
-                                                    'comm-state-machine)))
+                                      :csm-type 'comm-state-machine)) ;(if simple
+                                                                      ;'simple-comm-state-machine
+                                                                      ;'comm-state-machine)))
          (client (make-instance (if simple 
-                                    'action-client
-                                    'simple-action-client)
+                                    'simple-action-client
+                                    'action-client)
                                 :goal-manager goal-manager
                                 :action-type action-type
                                 :goal-pub (advertise (make-action-topic action-name "goal")
@@ -143,7 +143,7 @@
                          stamp 0
                          id goal-id)))
 
-(defmethod send-goal ((client action-client) goal-msg &optional 
+(defmethod send-goal ((client action-client) goal-msg &key 
                                                         transition-cb
                                                         feedback-cb)
   "Sends a goal to the action server and returns the goal-handle"
