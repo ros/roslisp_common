@@ -1,3 +1,31 @@
+;;; Copyright (c) 2014, Jannik Buckelo <jannikbu@cs.uni-bremen.de>
+;;; All rights reserved.
+;;;
+;;; Redistribution and use in source and binary forms, with or without
+;;; modification, are permitted provided that the following conditions are met:
+;;;
+;;; * Redistributions of source code must retain the above copyright
+;;; notice, this list of conditions and the following disclaimer.
+;;; * Redistributions in binary form must reproduce the above copyright
+;;; notice, this list of conditions and the following disclaimer in the
+;;; documentation and/or other materials provided with the distribution.
+;;; * Neither the name of the Institute for Artificial Intelligence/
+;;; Universitaet Bremen nor the names of its contributors may be used to
+;;; endorse or promote products derived from this software without specific
+;;; prior written permission.
+;;;
+;;; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+;;; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+;;; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+;;; ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+;;; LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+;;; CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+;;; SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+;;; INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+;;; CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+;;; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+;;; POSSIBILITY OF SUCH DAMAGE.
+
 (in-package :actionlib-lisp)
 
 (defclass goal-manager ()
@@ -16,6 +44,8 @@
    (csm-type :initform 'comm-state-machine
              :initarg :csm-type
              :reader csm-type)
+   (id-counter :initform -1
+               :accessor id-counter)
    (hash-mutex :initform (make-mutex :name "goal-hash-table-lock")
                :reader hash-mutex)
    (id-mutex :initform (make-mutex :name "goal-ids-lock")
@@ -37,6 +67,8 @@
   (:documentation "Updates the with the action-feedback associated comm-state-machine
                    with the feedback message."))
 
+(defgeneric stop-tracking-goals (manager))
+
 
 ;;;Implementation
 (defun status-msg->id-status (status-msg)
@@ -46,14 +78,15 @@
                                       (symbol-codes 'actionlib_msgs-msg:GoalStatus)))))
       (values id status-symbol))))
 
-(defun generate-goal-id ()
+(defun generate-goal-id (manager)
   "Generates a new goal-id"
   ;; TODO(Jannik): chose something standard-compliant here
-  (format nil "a_lisp_~a_~a" *ros-node-name* (ros-time)))
+  (incf (id-counter manager))
+  (format nil "~a_~a_~a" *ros-node-name* (id-counter manager) (ros-time)))
 
 (defmethod init-goal ((manager goal-manager) transition-cb feedback-cb cancel-fn)
   "Creates a new comm-state-machine and goal-handle and returns the goal-handle"
-  (let* ((goal-id (generate-goal-id))
+  (let* ((goal-id (generate-goal-id manager))
          (goal-handle (make-instance 'client-goal-handle))
          (csm (make-instance (csm-type manager)
                              :goal-id goal-id
@@ -63,7 +96,7 @@
                                               #'(lambda (feedback) 
                                                   (funcall feedback-cb goal-handle feedback)))
                              :send-cancel-fn #'(lambda () (funcall cancel-fn goal-id)))))
-    (setf (csm goal-handle) csm)
+    (setf (comm-state-machine goal-handle) csm)
     (with-recursive-lock ((hash-mutex manager))
       (setf (gethash goal-id (goals manager)) csm))
     (with-recursive-lock ((id-mutex manager))
@@ -85,7 +118,7 @@
                      (update-status comm-state-machine status-symbol)))))
       (loop for goal-id in goal-ids
             do (let ((csm (with-recursive-lock ((hash-mutex manager))
-                            (nth-value 0 (gethash ,goal-id (goals ,manager))))))
+                            (nth-value 0 (gethash goal-id (goals manager))))))
                  (when (or (not (eql (name (get-current-state (stm csm)))
                                      :waiting-for-goal-ack))
                            (> (- (ros-time) (start-time csm)) 
@@ -101,8 +134,8 @@
     (multiple-value-bind (id status-symbol) (status-msg->id-status status)
       (multiple-value-bind (comm-state-machine has-state-machine-p) (gethash id (goals manager))
         (when has-state-machine-p
-          (update-status csm status-symbol)
-          (update-result csm result))))))
+          (update-status comm-state-machine status-symbol)
+          (update-result comm-state-machine result))))))
     
 (defmethod update-feedbacks ((manager goal-manager) action-feedback)
   "Updates the comm-state-machine with the goal-id from the feedback message."
@@ -110,8 +143,11 @@
     (multiple-value-bind (id status-symbol) (status-msg->id-status status)
       (multiple-value-bind (comm-state-machine has-state-machine-p) (gethash id (goals manager))
         (when has-state-machine-p
-          (update-status csm status-symbol)
-          (update-feedback csm feedback))))))
+          (update-status comm-state-machine status-symbol)
+          (update-feedback comm-state-machine feedback))))))
 
-(defmethod cancel-all-goals ((manager goal-manager))
+(defmethod stop-tracking-goals ((manager goal-manager))
+  "Removes all comm-state-machines and goal-ids"
+  (setf (goal-ids manager) nil)
+  (setf (goals manager) (make-hash-table :test #'equal)))
   
