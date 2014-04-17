@@ -29,7 +29,8 @@
 (in-package actionlib-lisp)
 
 (defclass simple-action-client (action-client)
-  ((goal-handle :accessor goal-handle))
+  ((goal-handle :initform nil
+                :accessor goal-handle))
   (:documentation "Like the action-client but simple"))
 
 (defgeneric send-goal-and-wait (client goal-msg execute-timeout preempt-timeout)
@@ -60,16 +61,26 @@
 
 
 (defun make-simple-action-client (action-name action-type)
+  "Returns an instance of simple-action-client initialized and subscribes to
+   to the topics of the action-server."
   (create-action-client action-name action-type t))
 
 (defun timeout-not-reached (start-time timeout)
+  "Checks if the `timeout' seconds have passed since `start-time'. If that the case 
+   returns NIL else TRUE"
   (if (eql timeout 0)
       t
       (> timeout (- (ros-time) start-time))))
 
 (defmethod send-goal ((client simple-action-client) goal-msg &key
                        done-cb active-cb feedback-cb)
-  "Sends a goal to the action server"
+  "Sends a goal to the action server.
+   `done-cb' Callback that gets called when the goal received a result and is done.
+             It takes the state information of the goal and the result as parameters.
+   `active-cd' Callback that gets called when the state of the goal changes to active.
+               It takes no parameters.
+   `feedbak-cb' Callback that gets callback eveytime feeback for the goal is received.
+                It takes the feedback message as parameter."
   (stop-tracking-goal client)
   (setf (goal-handle client)
         (call-next-method client goal-msg
@@ -84,10 +95,13 @@
                                            (declare (ignore goal-handle))
                                            (if feedback-cb
                                                (funcall feedback-cb feedback)))))
-  nil)
+  t)
 
 (defmethod send-goal-and-wait ((client simple-action-client) goal-msg 
                                execute-timeout preempt-timeout)
+  "Sends a goal to the action server and loops until the goal is done or
+   the `execute-timeout' is reached and then loops until the goal preempetd or
+   the `preempt-timeout' is reached. Returns the state information of the goal"
   (let ((execute-start-time (ros-time))
         (preempt-start-time nil)
         (is-done nil))
@@ -107,6 +121,8 @@
     (state client)))
   
 (defmethod state ((client simple-action-client))
+  "Returns the state information of the goal tracked by the client. 
+   RECALLING gets mapped to PENDING and PREEMPTING to ACTIVE"
   (let ((status (goal-status (goal-handle client))))
     (cond
       ((eql status :recalling)
@@ -117,16 +133,27 @@
        status))))       
 
 (defmethod result ((client simple-action-client))
-  (result (goal-handle client)))
+  "Returns the result of the goal tracked by the client. NIL the client tracks
+   no goal or no result has been received yet."
+  (if (goal-handle client)
+      (result (goal-handle client))))
 
 (defmethod cancel-goal ((client simple-action-client))
+  "Cancels the goal tracked by the client."
   (cancel (goal-handle client)))
 
 (defmethod stop-tracking-goal ((client simple-action-client))
-  (stop-tracking-goals (goal-manager client)))
+  "Removes all goals that form the goal-manager."
+  (stop-tracking-goals (goal-manager client))
+  t)
 
-(defmethod waiting-for-result ((client simple-action-client) timeout)
-  (loop while (and (timeout-not-reached (ros-time) timeout)
-                   (not (eql (comm-state (goal-handle client)) :done)))
-        do (sleep 0.01))
+(defmethod wait-for-result ((client simple-action-client) timeout)
+  "Loops until a result is received or the timeout is reached. Returns the state
+   of the goal. An Error is thrown if the client hasn't sent a goal yet."
+  (assert (goal-handle client) nil 
+          "No goal has been sent.")
+  (let ((start-time (ros-time)))
+    (loop while (and (timeout-not-reached start-time timeout)
+                     (not (eql (comm-state (goal-handle client)) :done)))
+          do (sleep 0.01)))
   (eql (comm-state (goal-handle client)) :done))

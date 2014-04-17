@@ -50,17 +50,10 @@
                  :reader client-mutex))
   (:documentation "TODO"))
 
-(defgeneric send-goal (client goal &key &allow-other-keys)
+(defgeneric send-goal (client goal-msg &key &allow-other-keys)
   (:documentation "Sends a goal to the action server.
                    `client' is an instance of ACTION-CLIENT.
-                   `goal' is an instance of the Goal message.
-                   `transitions-cb' Callback that gets called on every
-                    state transition for the sent goal. It takes a
-                    CLIENT-GOAL-HANDLE as a parameter.
-                    `feedback-cb' Callback that gets called evey time the
-                    client receives feedback for the sent goal. It takes a
-                    CLIENT-GOAL-HANDLE and an instance of the feedback 
-                    message as arguments."))
+                   `goal-msg' is an instance of the Goal message."))
 
 (defgeneric cancel-all-goals (client)
   (:documentation "Cancels all goals currently running on the action server."))
@@ -146,7 +139,14 @@
 (defmethod send-goal ((client action-client) goal-msg &key 
                                                         transition-cb
                                                         feedback-cb)
-  "Sends a goal to the action server and returns the goal-handle"
+  "Sends a goal to the action server and returns the goal-handle.
+   `transitions-cb' Callback that gets called on every
+                    state transition for the sent goal. It takes a
+                    CLIENT-GOAL-HANDLE as a parameter.
+   `feedback-cb' Callback that gets called evey time the
+                 client receives feedback for the sent goal. It takes a
+                 CLIENT-GOAL-HANDLE and an instance of the feedback 
+                 message as arguments."
   (let ((goal-handle (init-goal (goal-manager client) transition-cb feedback-cb
                                 #'(lambda (goal-id) (send-cancel-msg client goal-id)))))
     (publish (goal-pub client)
