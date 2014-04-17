@@ -26,7 +26,7 @@
 ;;; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ;;; POSSIBILITY OF SUCH DAMAGE.
 
-(in-package :actionlib)
+(in-package :actionlib-lisp)
 
 (defvar *terminal-states* '(:rejected :recalled :aborted :succeeded :preempted :lost))
 

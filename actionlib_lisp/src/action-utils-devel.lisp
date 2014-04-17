@@ -1,3 +1,6 @@
+(in-package :actionlib-lisp)
+;; TODO(Jannik): add comments for all of these
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Software License Agreement (BSD License)
 ;; 
@@ -37,50 +40,19 @@
 ;; DAMAGE.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
-(in-package :actionlib)
-
-;;; This file contains (non-mutating) utils that are used by both, the
-;;; server and the client implementations.
-
-(defgeneric goal-id (g))
-(defgeneric get-status-symbol (s))
-
-(defmethod goal-id ((g ros-message))
-  "Takes in a FooActionGoal message and returns the id string"
-  (with-fields ((id (:id :goal_id))) g
-    id))
-
-(defmethod get-status-symbol ((status <GoalStatus>))
-  (let ((pair (rassoc (status status)
-                      (symbol-codes '<GoalStatus>))))
-    (assert pair () "Could not find status code for `~a'" status)
-    (car pair)))
-
-(defun action-package (msg-type)
-  (etypecase msg-type
-    (symbol (symbol-package msg-type))
-    (string
-       (destructuring-bind (pkg-name type) (roslisp-utils:tokens
-                                            (string-upcase msg-type)
-                                            :separators '(#\/))
-         (declare (ignore type))
-         (find-package (intern (concatenate 'string pkg-name "-MSG") 'keyword))))))
-
-(defun make-status (status goal)
-  (make-msg "actionlib_msgs/GoalStatus"
-            (id goal_id) goal
-            status (symbol-code '<GoalStatus> status)))
+(defmacro make-action-goal-msg (client &body args)
+  `(make-message (action-goal-type (action-type ,client))
+                 ,@args))
 
 (defun str-has-suffix (str suffix)
   (and (> (length str) (length suffix))
        (equal (subseq str (- (length str) (length suffix)))
               suffix)))
 
-(defun action-topic (a suffix)
+(defun make-action-topic (a suffix)
   (concatenate 'string a "/" suffix))
 
-(defun action-type (a suffix)
+(defun make-action-type (a suffix)
   (assert (str-has-suffix a "Action")
           nil
           "The action type is invalid. Actions always have the suffix 'Action'")
@@ -96,7 +68,3 @@
 
 (defun action-goal-type (a)
   (action-msg-type a "Goal"))
-
-;; Needed to prevent problems with older and newer sbcl versions
-(defun lisp-version-number ()
-  (parse-integer (remove #\. (lisp-implementation-version)) :junk-allowed t))
