@@ -48,7 +48,7 @@
     :initform nil
     :accessor transitions)))
 
-(defgeneric get-next-state (stm signal)
+(defgeneric get-next-state (state signal)
   (:documentation "Returns the state that the transition for signal from the
                    current state points to."))
 
@@ -69,38 +69,53 @@
                    current state to the state following the transition. Returns
                    the new state or NIL if there is no transition for the signal."))
 
+;;; Implementation
+
 (defmethod get-next-state ((stm state-machine) signal)
+  "Returns the state that follows the `signal' transition from the 
+   current state of the state-machine."
   (getf (states stm)
         (get-next-state (get-state stm) signal)))
 
 (defmethod get-next-state ((state state) signal)
+  "Returns the state that follows the `signal' transition from the `state'"
   (getf (transitions state) signal))
 
 (defmethod get-state ((stm state-machine) &optional state-name)
+  "Returns the state with name `state-name' or the current state of the state-machine
+   if `state-name' is not set."
   (if state-name 
       (getf (states stm) state-name)
       (get-current-state stm)))
 
 (defmethod process-signal ((stm state-machine) signal)
+  "If there is a transition `signal' for the current state of the state-machine set
+   the current state to the one following the transition. Returns the new current state
+   or NIL if there is no transition for the current state."
   (let ((next-state (get-next-state stm signal)))
     (if next-state
         (set-current-state stm next-state))))
 
 (defmethod get-current-state ((stm state-machine))
+  "Returns the current state of the state-machine"
   (with-recursive-lock ((state-mutex stm))
     (current-state stm)))
 
 (defmethod set-current-state ((stm state-machine) (state state))
+  "Sets the current state to `state'."
   (with-recursive-lock ((state-mutex stm))
     (setf (current-state stm) state)))
 
 (defmethod set-current-state ((stm state-machine) state-name)
+  "Sets the current state to the state with name `state-name' if it exists."
   (let ((state (get-state stm state-name)))
     (if state
         (with-mutex ((state-mutex stm))
           (setf (current-state stm) state)))))
 
 (defun make-states (state-transitions)
+  "Gets a list with state-names followed by their transitions. The transitions
+   are a list of the name of the transition followed by the target state."
   (let ((result nil))
     (loop for state-transition in state-transitions
           do (push (make-state state-transition)
@@ -109,6 +124,8 @@
     result))
 
 (defun make-state (state-transition)
+   "Gets a list a state-name followed by his transitions. The transitions
+    are a list of the name of the transition followed by the target state."
   (make-instance 'state 
                  :name (first state-transition)
                  :transitions (second state-transition)))

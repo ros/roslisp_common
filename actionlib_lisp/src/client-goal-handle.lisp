@@ -28,15 +28,11 @@
 
 (in-package :actionlib-lisp)
 
-(defvar *terminal-states* '(:rejected :recalled :aborted :succeeded :preempted :lost))
-
 (defclass client-goal-handle ()
   ((comm-state-machine :initarg :comm-state-machine
-                       :accessor comm-state-machine)))
-
-(defgeneric goal-id (goal-handle)
-  (:documentation "Returns the id of the goal."))
-                  
+                       :accessor comm-state-machine))
+  (:documentation "Handle for the goal that mainly wraps around the comm-state-machine."))
+                 
 (defgeneric cancel (goal-handle)
   (:documentation "Sends the Server a message to cancel the goal."))
 
@@ -58,25 +54,33 @@
 ;;;Implementation
 
 (defmethod goal-id ((goal-handle client-goal-handle))
-  (get-goal-id (comm-state-machine goal-handle)))
+  "Returns the id of the goal"
+  (goal-id (comm-state-machine goal-handle)))
 
 (defmethod cancel ((goal-handle client-goal-handle))
+  "Makes a calls the :cancel-goal transition to change the state
+   of the goal and sends a cancel message to the server."
   (transition-to (comm-state-machine goal-handle) :cancel-goal)
   (funcall (send-cancel-fn (comm-state-machine goal-handle))))
  
 (defmethod comm-state ((goal-handle client-goal-handle))
+  "Returns the state of the comm-state-machine"
   (comm-state (comm-state-machine goal-handle)))
 
 (defmethod goal-status ((goal-handle client-goal-handle))
+  "Returns the status of the goal as it stands in the status-msg from
+   the server."
   (latest-goal-status (comm-state-machine goal-handle)))
 
 (defmethod result ((goal-handle client-goal-handle))
+  "Returns the last result the client received for the goal."
   (latest-result (comm-state-machine goal-handle)))
 
 (defmethod terminal-state ((goal-handle client-goal-handle))
+  "Retuns the state of the goal if the goal is done else nil."
   (let ((state (comm-state (comm-state-machine goal-handle)))
         (status (goal-status goal-handle)))
-    (if (and (equal state :done)
-             (member status *terminal-states*))
-        status)))
+    (if (equal state :done)
+        status
+        nil)))
       
