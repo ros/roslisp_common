@@ -30,7 +30,9 @@
 
 (defclass action-client ()
   ((goal-manager :initarg :goal-manager
-                 :accessor goal-manager)
+                 :accessor goal-manager
+                 :documentation "Updates the states of the goals
+                                 and executes the callbacks.")
    (goal-pub :initarg :goal-pub
              :accessor goal-pub)
    (cancel-pub :initarg :cancel-pub
@@ -48,7 +50,8 @@
                        :reader connection-timeout)
    (client-mutex :initform (make-mutex :name (string (gensym "action-client-lock"))) 
                  :reader client-mutex))
-  (:documentation "TODO"))
+  (:documentation "The action-client can send goals to the actio server and monitors
+                   their states and execute their callbacks."))
 
 (defgeneric send-goal (client goal-msg &key &allow-other-keys)
   (:documentation "Sends a goal to the action server.
@@ -128,9 +131,6 @@
 
 (defun send-cancel-msg (client goal-id)
   "Publishes a msg with the goal-id on the cancel topic"
-  ; TODO(Jannik): make printing optional with key-parameter
-  ; disabled for now
-  ;(format t "Cancel ~a~%" goal-id)
   (publish (cancel-pub client)
            (make-message "actionlib_msgs/GoalID"
                          stamp 0

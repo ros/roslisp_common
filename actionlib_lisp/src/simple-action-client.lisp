@@ -31,7 +31,11 @@
 (defclass simple-action-client (action-client)
   ((goal-handle :initform nil
                 :accessor goal-handle))
-  (:documentation "Like the action-client but simple"))
+  (:documentation "Action-client that always only tracks one goal, so no
+                   goal-handle is needed and all functions to influence or
+                   get information about the goal need the client.
+                   The API is based on the API for the simple-action-client
+                   in the c-code actionlib."))
 
 (defgeneric send-goal-and-wait (client goal-msg execute-timeout preempt-timeout)
   (:documentation "Sends a goal to the action server and waits unitl it's done
@@ -130,7 +134,7 @@
       ((eql status :preempting)
        :active)
       (t
-       status))))       
+       status))))
 
 (defmethod result ((client simple-action-client))
   "Returns the result of the goal tracked by the client. NIL the client tracks

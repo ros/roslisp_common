@@ -45,12 +45,14 @@
              :initarg :csm-type
              :reader csm-type)
    (id-counter :initform -1
-               :accessor id-counter)
+               :accessor id-counter
+               :documentation "Counter that gets included into the goal-id.")
    (hash-mutex :initform (make-mutex :name "goal-hash-table-lock")
                :reader hash-mutex)
    (id-mutex :initform (make-mutex :name "goal-ids-lock")
              :reader id-mutex))
-  (:documentation "Contains all comm-state-machines and updates them if new messages arrive."))
+  (:documentation "Contains all comm-state-machines and updates them if new messages 
+                   arrive from the action server."))
 
 (defgeneric init-goal (manager transition-cb feedback-cb cancel-fn)
   (:documentation "Initializes a new goal and returns the goal-handle."))
@@ -67,7 +69,8 @@
   (:documentation "Updates the with the action-feedback associated comm-state-machine
                    with the feedback message."))
 
-(defgeneric stop-tracking-goals (manager))
+(defgeneric stop-tracking-goals (manager)
+  (:documentation "Removes all goals from the goal manager"))
 
 
 ;;;Implementation

@@ -90,9 +90,10 @@
   ((stm :initform (make-instance 'state-machine 
                                  :current-state (getf *states* :waiting-for-goal-ack)
                                  :states *states*)
-        :accessor stm)
+        :accessor stm
+        :documentation "Manages the state and statetransitions.")
    (goal-id :initarg :goal-id
-            :reader get-goal-id)
+            :reader goal-id)
    (start-time :initform (ros-time)
                :accessor start-time)
    (transition-cb :initarg :transition-cb
@@ -101,8 +102,8 @@
    (feedback-cb :initarg :feedback-cb
                 :initform nil
                 :accessor feedback-cb)
-   (send-goal-fn :initarg :send-goal-fn
-                 :reader send-goal-fn)
+   ;(send-goal-fn :initarg :send-goal-fn
+   ;              :reader send-goal-fn) ;TODO(Jannik) überflüssig?????
    (send-cancel-fn :initarg :send-cancel-fn
                    :reader send-cancel-fn)
    (latest-goal-status :initform :pending
@@ -113,12 +114,12 @@
                     :accessor latest-feedback)
    (stm-mutex :initform (make-mutex :name "state-machine-lock")
               :reader stm-mutex)
-   (stat-mutex :initform (make-mutex :name "status-lock")
-                 :reader status-mutex) ;; TODO(Jannik): rename slot to status-mutex
-   (res-mutex :initform (make-mutex :name "result-lock")
-                 :reader result-mutex) ;; TODO(Jannik): rename slot to result-mutex
-   (fb-mutex :initform (make-mutex :name "feedback-lock")
-                   :reader feedback-mutex)) ;; TODO(Jannik): make slot and reader same
+   (status-mutex :initform (make-mutex :name "status-lock")
+                 :reader status-mutex) 
+   (result-mutex :initform (make-mutex :name "result-lock")
+                 :reader result-mutex) 
+   (feedback-mutex :initform (make-mutex :name "feedback-lock")
+                   :reader feedback-mutex))
   (:documentation "Monitors the state of the communication between action-client
                    and the server for one goal and executes the callbacks."))
 
