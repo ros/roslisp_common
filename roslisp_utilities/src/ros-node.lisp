@@ -41,16 +41,24 @@
   `(setf (gethash ',name *ros-cleanup-functions*)
          (symbol-function ',name)))
 
+
+
 (defun startup-ros (&key
                     (master-uri (make-uri "localhost" 11311) master-uri?)
+                    (cmd-line-args nil cmds-supplied-p?)
                     (name "cram_hl")
                     (anonymous t))
   (if master-uri?
-      (start-ros-node name :anonymous anonymous :master-uri master-uri)
-      (start-ros-node name :anonymous anonymous))
+      (if cmds-supplied-p?
+    	    (start-ros-node name :anonymous anonymous :master-uri master-uri :cmd-line-args cmd-line-args)
+	        (start-ros-node name :anonymous anonymous :master-uri master-uri))
+      (if cmds-supplied-p?
+	        (start-ros-node name :anonymous anonymous :cmd-line-args cmd-line-args)
+	        (start-ros-node name :anonymous anonymous)))
   (loop for f being the hash-values of *ros-init-functions* do
     (ros-info (rosnode) "ROS init ~a." f)
     (funcall f)))
+
 
 (defun shutdown-ros ()
   (loop for f being the hash-values of *ros-cleanup-functions* do
