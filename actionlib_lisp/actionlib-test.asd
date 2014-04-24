@@ -1,7 +1,7 @@
 ;;;; -*- Mode: LISP -*-
 
 (defsystem "actionlib-test"
-  :depends-on ("lisp-unit" "actionlib" "roslisp" "actionlib-msg")
+  :depends-on ("lisp-unit" "actionlib-lisp" "roslisp" "actionlib-msg")
   :components
   ((:module "test"
             :components
