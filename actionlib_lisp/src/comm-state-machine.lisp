@@ -102,8 +102,6 @@
    (feedback-cb :initarg :feedback-cb
                 :initform nil
                 :accessor feedback-cb)
-   ;(send-goal-fn :initarg :send-goal-fn
-   ;              :reader send-goal-fn) ;TODO(Jannik) überflüssig?????
    (send-cancel-fn :initarg :send-cancel-fn
                    :reader send-cancel-fn)
    (latest-goal-status :initform :pending
@@ -112,13 +110,13 @@
                   :accessor latest-result)
    (latest-feedback :initform nil
                     :accessor latest-feedback)
-   (stm-mutex :initform (make-mutex :name "state-machine-lock")
+   (stm-mutex :initform (make-mutex :name (string (gensym "state-machine-lock")))
               :reader stm-mutex)
-   (status-mutex :initform (make-mutex :name "status-lock")
+   (status-mutex :initform (make-mutex :name (string (gensym "status-lock")))
                  :reader status-mutex) 
-   (result-mutex :initform (make-mutex :name "result-lock")
+   (result-mutex :initform (make-mutex :name (string (gensym "result-lock")))
                  :reader result-mutex) 
-   (feedback-mutex :initform (make-mutex :name "feedback-lock")
+   (feedback-mutex :initform (make-mutex :name (string (gensym "feedback-lock")))
                    :reader feedback-mutex))
   (:documentation "Monitors the state of the communication between action-client
                    and the server for one goal and executes the callbacks."))
@@ -156,11 +154,11 @@
 (defmethod update-status ((csm comm-state-machine) status)
   "If the status is not equal to the last status the comm-state-machine
    gets updated with the new status"
+  (if (get-next-state (stm csm) status)
+      (transition-to csm status))
   (when (not (eql (latest-goal-status csm) status))
     (with-recursive-lock ((status-mutex csm))
-      (setf (latest-goal-status csm) status))
-    (if (get-next-state (stm csm) status)
-        (transition-to csm status))))
+      (setf (latest-goal-status csm) status))))
       
 (defmethod update-result ((csm comm-state-machine) action-result)
   "Updates the result of the comm-state-machine"

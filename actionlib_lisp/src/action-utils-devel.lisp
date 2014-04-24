@@ -57,15 +57,15 @@
 
 (defun make-action-type (a suffix)
   "Creates an action-type by adding the `suffix' to the end of `a'.
-   If a doesn't has "Action" as its suffix an error is thrown."
+   If a doesn't has 'Action' as its suffix an error is thrown."
   (assert (str-has-suffix a "Action")
           nil
           "The action type is invalid. Actions always have the suffix 'Action'")
   (concatenate 'string a suffix))
 
 (defun action-msg-type (a suffix)
-  "Creates an action-msg-type by removing "Action" from the end of `a'
-   and adding `suffix'. If a doesn't has "Action" as its suffix an 
+  "Creates an action-msg-type by removing 'Action' from the end of `a'
+   and adding `suffix'. If a doesn't has 'Action' as its suffix an 
    error is thrown."
   (assert (str-has-suffix a "Action")
           nil

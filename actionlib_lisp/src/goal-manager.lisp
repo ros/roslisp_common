@@ -36,7 +36,8 @@
    (goal-ids :initform nil
              :accessor goal-ids
              :documentation "List of all goal-ids of all monitored goals.")
-   (waiting-for-goal-ack-timeout :initform 2
+   (waiting-for-goal-ack-timeout :initform 10
+                                 :initarg waiting-for-goal-ack-timeout
                                  :accessor waiting-for-goal-ack-timeout
                                  :documentation "Time in seconds to wait for server
                                                  to acknowledge the goal before
@@ -47,9 +48,9 @@
    (id-counter :initform -1
                :accessor id-counter
                :documentation "Counter that gets included into the goal-id.")
-   (hash-mutex :initform (make-mutex :name "goal-hash-table-lock")
+   (hash-mutex :initform (make-mutex :name (string (gensym "goal-hash-table-lock")))
                :reader hash-mutex)
-   (id-mutex :initform (make-mutex :name "goal-ids-lock")
+   (id-mutex :initform (make-mutex :name (string (gensym "goal-ids-lock")))
              :reader id-mutex))
   (:documentation "Contains all comm-state-machines and updates them if new messages 
                    arrive from the action server."))
@@ -71,6 +72,8 @@
 
 (defgeneric stop-tracking-goals (manager)
   (:documentation "Removes all goals from the goal manager"))
+
+(defgeneric goal-with-id (manager id))
 
 
 ;;;Implementation
@@ -112,15 +115,18 @@
   (let ((goal-ids (with-recursive-lock ((id-mutex manager))
                     (copy-list (goal-ids manager)))))
     (with-fields ((status-list status_list)) status-array
+      ;;loops over the goals in the status list, updates their status
+      ;;and removes them from the local goal-ids list
       (loop for goal-status being the elements of status-list
             do (multiple-value-bind (id status-symbol) (status-msg->id-status goal-status)
-                 (multiple-value-bind (comm-state-machine has-state-machine-p) (gethash id (goals manager))
+                 (multiple-value-bind (comm-state-machine has-state-machine-p) (goal-with-id manager id)
                    (when has-state-machine-p
                      (setf goal-ids (remove id goal-ids :test #'equal))
                      (update-status comm-state-machine status-symbol)))))
+      ;;loops over the remaining ids in goal-ids and marks them as lost if they aren't
+      ;;waiting-for-goal-ack or if they exceeded the timeout
       (loop for goal-id in goal-ids
-            do (let ((csm (with-recursive-lock ((hash-mutex manager))
-                            (nth-value 0 (gethash goal-id (goals manager))))))
+            do (let ((csm (nth-value 0 (goal-with-id manager goal-id))))
                  (when (or (not (eql (name (get-current-state (stm csm)))
                                      :waiting-for-goal-ack))
                            (> (- (ros-time) (start-time csm)) 
@@ -130,12 +136,18 @@
                            (remove goal-id (goal-ids manager) :test #'equal)))
                    (update-status csm :lost)))))))
 
+;; TODO(Jannik): if another client is already running, the first result
+;; after the new client has sent its first goal doesn't trigger a callback.
+;; Maybe a it's roslisp fault.
 (defmethod update-results ((manager goal-manager) action-result)
   "Updates the comm-state-machine with the goal-id from the result message."
+  (format t "received result.~%")
   (with-fields (status result) action-result
     (multiple-value-bind (id status-symbol) (status-msg->id-status status)
-      (multiple-value-bind (comm-state-machine has-state-machine-p) (gethash id (goals manager))
+      (multiple-value-bind (comm-state-machine has-state-machine-p) (goal-with-id manager id)
+        (format t "middle.~a ~a~%" (goals manager) (goal-ids manager))
         (when has-state-machine-p
+          (format t "asd")
           (update-status comm-state-machine status-symbol)
           (update-result comm-state-machine result))))))
     
@@ -143,7 +155,7 @@
   "Updates the comm-state-machine with the goal-id from the feedback message."
   (with-fields (status feedback) action-feedback
     (multiple-value-bind (id status-symbol) (status-msg->id-status status)
-      (multiple-value-bind (comm-state-machine has-state-machine-p) (gethash id (goals manager))
+      (multiple-value-bind (comm-state-machine has-state-machine-p) (goal-with-id manager id)
         (when has-state-machine-p
           (update-status comm-state-machine status-symbol)
           (update-feedback comm-state-machine feedback))))))
@@ -152,4 +164,7 @@
   "Removes all comm-state-machines and goal-ids."
   (setf (goal-ids manager) nil)
   (setf (goals manager) (make-hash-table :test #'equal)))
-  
+
+(defmethod goal-with-id ((manager goal-manager) id)
+  (with-recursive-lock ((hash-mutex manager))
+    (gethash id (goals manager))))

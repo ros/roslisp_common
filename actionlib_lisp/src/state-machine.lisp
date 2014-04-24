@@ -36,7 +36,7 @@
     :initarg :states
     :initform nil
     :accessor states)
-   (stm-mutex :initform (make-mutex :name "state-lock")
+   (stm-mutex :initform (make-mutex :name (string (gensym "state-lock")))
               :reader state-mutex)))
 
 (defclass state ()
