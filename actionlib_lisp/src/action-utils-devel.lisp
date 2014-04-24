@@ -1,6 +1,3 @@
-(in-package :actionlib-lisp)
-;; TODO(Jannik): add comments for all of these
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Software License Agreement (BSD License)
 ;; 
@@ -40,25 +37,36 @@
 ;; DAMAGE.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(in-package :actionlib-lisp)
+
 (defmacro make-action-goal-msg (client &body args)
+  "Creates a message for with the action-goal-type of the `client'."
   `(make-message (action-goal-type (action-type ,client))
                  ,@args))
 
 (defun str-has-suffix (str suffix)
+  "Checks if the string `str' has `suffix' as its suffix."
   (and (> (length str) (length suffix))
        (equal (subseq str (- (length str) (length suffix)))
               suffix)))
 
 (defun make-action-topic (a suffix)
+  "Gets the name of a topic `a' and adds a slash and the `suffix'
+   to the end."
   (concatenate 'string a "/" suffix))
 
 (defun make-action-type (a suffix)
+  "Creates an action-type by adding the `suffix' to the end of `a'.
+   If a doesn't has "Action" as its suffix an error is thrown."
   (assert (str-has-suffix a "Action")
           nil
           "The action type is invalid. Actions always have the suffix 'Action'")
   (concatenate 'string a suffix))
 
 (defun action-msg-type (a suffix)
+  "Creates an action-msg-type by removing "Action" from the end of `a'
+   and adding `suffix'. If a doesn't has "Action" as its suffix an 
+   error is thrown."
   (assert (str-has-suffix a "Action")
           nil
           "The action type is invalid. Actions always have the suffix 'Action'")
@@ -67,4 +75,5 @@
                suffix))
 
 (defun action-goal-type (a)
+  "Creates an action-msg-type for the goal."
   (action-msg-type a "Goal"))

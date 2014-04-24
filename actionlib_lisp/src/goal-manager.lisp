@@ -35,7 +35,7 @@
                           monitored goals.")
    (goal-ids :initform nil
              :accessor goal-ids
-             :documentation "List of all goal-ids of all monitored goals")
+             :documentation "List of all goal-ids of all monitored goals.")
    (waiting-for-goal-ack-timeout :initform 2
                                  :accessor waiting-for-goal-ack-timeout
                                  :documentation "Time in seconds to wait for server
@@ -75,17 +75,16 @@
 
 ;;;Implementation
 (defun status-msg->id-status (status-msg)
-  "Gets a status msg and returns a the id and status"
+  "Gets a status msg and returns a the id and status."
   (with-fields (status (id (id goal_id))) status-msg
     (let ((status-symbol (car (rassoc status
                                       (symbol-codes 'actionlib_msgs-msg:GoalStatus)))))
       (values id status-symbol))))
 
 (defun generate-goal-id (manager)
-  "Generates a new goal-id"
-  ;; TODO(Jannik): chose something standard-compliant here
+  "Generates a new unique goal-id."
   (incf (id-counter manager))
-  (format nil "~a_~a_~a" *ros-node-name* (id-counter manager) (ros-time)))
+  (format nil "~a-~a-~a" *ros-node-name* (id-counter manager) (ros-time)))
 
 (defmethod init-goal ((manager goal-manager) transition-cb feedback-cb cancel-fn)
   "Creates a new comm-state-machine and goal-handle and returns the goal-handle"
@@ -109,7 +108,7 @@
 (defmethod update-statuses ((manager goal-manager) status-array)
   "Updates the statuses of all goals that the goal-manager tracks. If the status 
    array contains the goal-id of comm-state-machine, the state of the comm-state-machine
-   gets updated with the status else the comm-state-machine gets set to lost"
+   gets updated with the status else the comm-state-machine gets set to lost."
   (let ((goal-ids (with-recursive-lock ((id-mutex manager))
                     (copy-list (goal-ids manager)))))
     (with-fields ((status-list status_list)) status-array
@@ -150,7 +149,7 @@
           (update-feedback comm-state-machine feedback))))))
 
 (defmethod stop-tracking-goals ((manager goal-manager))
-  "Removes all comm-state-machines and goal-ids"
+  "Removes all comm-state-machines and goal-ids."
   (setf (goal-ids manager) nil)
   (setf (goals manager) (make-hash-table :test #'equal)))
   
