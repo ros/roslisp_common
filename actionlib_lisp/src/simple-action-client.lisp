@@ -126,7 +126,10 @@
   
 (defmethod state ((client simple-action-client))
   "Returns the state information of the goal tracked by the client. 
-   RECALLING gets mapped to PENDING and PREEMPTING to ACTIVE"
+   RECALLING gets mapped to PENDING and PREEMPTING to ACTIVE.
+   Throws an error if the client tracks no goal."
+  (assert (goal-handle client) nil
+          "The client tracks no goal.")
   (let ((status (goal-status (goal-handle client))))
     (cond
       ((eql status :recalling)
@@ -137,23 +140,29 @@
        status))))
 
 (defmethod result ((client simple-action-client))
-  "Returns the result of the goal tracked by the client. NIL the client tracks
-   no goal or no result has been received yet."
-  (if (goal-handle client)
-      (result (goal-handle client))))
+  "Returns the result of the goal tracked by the client. NIL if no result has
+   been received yet. Throws an error if the client doesn't track any goal."
+  (assert (goal-handle client) nil
+          "The client tracks no goal.")
+  (result (goal-handle client)))
 
 (defmethod cancel-goal ((client simple-action-client))
-  "Cancels the goal tracked by the client."
+  "Cancels the goal tracked by the client. Throwns an error if the client
+   tracks no goal."
+  (assert (goal-handle client) nil
+          "The client tracks no goal.")
   (cancel (goal-handle client)))
 
 (defmethod stop-tracking-goal ((client simple-action-client))
   "Removes all goals that form the goal-manager."
   (stop-tracking-goals (goal-manager client))
+  (setf (goal-manager client) nil)
   t)
 
 (defmethod wait-for-result ((client simple-action-client) timeout)
-  "Loops until a result is received or the timeout is reached. Returns the state
-   of the goal. An Error is thrown if the client hasn't sent a goal yet."
+  "Loops until a result is received or the timeout is reached. Returns TRUE
+   if the goal finished before the timeout or NIL otherwise. An Error is
+   thrown if the client hasn't sent a goal yet or stopped tracking it."
   (assert (goal-handle client) nil 
           "No goal has been sent.")
   (let ((start-time (ros-time)))
