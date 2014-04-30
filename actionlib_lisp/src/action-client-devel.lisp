@@ -169,7 +169,7 @@
                      (if timeout 
                          (< (- (ros-time) start-time) timeout)
                          t))
-          do (sleep 0.02)))
+          do (sleep 0.01)))
   (is-connected client))
 
 (defmethod is-connected ((client action-client))

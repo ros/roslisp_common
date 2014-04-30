@@ -42,6 +42,7 @@
 
 ;;; Test for the state machine
 
+;;TODO(Jannik) this test fails until you recompile it, no clue why it would do that
 (define-test waiting-for-goal-ack-transitions
   (test-state-transitions :waiting-for-goal-ack
                           (append (list '(:cancel-goal :waiting-for-cancel-ack)
@@ -150,7 +151,8 @@
 
 (define-test update-feedback
   (let* ((feedback-received nil)
-         (feedback-cb #'(lambda () (setf feedback-received t)))
+         (feedback-cb #'(lambda (x) (declare (ignore x))
+                          (setf feedback-received t)))
          (csm (make-csm nil feedback-cb nil)))
     (assert-false (actionlib-lisp::latest-feedback csm))
     (actionlib-lisp::update-feedback csm "test-feedback")
