@@ -83,12 +83,13 @@
              It takes the state information of the goal and the result as parameters.
    `active-cd' Callback that gets called when the state of the goal changes to active.
                It takes no parameters.
-   `feedbak-cb' Callback that gets callback eveytime feeback for the goal is received.
+   `feedbak-cb' Callback that gets callback everytime feeback for the goal is received.
                 It takes the feedback message as parameter."
   (stop-tracking-goal client)
   (setf (goal-handle client)
         (call-next-method client goal-msg
                           :transition-cb #'(lambda (goal-handle)
+                                             ;; TODO(Jannik) check for all active states
                                              (if (eql (comm-state goal-handle) :active)
                                                  (if active-cb (funcall active-cb))
                                                  (if (eql (comm-state goal-handle) :done)
@@ -104,7 +105,7 @@
 (defmethod send-goal-and-wait ((client simple-action-client) goal-msg 
                                execute-timeout preempt-timeout)
   "Sends a goal to the action server and loops until the goal is done or
-   the `execute-timeout' is reached and then loops until the goal preempetd or
+   the `execute-timeout' is reached and then loops until the goal preempted or
    the `preempt-timeout' is reached. Returns the state information of the goal"
   (let ((execute-start-time (ros-time))
         (preempt-start-time nil)
@@ -156,7 +157,7 @@
 (defmethod stop-tracking-goal ((client simple-action-client))
   "Removes all goals that form the goal-manager."
   (stop-tracking-goals (goal-manager client))
-  (setf (goal-manager client) nil)
+  ;;(setf (goal-manager client) nil) ;;TODO(Jannik) why did you do this?
   t)
 
 (defmethod wait-for-result ((client simple-action-client) timeout)

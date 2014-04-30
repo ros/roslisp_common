@@ -1,2 +1,0 @@
-(in-package :actionlib-test)
-

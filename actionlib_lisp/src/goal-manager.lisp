@@ -73,8 +73,8 @@
 (defgeneric stop-tracking-goals (manager)
   (:documentation "Removes all goals from the goal manager"))
 
-(defgeneric goal-with-id (manager id))
-
+(defgeneric goal-with-id (manager id)
+  (:documentation "Returns the entry in the goal-hash-tablefor the goal with the given id."))
 
 ;;;Implementation
 (defun status-msg->id-status (status-msg)
@@ -127,10 +127,11 @@
       ;;waiting-for-goal-ack or if they exceeded the timeout
       (loop for goal-id in goal-ids
             do (let ((csm (nth-value 0 (goal-with-id manager goal-id))))
-                 (when (or (not (eql (name (get-current-state (stm csm)))
-                                     :waiting-for-goal-ack))
-                           (> (- (ros-time) (start-time csm)) 
-                              (waiting-for-goal-ack-timeout manager)))
+                 (when (and csm
+                            (or (not (eql (name (get-current-state (stm csm)))
+                                          :waiting-for-goal-ack))
+                                (> (- (ros-time) (start-time csm)) 
+                                   (waiting-for-goal-ack-timeout manager))))
                    (with-recursive-lock ((id-mutex manager))
                      (setf (goal-ids manager) 
                            (remove goal-id (goal-ids manager) :test #'equal)))
@@ -139,15 +140,14 @@
 ;; TODO(Jannik): if another client is already running, the first result
 ;; after the new client has sent its first goal doesn't trigger a callback.
 ;; Maybe a it's roslisp fault.
+;; Might be fixed. nope.
 (defmethod update-results ((manager goal-manager) action-result)
   "Updates the comm-state-machine with the goal-id from the result message."
-  (format t "received result.~%")
   (with-fields (status result) action-result
     (multiple-value-bind (id status-symbol) (status-msg->id-status status)
       (multiple-value-bind (comm-state-machine has-state-machine-p) (goal-with-id manager id)
-        (format t "middle.~a ~a~%" (goals manager) (goal-ids manager))
+        (format t "id: ~a~%goal-ids: ~a~%result: ~a~%" id (goal-ids manager) status-symbol)
         (when has-state-machine-p
-          (format t "asd")
           (update-status comm-state-machine status-symbol)
           (update-result comm-state-machine result))))))
     
@@ -166,5 +166,6 @@
   (setf (goals manager) (make-hash-table :test #'equal)))
 
 (defmethod goal-with-id ((manager goal-manager) id)
+  "Returns the values for `id' in the goals-hash-table."
   (with-recursive-lock ((hash-mutex manager))
     (gethash id (goals manager))))

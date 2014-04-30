@@ -154,11 +154,11 @@
 (defmethod update-status ((csm comm-state-machine) status)
   "If the status is not equal to the last status the comm-state-machine
    gets updated with the new status"
-  (if (get-next-state (stm csm) status)
-      (transition-to csm status))
   (when (not (eql (latest-goal-status csm) status))
     (with-recursive-lock ((status-mutex csm))
-      (setf (latest-goal-status csm) status))))
+      (setf (latest-goal-status csm) status)))
+  (if (get-next-state (stm csm) status)
+        (transition-to csm status)))
       
 (defmethod update-result ((csm comm-state-machine) action-result)
   "Updates the result of the comm-state-machine"
