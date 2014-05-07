@@ -28,6 +28,10 @@
 
 (in-package actionlib-lisp)
 
+;;;
+;;; Exported
+;;;
+
 (defclass simple-action-client (action-client)
   ((goal-handle :initform nil
                 :accessor goal-handle))
@@ -68,16 +72,7 @@
    to the topics of the action-server."
   (create-action-client action-name action-type t))
 
-(defun timeout-not-reached (start-time timeout)
-  "Checks if the `timeout' seconds have passed since `start-time'. If that the case 
-   returns NIL else TRUE"
-  (if (eql timeout 0)
-      t
-      (> timeout (- (ros-time) start-time))))
 
-(defun goal-handle-not-nil (goal-handle)
-  (assert goal-handle nil
-          "The client tracks no goal."))
   
 (defmethod send-goal ((client simple-action-client) goal-msg &key
                        done-cb active-cb feedback-cb)
@@ -171,3 +166,19 @@
                      (not (eql (comm-state (goal-handle client)) :done)))
           do (sleep 0.01)))
   (eql (comm-state (goal-handle client)) :done))
+
+;;;
+;;; Internal
+;;;
+
+(defun timeout-not-reached (start-time timeout)
+  "Checks if the `timeout' seconds have passed since `start-time'. If that the case 
+   returns NIL else TRUE"
+  (if (eql timeout 0)
+      t
+      (> timeout (- (ros-time) start-time))))
+
+(defun goal-handle-not-nil (goal-handle)
+  "Checks if the goal-handle is NIL"
+  (assert goal-handle nil
+          "The client tracks no goal."))

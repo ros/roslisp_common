@@ -50,8 +50,9 @@
                    goal as an integer from the GoalStatus message.
                    NIL if the goal isn't done."))
 
-
-;;;Implementation
+;;;
+;;; Exported
+;;;
 
 (defmethod goal-id ((goal-handle client-goal-handle))
   "Returns the id of the goal"

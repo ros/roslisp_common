@@ -29,7 +29,6 @@
 (in-package :cl-user)
 
 (defpackage :actionlib-lisp
-  ;(:nicknames :actionlib)
   (:use :cl :roslisp :actionlib_msgs-msg :sb-thread)
   (:export :cancel :cancel-all-goals :cancel-at-before-time :cancel-goal 
            :comm-state :goal-id :goal-status :is-connected 
