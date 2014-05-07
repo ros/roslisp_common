@@ -1,4 +1,4 @@
-(in-package :actionlib-server)
+(in-package :actionlib-test-server)
 
 (defclass action-server ()
   ((goals :initform nil

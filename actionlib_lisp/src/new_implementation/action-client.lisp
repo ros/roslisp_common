@@ -53,6 +53,10 @@
   (:documentation "The action-client can send goals to the actio server and monitors
                    their states and execute their callbacks."))
 
+;;;
+;;; Exported
+;;;
+
 (defgeneric send-goal (client goal-msg &key &allow-other-keys)
   (:documentation "Sends a goal to the action server.
                    `client' is an instance of ACTION-CLIENT.
@@ -75,14 +79,58 @@
   (:documentation "Returns true if the client is connected to an action 
                    server, NIL otherwise."))
 
-
-;;;Implementation
-
 (defun make-action-client (action-name action-type)
   "Creates and retruns an action-client.
    `acton-name' Name of the action.
    `action-type' Type of the action. Must end with 'Action'."
   (create-action-client action-name action-type nil))
+
+(defmethod send-goal ((client action-client) goal-msg &key 
+                                                        transition-cb
+                                                        feedback-cb)
+  "Sends a goal to the action server and returns the goal-handle.
+   `transitions-cb' Callback that gets called on every
+                    state transition for the sent goal. It takes a
+                    CLIENT-GOAL-HANDLE as a parameter.
+   `feedback-cb' Callback that gets called evey time the
+                 client receives feedback for the sent goal. It takes a
+                 CLIENT-GOAL-HANDLE and an instance of the feedback 
+                 message as arguments."
+  (let ((goal-handle (init-goal (goal-manager client) transition-cb feedback-cb
+                                #'(lambda (goal-id) (send-cancel-msg client goal-id)))))
+    (publish (goal-pub client)
+             (make-message (make-action-type (action-type client) "Goal")
+                           (stamp header) (ros-time)
+                           (seq header) (incf (seq-nr client))
+                           (stamp goal_id) (ros-time)
+                           (id goal_id) (goal-id goal-handle)
+                           goal goal-msg))
+    goal-handle))
+
+(defmethod cancel-all-goals ((client action-client))
+  "Sends a cancel msg with an empty goal-id"
+  (send-cancel-msg client ""))
+
+(defmethod wait-for-server ((client action-client) &optional timeout)
+  "Loops until the client connects with the action server"
+  (let ((start-time (ros-time)))
+    (loop while (and (not (is-connected client))
+                     (if timeout 
+                         (< (- (ros-time) start-time) timeout)
+                         t))
+          do (sleep 0.01)))
+  (is-connected client))
+
+(defmethod is-connected ((client action-client))
+  "Checks if the client has recently heard anything from the action server"
+  (if (with-recursive-lock ((client-mutex client))
+        (last-connection client))
+      (< (- (ros-time) (last-connection client)) 
+         (connection-timeout client))))
+
+;;;
+;;; Internal
+;;;
 
 (defun create-action-client (action-name action-type simple)
   "Creates and retruns an action-client.
@@ -135,48 +183,5 @@
            (make-message "actionlib_msgs/GoalID"
                          stamp 0
                          id goal-id)))
-
-(defmethod send-goal ((client action-client) goal-msg &key 
-                                                        transition-cb
-                                                        feedback-cb)
-  "Sends a goal to the action server and returns the goal-handle.
-   `transitions-cb' Callback that gets called on every
-                    state transition for the sent goal. It takes a
-                    CLIENT-GOAL-HANDLE as a parameter.
-   `feedback-cb' Callback that gets called evey time the
-                 client receives feedback for the sent goal. It takes a
-                 CLIENT-GOAL-HANDLE and an instance of the feedback 
-                 message as arguments."
-  (let ((goal-handle (init-goal (goal-manager client) transition-cb feedback-cb
-                                #'(lambda (goal-id) (send-cancel-msg client goal-id)))))
-    (publish (goal-pub client)
-             (make-message (make-action-type (action-type client) "Goal")
-                           (stamp header) (ros-time)
-                           (seq header) (incf (seq-nr client))
-                           (stamp goal_id) (ros-time)
-                           (id goal_id) (goal-id goal-handle)
-                           goal goal-msg))
-    goal-handle))
-
-(defmethod cancel-all-goals ((client action-client))
-  "Sends a cancel msg with an empty goal-id"
-  (send-cancel-msg client ""))
-
-(defmethod wait-for-server ((client action-client) &optional timeout)
-  "Loops until the client connects with the action server"
-  (let ((start-time (ros-time)))
-    (loop while (and (not (is-connected client))
-                     (if timeout 
-                         (< (- (ros-time) start-time) timeout)
-                         t))
-          do (sleep 0.01)))
-  (is-connected client))
-
-(defmethod is-connected ((client action-client))
-  "Checks if the client has recently heard anything from the action server"
-  (if (with-recursive-lock ((client-mutex client))
-        (last-connection client))
-      (< (- (ros-time) (last-connection client)) 
-         (connection-timeout client))))
 
 
