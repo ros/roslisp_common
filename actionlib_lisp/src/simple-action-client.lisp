@@ -63,7 +63,6 @@
                    Returns TRUE if the goal finishes or NIL if the timeout is reached.
                    A timeout of 0 implies wait forever."))
 
-
 (defun make-simple-action-client (action-name action-type)
   "Returns an instance of simple-action-client initialized and subscribes to
    to the topics of the action-server."
@@ -76,6 +75,10 @@
       t
       (> timeout (- (ros-time) start-time))))
 
+(defun goal-handle-not-nil (goal-handle)
+  (assert goal-handle nil
+          "The client tracks no goal."))
+  
 (defmethod send-goal ((client simple-action-client) goal-msg &key
                        done-cb active-cb feedback-cb)
   "Sends a goal to the action server.
@@ -105,7 +108,8 @@
                                execute-timeout preempt-timeout)
   "Sends a goal to the action server and loops until the goal is done or
    the `execute-timeout' is reached and then loops until the goal preempted or
-   the `preempt-timeout' is reached. Returns the state information of the goal"
+   the `preempt-timeout' is reached. A timeout of 0 implies forever. Returns 
+   the state information of the goal"
   (let ((execute-start-time (ros-time))
         (preempt-start-time nil)
         (is-done nil))
@@ -128,8 +132,7 @@
   "Returns the state information of the goal tracked by the client. 
    RECALLING gets mapped to PENDING and PREEMPTING to ACTIVE.
    Throws an error if the client tracks no goal."
-  (assert (goal-handle client) nil
-          "The client tracks no goal.")
+  (goal-handle-not-nil (goal-handle client))
   (let ((status (goal-status (goal-handle client))))
     (cond
       ((eql status :recalling)
@@ -142,15 +145,13 @@
 (defmethod result ((client simple-action-client))
   "Returns the result of the goal tracked by the client. NIL if no result has
    been received yet. Throws an error if the client doesn't track any goal."
-  (assert (goal-handle client) nil
-          "The client tracks no goal.")
+  (goal-handle-not-nil (goal-handle client))
   (result (goal-handle client)))
 
 (defmethod cancel-goal ((client simple-action-client))
   "Cancels the goal tracked by the client. Throwns an error if the client
    tracks no goal."
-  (assert (goal-handle client) nil
-          "The client tracks no goal.")
+  (goal-handle-not-nil (goal-handle client))
   (cancel (goal-handle client)))
 
 (defmethod stop-tracking-goal ((client simple-action-client))
@@ -164,8 +165,7 @@
   "Loops until a result is received or the timeout is reached. Returns TRUE
    if the goal finished before the timeout or NIL otherwise. An Error is
    thrown if the client hasn't sent a goal yet or stopped tracking it."
-  (assert (goal-handle client) nil 
-          "No goal has been sent.")
+  (goal-handle-not-nil (goal-handle client))
   (let ((start-time (ros-time)))
     (loop while (and (timeout-not-reached start-time timeout)
                      (not (eql (comm-state (goal-handle client)) :done)))
