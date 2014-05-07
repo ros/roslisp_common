@@ -142,7 +142,6 @@
   (with-fields (status result) action-result
     (multiple-value-bind (id status-symbol) (status-msg->id-status status)
       (multiple-value-bind (comm-state-machine has-state-machine-p) (goal-with-id manager id)
-        (format t "id: ~a~%goal-ids: ~a~%result: ~a~%" id (goal-ids manager) status-symbol)
         (when has-state-machine-p
           (update-status comm-state-machine status-symbol)
           (update-result comm-state-machine result))))))
