@@ -81,7 +81,7 @@
   "Sends a goal to the action server.
    `done-cb' Callback that gets called when the goal received a result and is done.
              It takes the state information of the goal and the result as parameters.
-   `active-cd' Callback that gets called when the state of the goal changes to active.
+   `active-cb' Callback that gets called when the state of the goal changes to active.
                It takes no parameters.
    `feedbak-cb' Callback that gets callback everytime feeback for the goal is received.
                 It takes the feedback message as parameter."
@@ -89,7 +89,6 @@
   (setf (goal-handle client)
         (call-next-method client goal-msg
                           :transition-cb #'(lambda (goal-handle)
-                                             ;; TODO(Jannik) check for all active states
                                              (if (eql (comm-state goal-handle) :active)
                                                  (if active-cb (funcall active-cb))
                                                  (if (eql (comm-state goal-handle) :done)
@@ -155,9 +154,10 @@
   (cancel (goal-handle client)))
 
 (defmethod stop-tracking-goal ((client simple-action-client))
-  "Removes all goals that form the goal-manager."
+  "Removes all goals that form the goal-manager and sets the goal-handle to NIL
+   so no information about old goals remain."
   (stop-tracking-goals (goal-manager client))
-  ;;(setf (goal-manager client) nil) ;;TODO(Jannik) why did you do this?
+  (setf (goal-handle client) nil) 
   t)
 
 (defmethod wait-for-result ((client simple-action-client) timeout)

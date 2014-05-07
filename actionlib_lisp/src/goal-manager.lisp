@@ -137,10 +137,6 @@
                            (remove goal-id (goal-ids manager) :test #'equal)))
                    (update-status csm :lost)))))))
 
-;; TODO(Jannik): if another client is already running, the first result
-;; after the new client has sent its first goal doesn't trigger a callback.
-;; Maybe a it's roslisp fault.
-;; Might be fixed. nope.
 (defmethod update-results ((manager goal-manager) action-result)
   "Updates the comm-state-machine with the goal-id from the result message."
   (with-fields (status result) action-result
