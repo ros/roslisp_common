@@ -29,8 +29,7 @@
        #'(lambda ()
            (apply #'send-static-transforms-blocking
                   broadcaster interval transforms)))
-      (apply #'send-static-transforms-blocking broadcaster
-             broadcaster interval transforms)))
+      (apply #'send-static-transforms-blocking broadcaster interval transforms)))
 
 (defmacro with-tf-broadcasting ((broadcaster &rest transforms) &body body)
   (let ((thread-var (gensym)))
