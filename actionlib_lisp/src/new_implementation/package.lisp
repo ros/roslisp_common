@@ -32,6 +32,6 @@
   (:use :cl :roslisp :actionlib_msgs-msg :sb-thread)
   (:export :cancel :cancel-all-goals :cancel-at-before-time :cancel-goal 
            :comm-state :goal-id :goal-status :is-connected 
-           :make-action-goal-msg :make-simple-action-client :result :send-goal 
-           :send-goal-and-wait :state :stop-tracking-goal :terminal-state 
+           :make-action-goal-msg :make-simple-action-client :simple-action-client :result
+           :send-goal :send-goal-and-wait :state :stop-tracking-goal :terminal-state
            :wait-for-result :wait-for-server))
