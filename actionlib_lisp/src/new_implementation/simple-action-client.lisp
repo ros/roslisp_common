@@ -108,20 +108,31 @@
   (let ((execute-start-time (ros-time))
         (preempt-start-time nil)
         (is-done nil))
-    (send-goal client goal-msg 
-                :done-cb #'(lambda (state result) 
-                             (declare (ignore state result))
-                             (setf is-done t)))
-    (loop while (and (not is-done)
-                     (timeout-not-reached execute-start-time execute-timeout))
-          do (sleep 0.01))
-    (if (not is-done)
-        (cancel-goal client))
-    (setf preempt-start-time (ros-time))
-    (loop while (and (not is-done)
-                     (timeout-not-reached preempt-start-time preempt-timeout))
-          do (sleep 0.01))
-    (state client)))
+    ;; in case this method is evaporated during execution, unwind-protect
+    ;; ensure that we inform the server by canceling the goal
+    (unwind-protect
+         (progn
+           (send-goal client goal-msg 
+                      :done-cb #'(lambda (state result) 
+                                   (declare (ignore state result))
+                                   (setf is-done t)))
+           ;; waiting for execution timeout
+           (loop while (and 
+                        (not is-done)
+                        (timeout-not-reached execute-start-time execute-timeout))
+                 do (sleep 0.01))
+           ;; maybe waiting for preempt timeout
+           (if (not is-done) (cancel-goal client))
+           (setf preempt-start-time (ros-time))
+           (loop while (and 
+                        (not is-done)
+                        (timeout-not-reached preempt-start-time preempt-timeout))
+                 do (sleep 0.01))
+           ;; returning the state of the action client
+           (state client))
+      ;; cancel the goal in case we have been evaporated
+      (when (goal-handle client) ; making sure we still have a goal-handle
+        (cancel-goal client)))))
   
 (defmethod state ((client simple-action-client))
   "Returns the state information of the goal tracked by the client. 
