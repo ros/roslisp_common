@@ -4,7 +4,7 @@
            :x :y :z :w :make-quaternion :make-identity-rotation
            :copy-quaternion :q= :q* :q-inv :q+ :q- :q-norm :q-dot :q-scale
            :squared-norm :3d-vector :make-3d-vector :copy-3d-vector
-           :make-identity-vector :v+ :v- :v* :v-inv :dot-product
+           :make-identity-vector :v+ :v- :v* :v-inv :dot-product :normalize-vector
            :cross-product :v-dist :v-norm :rotate :axis-angle->quaternion
            :quaternion->axis-angle :yaw :get-yaw
            :euler->quaternion :matrix->quaternion :normalize
