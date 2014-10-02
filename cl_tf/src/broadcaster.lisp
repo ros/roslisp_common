@@ -1,5 +1,9 @@
 (in-package :cl-tf)
 
+(defparameter *tf-broadcasting-interval* 0.1)
+
+(defparameter *tf-static-broadcast-future-offset* 0.5)
+
 (defun make-transform-broadcaster (&key (topic "/tf"))
   "Return a publisher that can be used with send-transform"
   (advertise topic "tf/tfMessage"))
@@ -13,15 +17,14 @@
   (publish broadcaster (transforms->tf transforms)))
 
 (defun send-static-transforms-blocking (broadcaster interval &rest transforms)
-  (loop-at-most-every interval
-    (unless (eq (roslisp:node-status) :running) (return))
-    (publish-msg broadcaster 
-                 :transforms (map 'vector 
-                                  (lambda (transform) 
-                                    (modify-message-copy 
-                                     (transform->msg transform) 
-                                     (:stamp :header) (ros-time)))
-                                  transforms))))
+  (let ((msg (make-message
+              "tf/tfmessage" 
+              :transforms (map 'vector #'transform->msg transforms))))
+    (loop-at-most-every interval
+      (unless (eq (roslisp:node-status) :running) (return))
+      (publish 
+       broadcaster 
+       (restamp-tf-msg msg (+ (ros-time) *tf-static-broadcast-future-offset*))))))
 
 (defun send-static-transforms (broadcaster interval new-thread &rest transforms)
   (if new-thread
@@ -34,6 +37,12 @@
 
 (defmacro with-tf-broadcasting ((broadcaster &rest transforms) &body body)
   (let ((thread-var (gensym)))
-    `(let ((,thread-var (send-static-transforms ,broadcaster 0.01 t ,@transforms)))
+    `(let ((,thread-var (send-static-transforms ,broadcaster *tf-broadcasting-interval* t ,@transforms)))
+       (unwind-protect ,@body
+         (sb-thread:terminate-thread ,thread-var)))))
+
+(defmacro with-tf-broadcasting-list ((broadcaster transforms) &body body)
+  (let ((thread-var (gensym)))
+    `(let ((,thread-var (apply #'send-static-transforms ,broadcaster *tf-broadcasting-interval* t ,transforms)))
        (unwind-protect ,@body
          (sb-thread:terminate-thread ,thread-var)))))
