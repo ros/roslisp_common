@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<package>
+  <name>cl_tf2</name>
+  <version>0.0.0</version>
+  <description>
+    Client implementation to use TF2 from Common Lisp
+  </description>
+
+  <author email="georg.bartels@cs.uni-bremen.de">Georg Bartels</author>
+  <author email="lisca@cs.uni-bremen.de">Gheorghe Lisca</author>
+
+  <maintainer email="georg.bartels@cs.uni-bremen.de">Georg Bartels</maintainer>
+  <maintainer email="lisca@cs.uni-bremen.de">Gheorghe Lisca</maintainer>
+
+  <license>BSD</license>
+
+  <!--url type="website">TODO</url-->
+  <url type="bugtracker">https://github.com/ros/roslisp_common/issues</url>
+  <url type="repository">https://github.com/ros/roslisp_common</url>
+
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>actionlib_lisp</build_depend>
+  <build_depend>sbcl</build_depend>
+  <build_depend>roslisp</build_depend>
+  <build_depend>tf2_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>std_msgs</build_depend>
+
+  <run_depend>actionlib_lisp</run_depend>
+  <run_depend>sbcl</run_depend>
+  <run_depend>roslisp</run_depend>
+  <run_depend>tf2_msgs</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>std_msgs</run_depend>
+</package>

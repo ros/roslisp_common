@@ -56,6 +56,21 @@
                                (* 0.25 s)
                                (/ (- (aref matrix 1 0) (aref matrix 0 1)) s))))))))
 
+(defun column-vectors->quaternion (x y z)
+  "Constructs a quaternion from the three column-vectors `x', `y',
+ and `z' of a rotation matrix. Note: The column-vectors do not need
+ to be normalized."
+  (flet ((3d-vector->list (v)
+           (with-slots (x y z) v
+             (list x y z))))
+    (matrix->quaternion
+     (transpose-rot-matrix
+      (make-array 
+       '(3 3) 
+       :initial-contents
+       (mapcar (compose #'3d-vector->list #'normalize-vector)
+               (list x y z)))))))
+
 (defun matrix->transform (matrix)
   "Converts a homogenous 4x4 matrix to a pose object. `matrix' is a
 two-dimensional 4x4 array, row-major."
