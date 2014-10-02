@@ -1,2 +1,8 @@
+# VIM and EMACS temporal files
+*~
+*.swp
 build
 *.fasl
+*.*~
+*.*#
+.#*

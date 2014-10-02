@@ -51,6 +51,9 @@
   "Returns the magnitude of the vector"
   (sqrt (dot-product v v)))
 
+(defun normalize-vector (v)
+  (v* v (/ 1.0 (v-norm v))))
+
 (defun v+ (&rest vecs)
   (reduce #'v+-pairwise vecs))
 
