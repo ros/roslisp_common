@@ -28,7 +28,8 @@
       (sb-thread:make-thread
        #'(lambda ()
            (apply #'send-static-transforms-blocking
-                  broadcaster interval transforms)))
+                  broadcaster interval transforms))
+       :name "TF static broadcaster thread.")
       (apply #'send-static-transforms-blocking broadcaster interval transforms)))
 
 (defmacro with-tf-broadcasting ((broadcaster &rest transforms) &body body)
