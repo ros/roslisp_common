@@ -17,5 +17,6 @@
                                                         "quaternions"
                                                         "quaternion-rotations"
                                                         "3d-vector"
-                                                        "transforms")))
+                                                        "transforms"))
+               (:file "screws" :depends-on ("package" "3d-vector")))
   :depends-on ("cl-utils"))
