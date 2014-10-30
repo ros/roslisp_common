@@ -104,37 +104,28 @@ two-dimensional 4x4 array, row-major."
     (make-transform (make-3d-vector (aref matrix 0 3) (aref matrix 1 3) (aref matrix 2 3))
                     (matrix->quaternion rotation-submatrix))))
 
-(defun transform->matrix (trans)
-  "Constructs a homogenous matrix from pose and returns it as a 2D array.
-   Please note: to convert it to a 1D array, you can do the following:
-
-  (make-array (array-total-size x) 
-              :element-type (array-element-type x) 
-              :displaced-to x)"
-  (with-slots (translation rotation) trans
-    (let ((result (make-array '(4 4) :initial-element 0.0)))
-      (with-slots (x y z w) rotation
-        (let ((x2 (* x x))
-              (y2 (* y y))
-              (z2 (* z z))
-              (w2 (* w w)))
-          (setf (aref result 0 0) (+ w2 x2 (- y2) (- z2))
-                (aref result 0 1) (- (* 2 x y) (* 2 w z))
-                (aref result 0 2) (+ (* 2 x z) (* 2 w y))
-
-                (aref result 1 0) (+ (* 2 x y) (* 2 w z))
-                (aref result 1 1) (+ w2 (- x2) y2 (- z2))
-                (aref result 1 2) (- (* 2 y z) (* 2 w x))
-
-                (aref result 2 0) (- (* 2 x z) (* 2 w y))
-                (aref result 2 1) (+ (* 2 y z) (* 2 w x))
-                (aref result 2 2) (+ w2 (- x2) (- y2) z2))))
-      (with-slots (x y z) translation
-        (setf (aref result 0 3) x
-              (aref result 1 3) y
-              (aref result 2 3) z
-              (aref result 3 3) 1))
-      result)))
+(defun transform->matrix (transform)
+  "Constructs a homogenous matrix from `transform' it as a 2D array."
+  ;; Internal auxiliary functions.
+  (flet ((set-rot-matrix (transform rotation)
+           (loop for row from 0 to 2 do
+             (loop for column from 0 to 2 do
+               (setf (aref transform row column) 
+                     (aref rotation row column)))))
+         (set-trans-vector (transform translation)
+           (with-slots (x y z) translation
+             (setf (aref transform 0 3) x
+                   (aref transform 1 3) y
+                   (aref transform 2 3) z)))
+         (ensure-homogeneous-transform (transform)
+           (setf (aref transform 3 3) 1)))
+    ;; Actual algorithm.
+    (with-slots (translation rotation) transform
+      (let ((result (make-array '(4 4) :initial-element 0.0)))
+        (set-rot-matrix result (quaternion->matrix rotation))
+        (set-trans-vector result translation)
+        (ensure-homogeneous-transform result)
+        result))))
 
 (defun pose->matrix (pose)
   (transform->matrix (reference-transform pose)))
