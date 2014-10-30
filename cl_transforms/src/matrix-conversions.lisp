@@ -10,12 +10,21 @@
 (defun transpose-rot-matrix (matrix)
   "Transposes a 3x3 rotation matrix."
   (assert (typep matrix '(array * (3 3))))
-  (make-array 
-   '(3 3) 
-   :initial-contents 
-   (loop for column from 0 below 3 
-         collecting (loop for row from 0 below 3 
-                          collecting (aref matrix row column)))))
+  (transpose-2d-matrix matrix))
+
+(defun transpose-2d-matrix (matrix)
+  "Returns the transpose of an arbitraty NxM `matrix'. 
+
+ NOTE: Leaves `matrix' untouched, and works on a copy instead."
+  (declare (type array matrix))
+  (assert (= (array-rank matrix) 2))
+  (destructuring-bind (rows columns) (array-dimensions matrix)
+    (make-array 
+     `(,columns ,rows)
+     :initial-contents
+     (loop for column from 0 below columns collecting
+       (loop for row from 0 below rows collecting
+         (aref matrix row column))))))
 
 (defun matrix->quaternion (matrix)
   "Converts a 3x3 rotation matrix to a quaternion."
