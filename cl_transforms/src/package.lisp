@@ -15,8 +15,8 @@
            :point :pose :make-pose :make-identity-pose :copy-pose
            :make-2d-pose :transform-pose :reference-transform :origin :orientation
            :transform->pose :pose->transform
-           :matrix->quaternion :matrix->transform :transform->matrix :pose->matrix
-           :slerp :interpolate-vector :invert-rot-matrix :transpose-rot-matrix
+           :matrix->quaternion :quaternion->matrix :matrix->transform :transform->matrix 
+           :pose->matrix :slerp :interpolate-vector :invert-rot-matrix :transpose-rot-matrix
            :column-vectors->quaternion
            :twist :make-twist :make-identity-twist :copy-twist
            :wrench :make-wrench :make-identity-wrench :copy-wrench))

@@ -56,6 +56,27 @@
                                (* 0.25 s)
                                (/ (- (aref matrix 1 0) (aref matrix 0 1)) s))))))))
 
+(defun quaternion->matrix (quaternion)
+  "Converts a `quaternion' into a 3x3 rotation matrix."
+  (let ((result (make-array '(3 3) :initial-element 0.0)))
+    (with-slots (x y z w) quaternion
+      (let ((x2 (* x x))
+            (y2 (* y y))
+            (z2 (* z z))
+            (w2 (* w w)))
+        (setf (aref result 0 0) (+ w2 x2 (- y2) (- z2))
+              (aref result 0 1) (- (* 2 x y) (* 2 w z))
+              (aref result 0 2) (+ (* 2 x z) (* 2 w y))
+              
+              (aref result 1 0) (+ (* 2 x y) (* 2 w z))
+              (aref result 1 1) (+ w2 (- x2) y2 (- z2))
+              (aref result 1 2) (- (* 2 y z) (* 2 w x))
+              
+              (aref result 2 0) (- (* 2 x z) (* 2 w y))
+              (aref result 2 1) (+ (* 2 y z) (* 2 w x))
+              (aref result 2 2) (+ w2 (- x2) (- y2) z2))))
+    result))
+
 (defun column-vectors->quaternion (x y z)
   "Constructs a quaternion from the three column-vectors `x', `y',
  and `z' of a rotation matrix. Note: The column-vectors do not need
