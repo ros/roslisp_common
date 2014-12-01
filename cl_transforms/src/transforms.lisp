@@ -51,6 +51,10 @@
                             (q* (rotation trans) (rotation prev))))
           (reverse transforms)))
 
+(defun transform-diff (transform-To transform-From)
+  "Return the transform that, when left-multiplied, will convert transform-From into transform-To."
+  (transform* transform-To (transform-inv transform-From)))
+
 (defun transform-point (trans p)
   (declare (type transform trans) (type point p))
   (v+ (translation trans) (rotate (rotation trans) p)))
