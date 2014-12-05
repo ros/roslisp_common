@@ -28,96 +28,74 @@
 
 (in-package :cl-tf2)
 
-(defvar *tf2* nil)
-(defvar *tf-mutex* (sb-thread:make-mutex))
-
-(defun init-tf2 ()
-  (setf *tf2* (make-instance 'buffer-client)))
-
-(roslisp-utilities:register-ros-init-function init-tf2)
-
 (defun unslash-frame (frame)
-  (cond ((string= (elt frame 0) "/")
-         (subseq frame 1))
-        (t frame)))
+  (string-trim "/" frame))
 
-(defun ensure-pose-stamped-transformable (pose-stamped target-frame
+(defun ensure-pose-stamped-transformable (tf pose-stamped target-frame
                                           &key use-current-ros-time)
-  (sb-thread:with-mutex (*tf-mutex*)
-    (let ((target-frame (unslash-frame target-frame))
-          (source-frame (unslash-frame (tf:frame-id pose-stamped))))
-      (let ((first-run t))
-        (loop for sleepiness = (or first-run (sleep 0.5))
-              for time = (cond (use-current-ros-time (ros-time))
-                               (t (tf:stamp pose-stamped)))
-              for can-tr = (cl-tf2:can-transform
-                            *tf2*
+  (let ((target-frame (unslash-frame target-frame))
+        (source-frame (unslash-frame (cl-tf:frame-id pose-stamped))))
+    (let ((first-run t))
+      (loop for sleepiness = (or first-run (sleep 0.5))
+            for time = (cond (use-current-ros-time (ros-time))
+                             (t (tf:stamp pose-stamped)))
+            for can-tr = (cl-tf2:can-transform
+                          tf
+                          target-frame
+                          source-frame
+                          time 2.0)
+            when (progn
+                   (when first-run
+                     (setf first-run nil)
+                     (setf use-current-ros-time t))
+                   can-tr)
+              do (return (tf:copy-pose-stamped pose-stamped :stamp time))))))
+
+(defun ensure-transform-available (tf reference-frame target-frame)
+  (let ((target-frame (unslash-frame target-frame))
+        (reference-frame (unslash-frame reference-frame))
+        (first-run t))
+    (loop for sleepiness = (or first-run (sleep 1.0))
+          for time = (ros-time)
+          for can-tr = (let ((can-tr (cl-tf2:can-transform
+                                      tf
+                                      target-frame
+                                      reference-frame
+                                      time 2.0)))
+                         (when can-tr
+                           (tf:transform->stamped-transform
+                            reference-frame
                             target-frame
-                            source-frame
-                            time 2.0)
-              when (progn
-                     (when first-run
-                       (setf first-run nil)
-                       (setf use-current-ros-time t))
-                     can-tr)
-                do (return (tf:copy-pose-stamped pose-stamped :stamp time)))))))
+                            time
+                            (cl-tf2::transform can-tr))))
+          when (progn
+                 (setf first-run nil)
+                 can-tr)
+            do (return can-tr))))
 
-(defun ensure-transform-available (reference-frame target-frame)
-  (sb-thread:with-mutex (*tf-mutex*)
-    (let ((target-frame (unslash-frame target-frame))
-          (reference-frame (unslash-frame reference-frame)))
-      (cpl:with-failure-handling
-          ((cl-tf:tf-cache-error (f)
-             (declare (ignore f))
-             (ros-warn (cl-tf2) "Failed to make transform available. Retrying.")
-             (cpl:retry)))
-        (let ((first-run t))
-          (loop for sleepiness = (or first-run (sleep 1.0))
-                for time = (ros-time)
-                for can-tr = (let ((can-tr (cl-tf2:can-transform
-                                            *tf2*
-                                            target-frame
-                                            reference-frame
-                                            time 2.0)))
-                               (when can-tr
-                                 (tf:transform->stamped-transform
-                                  reference-frame
-                                  target-frame
-                                  time
-                                  (cl-tf2::transform can-tr))))
-                when (progn
-                       (setf first-run nil)
-                       can-tr)
-                  do (return can-tr)))))))
-
-(defun ensure-pose-stamped-transformed (pose-stamped target-frame
+(defun ensure-pose-stamped-transformed (tf pose-stamped target-frame
                                         &key use-current-ros-time)
-  (sb-thread:with-mutex (*tf-mutex*)
-    (let ((target-frame (unslash-frame target-frame))
-          (source-frame (unslash-frame (tf:frame-id pose-stamped))))
-      (cpl:with-failure-handling
-          ((cl-tf:tf-cache-error (f)
-             (declare (ignore f))
-             (ros-warn (cl-tf2) "Failed to transform pose (~a -> ~a). Retrying."
-                       source-frame target-frame)
-             (cpl:retry)))
-        (let* ((rostime (cond (use-current-ros-time (roslisp:ros-time))
-                              (t (tf:stamp pose-stamped))))
-               (transform (cl-tf2:can-transform
-                           *tf2*
-                           target-frame
-                           source-frame
-                           rostime 3.0)))
-          (unless transform
-            (cpl:fail 'cl-tf:tf-cache-error))
-          (let* ((cl-transforms-transform
-                   (cl-tf2::transform transform))
-                 (transformed-pose
-                   (cl-transforms:transform-pose
-                    cl-transforms-transform
-                    pose-stamped)))
-            (tf:make-pose-stamped
-             target-frame
-             rostime
-             (cl-transforms:origin transformed-pose)
-             (cl-transforms:orientation transformed-pose))))))))
+  (let ((target-frame (unslash-frame target-frame))
+        (source-frame (unslash-frame (tf:frame-id pose-stamped))))
+    (loop with result = nil
+          while (not result)
+          as rostime = (cond (use-current-ros-time (roslisp:ros-time))
+                             (t (tf:stamp pose-stamped)))
+          as transform = (cl-tf2:can-transform
+                          tf
+                          target-frame
+                          source-frame
+                          rostime 3.0)
+          when transform
+            do (let* ((cl-transforms-transform
+                        (cl-tf2::transform transform))
+                      (transformed-pose
+                        (cl-transforms:transform-pose
+                         cl-transforms-transform
+                         pose-stamped)))
+                 (setf result (tf:make-pose-stamped
+                               target-frame
+                               rostime
+                               (cl-transforms:origin transformed-pose)
+                               (cl-transforms:orientation transformed-pose))))
+          finally (return result))))
