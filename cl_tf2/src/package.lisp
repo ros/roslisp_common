@@ -32,4 +32,5 @@
   (:use #:common-lisp #:roslisp)
   (:export buffer-client can-transform lookup-transform
            *tf2* ensure-pose-stamped-transformable
-           ensure-transform-available ensure-pose-stamped-transformed))
+           ensure-transform-available ensure-pose-stamped-transformed
+           unslash-frame))
