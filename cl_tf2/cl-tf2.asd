@@ -42,4 +42,8 @@
              (:file "buffer-interface" :depends-on ("package"))
              (:file "buffer-client" :depends-on ("package" "errors" "datatypes"
                                                            "message-conversions"
-                                                           "buffer-interface"))))))
+                                                           "buffer-interface"))
+             (:file "utilities" :depends-on ("package" "errors"
+                                                       "datatypes"
+                                                       "message-conversions"
+                                                       "buffer-interface"))))))
