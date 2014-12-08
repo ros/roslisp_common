@@ -31,7 +31,7 @@
   :license "BSD"
   :description "Common Lisp implementation of a TF2 client library."
 
-  :depends-on (roslisp cl-transforms actionlib tf2_msgs-msg geometry_msgs-msg std_msgs-msg cl-tf)
+  :depends-on (roslisp cl-transforms actionlib tf2_msgs-msg geometry_msgs-msg std_msgs-msg cl-tf-datatypes)
   :components
   ((:module "src"
             :components

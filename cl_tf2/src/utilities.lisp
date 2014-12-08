@@ -43,11 +43,11 @@ via `(roslisp:ros-time)' before trying to transform it every time. The
 parameter `tf' must be a valid instance of type
 `cl-tf2:buffer-client'. Returns the transformed pose."
   (let ((target-frame (unslash-frame target-frame))
-        (source-frame (unslash-frame (tf:frame-id pose-stamped))))
+        (source-frame (unslash-frame (tf-types:frame-id pose-stamped))))
     (loop with result = nil
           while (not result)
           as rostime = (cond (use-current-ros-time (roslisp:ros-time))
-                             (t (tf:stamp pose-stamped)))
+                             (t (tf-types:stamp pose-stamped)))
           as transform = (cl-tf2:can-transform
                           tf
                           target-frame
@@ -60,7 +60,7 @@ parameter `tf' must be a valid instance of type
                         (cl-transforms:transform-pose
                          cl-transforms-transform
                          pose-stamped)))
-                 (setf result (tf:make-pose-stamped
+                 (setf result (tf-types:make-pose-stamped
                                target-frame
                                rostime
                                (cl-transforms:origin transformed-pose)
@@ -83,7 +83,7 @@ parameter `tf' must be a valid instance of type
                                       reference-frame
                                       time 2.0)))
                          (when can-tr
-                           (tf:transform->stamped-transform
+                           (tf-types:transform->stamped-transform
                             reference-frame
                             target-frame
                             time
