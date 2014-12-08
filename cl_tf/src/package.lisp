@@ -2,7 +2,7 @@
 (in-package :cl-user)
 
 #.`(defpackage :cl-tf
-       (:use :cl :roslisp :tf-msg :cl-transforms :cl-tf-datatypes)
+     (:use :cl :roslisp :tf-msg :cl-transforms :cl-tf-datatypes)
      (:nicknames :tf)
      (:shadow transform-pose transform-point)
      (:export transformer make-transformer
@@ -18,10 +18,11 @@
               tf-transform->transform tf-message->transforms
               msg->pose msg->pose-stamped
               pose-stamped->msg pose->msg
-              pose->pose-stamped
               wait-for-transform tf-cache-error tf-connectivity-error
               tf-lookup-error topic send-transform send-transforms
               send-static-transforms-blocking send-static-transforms with-tf-broadcasting
               msg->point-stamped point-stamped->msg msg->point point->msg
               ,@(let ((r nil))
-                  (do-external-symbols (s :cl-transforms r) (push s r)))))
+                  (do-external-symbols (s :cl-transforms r) (push s r)))
+	      ,@(let ((r nil))
+                  (do-external-symbols (s :cl-tf-datatypes r) (push s r)))))
