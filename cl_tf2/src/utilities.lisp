@@ -28,6 +28,8 @@
 
 (in-package :cl-tf2)
 
+(defvar *tf2-ensurance-lock* (cram-utilities:make-lock))
+
 (defun unslash-frame (frame)
   "Removes any leading or trailing '/' characters from the string
 `frame' and returns the resulting string."
@@ -35,60 +37,38 @@
 
 (defun ensure-pose-stamped-transformed (tf pose-stamped target-frame
                                         &key use-current-ros-time)
-  "Tries to transform the stamped pose `pose-stamped' into the TF
-frame `target-frame'. When transformation fails, it is retried until
-it succeeds. If the option `use-current-ros-time' is set to `t', the
-time stamp in `pose-stamped' is replaced by the most current ROS time
-via `(roslisp:ros-time)' before trying to transform it every time. The
-parameter `tf' must be a valid instance of type
-`cl-tf2:buffer-client'. Returns the transformed pose."
-  (let ((target-frame (unslash-frame target-frame))
-        (source-frame (unslash-frame (tf-types:frame-id pose-stamped))))
-    (loop with result = nil
-          while (not result)
-          as rostime = (cond (use-current-ros-time (roslisp:ros-time))
-                             (t (tf-types:stamp pose-stamped)))
-          as transform = (cl-tf2:can-transform
-                          tf
-                          target-frame
-                          source-frame
-                          rostime 3.0)
-          when transform
-            do (let* ((cl-transforms-transform
-                        (cl-tf2::transform transform))
-                      (transformed-pose
-                        (cl-transforms:transform-pose
-                         cl-transforms-transform
-                         pose-stamped)))
-                 (setf result (tf-types:make-pose-stamped
-                               target-frame
-                               rostime
-                               (cl-transforms:origin transformed-pose)
-                               (cl-transforms:orientation transformed-pose))))
-          finally (return result))))
+  (let ((transform (ensure-transform-available
+                    tf (tf:frame-id pose-stamped) target-frame
+                    :time (unless use-current-ros-time (tf:stamp pose-stamped)))))
+    (tf:pose->pose-stamped
+     target-frame (tf:stamp transform)
+     (cl-transforms:transform-pose transform pose-stamped))))
 
-(defun ensure-transform-available (tf reference-frame target-frame)
+(defun ensure-transform-available (tf reference-frame target-frame
+                                   &key time)
   "Tries to find a valid transformation between the frames
 `reference-frame' and `target-frame' until one is available. The
 parameter `tf' must be a valid instance of type
 `cl-tf2:buffer-client'. Returns the found transformation."
-  (let ((target-frame (unslash-frame target-frame))
-        (reference-frame (unslash-frame reference-frame))
-        (first-run t))
-    (loop for sleepiness = (or first-run (sleep 1.0))
-          for time = (ros-time)
-          for can-tr = (let ((can-tr (cl-tf2:can-transform
-                                      tf
-                                      target-frame
-                                      reference-frame
-                                      time 2.0)))
-                         (when can-tr
-                           (tf-types:transform->stamped-transform
-                            reference-frame
-                            target-frame
-                            time
-                            (cl-tf2::transform can-tr))))
-          when (progn
-                 (setf first-run nil)
-                 can-tr)
-            do (return can-tr))))
+  (cram-utilities:with-lock-held (*tf2-ensurance-lock*)
+    (let ((target-frame (unslash-frame target-frame))
+          (reference-frame (unslash-frame reference-frame))
+          (first-run t))
+      (loop for sleepiness = (or first-run (sleep 1.0))
+            as rostime = (cond (time time)
+                               (t (roslisp:ros-time)))
+            for can-tr = (let ((can-tr (cl-tf2:can-transform
+                                        tf
+                                        target-frame
+                                        reference-frame
+                                        rostime 2.0)))
+                           (when can-tr
+                             (tf-types:transform->stamped-transform
+                              reference-frame
+                              target-frame
+                              rostime
+                              (cl-tf2::transform can-tr))))
+            when (progn
+                   (setf first-run nil)
+                   can-tr)
+              do (return can-tr)))))
