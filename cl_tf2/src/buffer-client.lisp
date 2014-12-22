@@ -42,9 +42,9 @@
   (ensure-both-or-none-supplied target-time-supplied-p fixed-frame-supplied-p
                                 target-frame source-frame)
   (handler-case (if (and target-time-supplied-p fixed-frame-supplied-p)
-                    (lookup-Transform tf target-frame source-frame source-time timeout
+                    (lookup-transform tf target-frame source-frame source-time timeout
                                       target-time fixed-frame)
-                    (lookup-Transform tf target-frame source-frame source-time timeout))
+                    (lookup-transform tf target-frame source-frame source-time timeout))
     (tf2-server-error () nil)))
 
 (defmethod lookup-transform ((tf buffer-client) target-frame source-frame 
