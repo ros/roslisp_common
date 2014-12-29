@@ -28,7 +28,7 @@
 
 (in-package :cl-tf2)
 
-(defvar *tf2-ensurance-lock* (cram-utilities:make-lock))
+(defvar *tf2-ensurance-lock* (sb-thread:make-mutex))
 
 (defun unslash-frame (frame)
   "Removes any leading or trailing '/' characters from the string
@@ -38,10 +38,10 @@
 (defun ensure-pose-stamped-transformed (tf pose-stamped target-frame
                                         &key use-current-ros-time)
   (let ((transform (ensure-transform-available
-                    tf (tf:frame-id pose-stamped) target-frame
-                    :time (unless use-current-ros-time (tf:stamp pose-stamped)))))
-    (tf:pose->pose-stamped
-     target-frame (tf:stamp transform)
+                    tf (tf-types:frame-id pose-stamped) target-frame
+                    :time (unless use-current-ros-time (tf-types:stamp pose-stamped)))))
+    (tf-types:pose->pose-stamped
+     target-frame (tf-types:stamp transform)
      (cl-transforms:transform-pose transform pose-stamped))))
 
 (defun ensure-transform-available (tf reference-frame target-frame
@@ -50,7 +50,7 @@
 `reference-frame' and `target-frame' until one is available. The
 parameter `tf' must be a valid instance of type
 `cl-tf2:buffer-client'. Returns the found transformation."
-  (cram-utilities:with-lock-held (*tf2-ensurance-lock*)
+  (sb-thread:with-mutex (*tf2-ensurance-lock*)
     (let ((target-frame (unslash-frame target-frame))
           (reference-frame (unslash-frame reference-frame))
           (first-run t))
