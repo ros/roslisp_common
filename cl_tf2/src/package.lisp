@@ -30,4 +30,7 @@
 
 (defpackage :cl-tf2
   (:use #:common-lisp #:roslisp)
-  (:export buffer-client can-transform lookup-transform))
+  (:export buffer-client can-transform lookup-transform
+           ensure-pose-stamped-transformable
+           ensure-transform-available ensure-pose-stamped-transformed
+           unslash-frame))
