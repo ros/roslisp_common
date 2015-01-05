@@ -28,8 +28,6 @@
 
 (in-package :cl-tf2)
 
-(defvar *tf2-ensurance-lock* (sb-thread:make-mutex))
-
 (defun unslash-frame (frame)
   "Removes any leading or trailing '/' characters from the string
 `frame' and returns the resulting string."
@@ -50,25 +48,24 @@
 `reference-frame' and `target-frame' until one is available. The
 parameter `tf' must be a valid instance of type
 `cl-tf2:buffer-client'. Returns the found transformation."
-  (sb-thread:with-mutex (*tf2-ensurance-lock*)
-    (let ((target-frame (unslash-frame target-frame))
-          (reference-frame (unslash-frame reference-frame))
-          (first-run t))
-      (loop for sleepiness = (or first-run (sleep 1.0))
-            as rostime = (cond (time time)
-                               (t (roslisp:ros-time)))
-            for can-tr = (let ((can-tr (cl-tf2:can-transform
-                                        tf
-                                        target-frame
-                                        reference-frame
-                                        rostime 2.0)))
-                           (when can-tr
-                             (tf-types:transform->stamped-transform
-                              reference-frame
-                              target-frame
-                              rostime
-                              (cl-tf2::transform can-tr))))
-            when (progn
-                   (setf first-run nil)
-                   can-tr)
-              do (return can-tr)))))
+  (let ((target-frame (unslash-frame target-frame))
+        (reference-frame (unslash-frame reference-frame))
+        (first-run t))
+    (loop for sleepiness = (or first-run (sleep 1.0))
+          as rostime = (cond (time time)
+                             (t (roslisp:ros-time)))
+          for can-tr = (let ((can-tr (cl-tf2:can-transform
+                                      tf
+                                      target-frame
+                                      reference-frame
+                                      rostime 2.0)))
+                         (when can-tr
+                           (tf-types:transform->stamped-transform
+                            reference-frame
+                            target-frame
+                            rostime
+                            (cl-tf2::transform can-tr))))
+          when (progn
+                 (setf first-run nil)
+                 can-tr)
+            do (return can-tr))))
