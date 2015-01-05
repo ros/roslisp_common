@@ -11,7 +11,7 @@
            :is-normalized :rotate :angle-between-quaternions
            :normalize-angle
            :transform :make-transform :make-identity-transform :copy-transform
-           :transform-inv :transform* :transform-point :translation :rotation
+           :transform-inv :transform* :transform-diff :transform-point :translation :rotation
            :point :pose :make-pose :make-identity-pose :copy-pose
            :make-2d-pose :transform-pose :reference-transform :origin :orientation
            :transform->pose :pose->transform
