@@ -33,7 +33,9 @@
            :initform (actionlib:make-action-client
                       "/tf2_buffer_server"
                       "tf2_msgs/LookupTransformAction") 
-           :reader client)))
+           :reader client)
+   (lock :initform (sb-thread:make-mutex :name (string (gensym "TF2-LOCK-")))
+         :accessor lock :type mutex)))
 
 (defmethod can-transform ((tf buffer-client) target-frame source-frame 
                           &optional (source-time 0.0) (timeout 0.0)
@@ -54,17 +56,19 @@
   (ensure-both-or-none-supplied target-time-supplied-p fixed-frame-supplied-p
                                 source-frame target-frame)
   (multiple-value-bind (result status)
-      (actionlib:send-goal-and-wait 
-       (client tf)
-       (actionlib:make-action-goal (client tf)
-         :target_frame target-frame :source_frame source-frame
-         :source_time source-time :timeout timeout
-         :target_time target-time :fixed_frame fixed-frame
-         :advanced (and target-time-supplied-p fixed-frame-supplied-p))
-       :result-timeout timeout)
+      (sb-thread:with-recursive-lock ((lock tf))
+        (actionlib:send-goal-and-wait 
+         (client tf)
+         (actionlib:make-action-goal 
+          (client tf)
+          :target_frame target-frame :source_frame source-frame
+          :source_time source-time :timeout timeout
+          :target_time target-time :fixed_frame fixed-frame
+          :advanced (and target-time-supplied-p fixed-frame-supplied-p))
+         :result-timeout timeout))
     (when (not (eq status :succeeded))
       (error 'tf2-timeout-error :description "Action call did not succeed."))
-    (process-result result)))
+  (process-result result)))
 
 (defun ensure-both-or-none-supplied (target-time-supplied-p fixed-frame-supplied-p
                                      source-frame target-frame)
