@@ -1,4 +1,4 @@
-;;; Copyright (c) 2013, Georg Bartels <georg.bartels@cs.uni-bremen.de>
+;;; Copyright (c) 2015, Georg Bartels <georg.bartels@cs.uni-bremen.de>
 ;;; All rights reserved.
 ;;;
 ;;; Redistribution and use in source and binary forms, with or without
@@ -26,12 +26,14 @@
 ;;; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ;;; POSSIBILITY OF SUCH DAMAGE.
 
-(in-package :cl-user)
+(in-package :cl-tf2)
 
-(defpackage :cl-tf2
-  (:use #:common-lisp #:roslisp)
-  (:export buffer-client can-transform lookup-transform
-           make-transform-broadcaster send-transform make-stamped-transform
-           ensure-pose-stamped-transformable
-           ensure-transform-available ensure-pose-stamped-transformed
-           unslash-frame))
+(defun make-transform-broadcaster (&key (topic "/tf"))
+  "Returns a publisher that can be used with send-transform. The broadcasting
+ topic can be altered through the keyword `topic'."
+  (advertise topic "tf2_msgs/TFMessage"))
+
+(defun send-transform (broadcaster &rest transforms)
+  "Uses `broadcaster' to send several stamped `transforms' to TF."
+  (publish broadcaster 
+           (make-message "tf2_msgs/TFMessage" :transforms (to-msg transforms))))
