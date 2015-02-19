@@ -6,7 +6,6 @@ find_package(catkin REQUIRED)
 catkin_package()
 
 foreach(dir
-    asdf
     src)
   install(DIRECTORY ${dir}
       DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}

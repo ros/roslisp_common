@@ -34,6 +34,9 @@
 (defgeneric from-msg (msg)
   (:documentation "Transforms 'msg' into suitable cl-tf2 or cl-transforms data structures."))
 
+(defmethod to-msg ((data list))
+  (coerce (mapcar #'to-msg data) 'vector))
+
 (defmethod to-msg ((data stamped-transform))
   (make-msg "geometry_msgs/TransformStamped"
             :header (to-msg (header data))

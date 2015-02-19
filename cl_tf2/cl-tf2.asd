@@ -43,6 +43,9 @@
              (:file "buffer-client" :depends-on ("package" "errors" "datatypes"
                                                            "message-conversions"
                                                            "buffer-interface"))
+             (:file "transform-broadcaster" :depends-on ("package"
+                                                         "datatypes"
+                                                         "message-conversions"))
              (:file "utilities" :depends-on ("package" "errors"
                                                        "datatypes"
                                                        "message-conversions"
