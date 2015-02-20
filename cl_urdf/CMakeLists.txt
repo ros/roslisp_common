@@ -4,7 +4,6 @@ project(cl_urdf)
 find_package(catkin REQUIRED COMPONENTS
   roslisp
   cl_transforms
-  cram_physics_utils
 )
 
 #set the default path for built executables to the "bin" directory

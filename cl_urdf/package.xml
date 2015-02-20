@@ -20,12 +20,10 @@
   <build_depend>sbcl</build_depend>
   <build_depend>roslisp</build_depend>
   <build_depend>cl_transforms</build_depend>
-  <build_depend>cram_physics_utils</build_depend>
 
   <!-- Dependencies needed after this package is compiled. -->
   <run_depend>sbcl</run_depend>
   <run_depend>roslisp</run_depend>
   <run_depend>cl_transforms</run_depend>
-  <run_depend>cram_physics_utils</run_depend>
 
 </package>
