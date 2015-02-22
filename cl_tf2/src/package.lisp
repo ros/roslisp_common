@@ -34,4 +34,4 @@
            make-transform-broadcaster send-transform make-stamped-transform
            ensure-pose-stamped-transformable
            ensure-transform-available ensure-pose-stamped-transformed
-           unslash-frame))
+           unslash-frame header child-frame-id transform frame-id stamp))
