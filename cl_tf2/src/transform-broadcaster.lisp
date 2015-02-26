@@ -28,12 +28,58 @@
 
 (in-package :cl-tf2)
 
-(defun make-transform-broadcaster (&key (topic "/tf"))
-  "Returns a publisher that can be used with send-transform. The broadcasting
- topic can be altered through the keyword `topic'."
-  (advertise topic "tf2_msgs/TFMessage"))
+(defclass transform-broadcaster ()
+  ((publisher :initarg :publisher
+              :reader publisher)
+   (send-transform-callbacks :initform '())
+   (send-transform-callbacks-enabled :initform nil)))
 
-(defun send-transform (broadcaster &rest transforms)
-  "Uses `broadcaster' to send several stamped `transforms' to TF."
-  (publish broadcaster 
-           (make-message "tf2_msgs/TFMessage" :transforms (to-msg transforms))))
+(defun make-transform-broadcaster (&key (topic "/tf") (static nil))
+  "Returns a publisher that can be used with send-transform. The broadcasting
+topic can be altered through the keyword `topic'."
+  (make-instance 'transform-broadcaster
+    :publisher (advertise topic "tf2_msgs/TFMessage" :latch static)))
+
+(defgeneric send-transform (broadcaster &rest transforms)
+  (:documentation "Uses `broadcaster' to send several stamped `transforms' to TF.")
+  (:method ((broadcaster transform-broadcaster) &rest transforms)
+    ;; (ros-info (broadcaster) "sending ~a -> ~a (at ~a)~%"
+    ;;           (cl-tf-datatypes:frame-id (first transforms))
+    ;;           (cl-tf-datatypes:child-frame-id (first transforms))
+    ;;           (cl-tf-datatypes:stamp (car transforms)))
+    (publish (slot-value broadcaster 'publisher)
+             (make-message "tf2_msgs/TFMessage" :transforms (to-msg transforms)))
+    (when (slot-value broadcaster 'send-transform-callbacks-enabled)
+      (execute-changed-callbacks broadcaster))))
+
+(defun execute-changed-callbacks (tf-broadcaster)
+  (with-slots (send-transform-callbacks) tf-broadcaster
+    (map 'nil (cl-utils:compose #'funcall #'cdr) send-transform-callbacks)))
+
+(defun add-transforms-changed-callback (tf-broadcaster name callback)
+  (with-slots (send-transform-callbacks) tf-broadcaster
+    (pushnew (cons name callback) send-transform-callbacks)))
+
+(defun remove-transforms-changed-callback (tf-broadcaster name)
+  (with-slots (send-transform-callbacks) tf-broadcaster
+    (setf send-transform-callbacks
+          (remove name send-transform-callbacks :key #'car))))
+
+(defun enable-changed-callbacks (tf-broadcaster)
+  (setf (slot-value tf-broadcaster 'send-transform-callbacks-enabled) t))
+
+(defun disable-changed-callbacks (tf-broadcaster)
+  (setf (slot-value tf-broadcaster 'send-transform-callbacks-enabled) nil))
+
+(defmacro with-transforms-changed-callbacks
+    ((tf-broadcaster callback &key (name (gensym "TRANSFORMS-CHANGED-CALLBACK-")))
+     &body body)
+  "Executes `body' with enabled SEND-TRANSFORM-CALLBACKS.
+`callback' is added to the overall list of the callbacks of `tf-broadcaster'."
+  `(unwind-protect
+        (progn
+          (add-transforms-changed-callback ,tf-broadcaster ',name ,callback)
+          (enable-changed-callbacks ,tf-broadcaster)
+          ,@body)
+     (remove-transforms-changed-callback ,tf-broadcaster ',name)
+     (disable-changed-callbacks ,tf-broadcaster)))
