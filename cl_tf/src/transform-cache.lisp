@@ -97,13 +97,13 @@
 
 (defmethod initialize-instance :after ((cache-entry cache-entry) &key)
   (setf (slot-value cache-entry 'transforms-cache)
-        (make-array +initial-cache-size+ :element-type '(or null stamped-transform)
+        (make-array +initial-cache-size+ :element-type '(or null transform-stamped)
                     :initial-element nil)))
 
 (defmethod cache-transform ((cache-entry cache-entry) transform)
   (let ((cache-size (array-dimension (transforms-cache cache-entry) 0))
         (cache (transforms-cache cache-entry)))
-    (declare (type (simple-array (or null stamped-transform) 1) cache))
+    (declare (type (simple-array (or null transform-stamped) 1) cache))
     (unless (>= (stamp transform) (newest-stamp cache-entry))
       (ros-debug
        (cl-tf cache)
@@ -146,7 +146,7 @@
             (interpolate
              (let ((ratio (/ (- time (stamp lower))
                              (- (stamp upper) (stamp lower)))))
-               (make-stamped-transform
+               (make-transform-stamped
                 (frame-id lower)
                 (child-frame-id lower)
                 time

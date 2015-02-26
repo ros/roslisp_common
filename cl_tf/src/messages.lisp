@@ -43,9 +43,10 @@
          msg
        (let ((transform (tf-transform->transform
                          (geometry_msgs-msg:transform msg))))
-         (make-stamped-transform frame-id child-frame-id stamp
-                                 (translation transform)
-                                 (rotation transform))))))
+         (cl-tf-datatypes:make-transform-stamped
+          frame-id child-frame-id stamp
+          (translation transform)
+          (rotation transform))))))
 
 (defun msg->pose-stamped (msg)
   (with-fields ((frame-id (frame_id header))
@@ -158,7 +159,7 @@
 (defun restamp-tf-msg (msg new-stamp)
   (with-slots (tf-msg::transforms) msg
     (loop for transform-msg across tf-msg::transforms do
-        (cl-tf::restamp-stamped-transform-msg transform-msg new-stamp))
+      (restamp-stamped-transform-msg transform-msg new-stamp))
     msg))
 
 (defun restamp-stamped-transform-msg (msg new-stamp)
