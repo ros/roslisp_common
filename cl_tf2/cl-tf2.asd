@@ -31,22 +31,29 @@
   :license "BSD"
   :description "Common Lisp implementation of a TF2 client library."
 
-  :depends-on (roslisp cl-transforms actionlib tf2_msgs-msg geometry_msgs-msg std_msgs-msg cl-tf-datatypes)
+  :depends-on (roslisp cl-transforms actionlib
+                       tf2_msgs-msg geometry_msgs-msg std_msgs-msg
+                       cl-tf-datatypes
+                       cl-utils)
   :components
   ((:module "src"
             :components
             ((:file "package")
              (:file "errors" :depends-on ("package"))
-             (:file "datatypes" :depends-on ("package"))
-             (:file "message-conversions" :depends-on ("package" "datatypes"))
+             ;; (:file "datatypes" :depends-on ("package"))
+             (:file "message-conversions" :depends-on ("package"
+                                                       ;; "datatypes"
+                                                       ))
              (:file "buffer-interface" :depends-on ("package"))
-             (:file "buffer-client" :depends-on ("package" "errors" "datatypes"
-                                                           "message-conversions"
-                                                           "buffer-interface"))
-             (:file "transform-broadcaster" :depends-on ("package"
-                                                         "datatypes"
-                                                         "message-conversions"))
              (:file "utilities" :depends-on ("package" "errors"
-                                                       "datatypes"
+                                                       ;; "datatypes"
                                                        "message-conversions"
-                                                       "buffer-interface"))))))
+                                                       "buffer-interface"))
+             (:file "buffer-client" :depends-on ("package" "errors"
+                                                           ;; "datatypes"
+                                                           "message-conversions"
+                                                           "buffer-interface"
+                                                           "utilities"))
+             (:file "transform-broadcaster" :depends-on ("package"
+                                                         ;; "datatypes"
+                                                         "message-conversions"))))))
