@@ -28,11 +28,14 @@
 
 (in-package :cl-tf2)
 
+(defparameter *buffer-server-action-topic* "tf2_buffer_server")
+(defparameter *buffer-server-action-type* "tf2_msgs/LookupTransformAction")
+
 (defclass buffer-client ()
   ((client :initarg :client
            :initform (actionlib:make-action-client
-                      "/tf2_buffer_server"
-                      "tf2_msgs/LookupTransformAction")
+                      *buffer-server-action-topic*
+                      *buffer-server-action-type*)
            :reader client)
    (lock :initform (sb-thread:make-mutex :name (string (gensym "TF2-LOCK-")))
          :accessor lock :type mutex)))
@@ -60,6 +63,8 @@
         (target-frame (unslash-frame target-frame))
         (source-frame (unslash-frame source-frame))
         (fixed-frame (unslash-frame fixed-frame)))
+    (unless (actionlib:wait-for-server (client tf) timeout)
+      (error 'tf2-server-error :description "Waiting for server timed out."))
     (multiple-value-bind (result status)
         (sb-thread:with-recursive-lock ((lock tf))
           (actionlib:send-goal-and-wait
