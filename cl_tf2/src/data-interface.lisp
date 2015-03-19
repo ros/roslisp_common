@@ -1,4 +1,4 @@
-;;; Copyright (c) 2013, Georg Bartels <georg.bartels@cs.uni-bremen.de>
+;;; Copyright (c) 2015 Georg Bartels <georg.bartels@cs.uni-bremen.de>
 ;;; All rights reserved.
 ;;;
 ;;; Redistribution and use in source and binary forms, with or without
@@ -26,30 +26,17 @@
 ;;; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ;;; POSSIBILITY OF SUCH DAMAGE.
 
-(defsystem "cl-tf2"
-  :author "Georg Bartels <georg.bartels@cs.uni-bremen.de>"
-  :license "BSD"
-  :description "Common Lisp implementation of a TF2 client library."
+(in-package :cl-tf2)
 
-  :depends-on (roslisp tf2_msgs-msg actionlib-lisp)
-  :components
-  ((:module "src"
-            :components
-            ((:file "package")
-             (:file "buffer-interface" :depends-on ("package"))
-             (:file "data-interface" :depends-on ("package"))
-;             (:file "errors" :depends-on ("package"))
-             ;; (:file "datatypes" :depends-on ("package"))
-             ;; (:file "message-conversions" :depends-on ("package" "datatypes"))
+;;;
+;;; INTERFACE WHICH ALL OBJECS SUBJECT TO TF2-REASONING HAVE TO IMPLEMENT
+;;;
 
-             ;; (:file "buffer-client" :depends-on ("package" "errors" "datatypes"
-             ;;                                               "message-conversions"
-             ;;                                               "buffer-interface"))
-             ;; (:file "transform-broadcaster" :depends-on ("package"
-             ;;                                             "datatypes"
-             ;;                                             "message-conversions"))
-             ;; (:file "utilities" :depends-on ("package" "errors"
-             ;;                                           "datatypes"
-             ;;                                           "message-conversions"
-             ;;                                           "buffer-interface"))
-             ))))
+(defgeneric get-frame-id (object)
+  (:documentation "Retrieves the frame-id in which 'object' is expressed."))
+
+(defgeneric get-time-stamp (object)
+  (:documentation "Retrieves the time-stamp at which 'object' is expressed."))
+
+(defgeneric apply-transform (object transform)
+  (:documentation "Applies 'transform' to 'object'."))
