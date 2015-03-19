@@ -36,8 +36,10 @@
   ((:module "src"
             :components
             ((:file "package")
-             (:file "buffer-interface" :depends-on ("package"))
              (:file "data-interface" :depends-on ("package"))
+             (:file "errors" :depends-on ("package"))
+             (:file "buffer-interface" :depends-on ("package" "errors" "data-interface"))
+             
              (:file "broadcaster-interface" :depends-on ("package"))
 ;             (:file "errors" :depends-on ("package"))
              ;; (:file "datatypes" :depends-on ("package"))

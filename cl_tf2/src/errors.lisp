@@ -28,12 +28,10 @@
 
 (in-package :cl-tf2)
 
-(define-condition fixed-frame-missing-error (error)
-  ((source-frame :initarg :source-frame :reader source-frame)
-   (target-frame :initarg :target-frame :reader target-frame)))
-
 (define-condition tf2-server-error (error)
-  ((description :initarg :description :reader description)))
+  ((description :initarg :description :reader description))
+  (:report (lambda (condition stream)
+             (format stream (description condition)))))
 
 (define-condition tf2-lookup-error (tf2-server-error) ())
 
