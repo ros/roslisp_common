@@ -32,32 +32,32 @@
 ;;; SIMPLE API
 ;;;
 
-(defgeneric lookup-transform (tf target-frame source-frame time timeout)
- (:documentation "Queries 'tf' for a transform from 'source-frame' to 'target-frame'
- at 'time'.
+(defgeneric lookup-transform (buffer target-frame source-frame time timeout)
+ (:documentation "Uses 'buffer' to query tf for a transform from 'source-frame'
+ to 'target-frame' at 'time'.
 
  This call will wait for the necessary transform until 'timeout' seconds have
  passed. If 'timeout' is 0, this call will wait forever until the specified
  transform is available."))
 
-(defgeneric has-transform (tf target-frame source-frame time timeout)
- (:documentation "Predicate to check whether 'tf' is aware of a transform from
- 'source-frame' to 'target-frame' at 'time'.
+(defgeneric has-transform (buffer target-frame source-frame time timeout)
+ (:documentation "Predicate using 'buffer' to check whether tf is aware of a
+ transform from 'source-frame' to 'target-frame' at 'time'.
 
  This call will wait for the necessary transform until 'timeout' seconds have
  passed. If 'timeout' is 0, this call will wait forever until the specified
  transform is available."))
 
-(defgeneric transform (tf object target-frame &key timeout)
-  (:documentation "Uses 'tf' to transform 'object' into 'target-frame'.
+(defgeneric transform (buffer object target-frame &key timeout)
+  (:documentation "Uses 'buffer' to have tf transform 'object' into 'target-frame'.
 
  This call will wait for the necessary transform until 'timeout' seconds have
  passed. If 'timeout' is 0, this call will wait forever until the specified
  transform is available."))
 
-(defgeneric can-transform (tf object target-frame &key timeout)
-  (:documentation "Predicate to check whether 'tf' can transform 'object' into
- reference frame 'target-frame'.
+(defgeneric can-transform (buffer object target-frame &key timeout)
+  (:documentation "Predicate using 'buffer' to check whether tf can transform
+ 'object' into reference frame 'target-frame'.
 
  This call will wait for the necessary transform until 'timeout' seconds have
  passed. If 'timeout' is 0, this call will wait forever until the specified
@@ -67,42 +67,42 @@
 ;;; ADVANCED API
 ;;;
 
-(defgeneric lookup-transform-advanced (tf target-frame target-time source-frame
+(defgeneric lookup-transform-advanced (buffer target-frame target-time source-frame
                                        source-time fixed-frame timeout)
- (:documentation "Queries 'tf' for a transform from 'source-frame' to 'target-frame'
- 'target-frame' shall be interpreted in 'target-time' and 'source-frame' shall be
- interpreted in 'source-time'. 'fixed-frame' denotes the frame in which the transform
- is constant in time.
-
- This call will wait for the necessary transform until 'timeout' seconds have
- passed. If 'timeout' is 0, this call will wait forever until the specified
- transform is available."))
-
-(defgeneric has-transform-advanced (tf target-frame target-time source-frame
-                                    source-time fixed-frame timeout)
- (:documentation "Predicate to check whether 'tf' has a transform from 'source-frame'
- to 'target-frame'. 'target-frame' shall be interpreted in 'target-time' and
- 'source-frame' shall be interpreted in 'source-time'. 'fixed-frame' denotes the
- frame in which the transform is constant in time.
-
- This call will wait for the necessary transform until 'timeout' seconds have
- passed. If 'timeout' is 0, this call will wait forever until the specified
- transform is available."))
-
-(defgeneric transform-advanced (tf object target-frame target-time fixed-frame
-                                &key timeout)
- (:documentation "Uses 'tf' to transform 'object' into 'target-frame'. 'target-frame'
- shall be interpreted in 'target-time. 'fixed-frame' denotes the frame in which the
+ (:documentation "Queries tf using 'buffer' for a transform from 'source-frame' to
+'target-frame' 'target-frame' shall be interpreted in 'target-time' and 'source-frame'
+ shall be interpreted in 'source-time'. 'fixed-frame' denotes the frame in which the
  transform is constant in time.
 
  This call will wait for the necessary transform until 'timeout' seconds have
  passed. If 'timeout' is 0, this call will wait forever until the specified
  transform is available."))
 
-(defgeneric can-transform-advanced (tf object target-frame target-time fixed-frame
+(defgeneric has-transform-advanced (buffer target-frame target-time source-frame
+                                    source-time fixed-frame timeout)
+ (:documentation "Predicate using 'buffer' to check whether tf has a transform from
+'source-frame' to 'target-frame'. 'target-frame' shall be interpreted in 'target-time'
+ and 'source-frame' shall be interpreted in 'source-time'. 'fixed-frame' denotes the
+ frame in which the transform is constant in time.
+
+ This call will wait for the necessary transform until 'timeout' seconds have
+ passed. If 'timeout' is 0, this call will wait forever until the specified
+ transform is available."))
+
+(defgeneric transform-advanced (buffer object target-frame target-time fixed-frame
+                                &key timeout)
+ (:documentation "Uses 'buffer' to have tf transform 'object' into 'target-frame'.
+ 'target-frame' shall be interpreted in 'target-time. 'fixed-frame' denotes the frame
+ in which the transform is constant in time.
+
+ This call will wait for the necessary transform until 'timeout' seconds have
+ passed. If 'timeout' is 0, this call will wait forever until the specified
+ transform is available."))
+
+(defgeneric can-transform-advanced (buffer object target-frame target-time fixed-frame
                                     &key timeout)
- (:documentation "Predicate to check whether 'tf' can transform 'object' into
- 'target-frame'. 'target-frame' shall be interpreted in 'target-time. 'fixed-frame'
+ (:documentation "Predicate using 'buffer' to check whether tf can transform 'object'
+ into 'target-frame'. 'target-frame' shall be interpreted in 'target-time. 'fixed-frame'
  denotes the frame in which the transform is constant in time.
 
  This call will wait for the necessary transform until 'timeout' seconds have
