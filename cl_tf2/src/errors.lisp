@@ -28,19 +28,19 @@
 
 (in-package :cl-tf2)
 
-(define-condition tf2-server-error (error)
+(define-condition tf2-buffer-client-error (error)
   ((description :initarg :description :reader description))
   (:report (lambda (condition stream)
              (format stream (description condition)))))
 
-(define-condition tf2-lookup-error (tf2-server-error) ())
+(define-condition tf2-lookup-error (tf2-buffer-client-error) ())
 
-(define-condition tf2-connectivity-error (tf2-server-error) ())
+(define-condition tf2-connectivity-error (tf2-buffer-client-error) ())
 
-(define-condition tf2-extrapolation-error (tf2-server-error) ())
+(define-condition tf2-extrapolation-error (tf2-buffer-client-error) ())
 
-(define-condition tf2-invalid-argument-error (tf2-server-error) ())
+(define-condition tf2-invalid-argument-error (tf2-buffer-client-error) ())
 
-(define-condition tf2-timeout-error (tf2-server-error) ())
+(define-condition tf2-timeout-error (tf2-buffer-client-error) ())
 
-(define-condition tf2-transform-error (tf2-server-error) ())
+(define-condition tf2-transform-error (tf2-buffer-client-error) ())
