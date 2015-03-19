@@ -28,80 +28,64 @@
 
 (in-package :cl-tf2)
 
+(defparameter *tf2-buffer-server-goal* "/tf2_buffer_server")
+(defparameter *tf2-buffer-server-goal-type* "tf2_msgs/LookupTransformAction")
+
 (defclass buffer-client ()
-  ((client :initarg :client 
-           :initform (actionlib:make-action-client
-                      "/tf2_buffer_server"
-                      "tf2_msgs/LookupTransformAction") 
-           :reader client)
-   (lock :initform (sb-thread:make-mutex :name (string (gensym "TF2-LOCK-")))
-         :accessor lock :type mutex)))
+  ((client :initarg :client :reader client
+           :type actionlib-lisp:simple-action-client
+           :initform (actionlib-lisp:make-simple-action-client
+                      *tf2-buffer-server-goal*
+                      *tf2-buffer-server-goal-type*))
+   (lock :accessor lock :type mutex
+         :initform (sb-thread:make-mutex
+                    :name (string (gensym "TF2-BUFFER-CLIENT-LOCK-"))))))
 
-(defmethod can-transform ((tf buffer-client) target-frame source-frame 
-                          &optional (source-time 0.0) (timeout 0.0)
-                            (target-time source-time target-time-supplied-p)
-                            (fixed-frame source-frame fixed-frame-supplied-p))
-  (ensure-both-or-none-supplied target-time-supplied-p fixed-frame-supplied-p
-                                target-frame source-frame)
-  (handler-case (if (and target-time-supplied-p fixed-frame-supplied-p)
-                    (lookup-transform tf target-frame source-frame source-time timeout
-                                      target-time fixed-frame)
-                    (lookup-transform tf target-frame source-frame source-time timeout))
-    (tf2-server-error () nil)))
+;;;
+;;; SIMPLE API
+;;;
 
-(defmethod lookup-transform ((tf buffer-client) target-frame source-frame 
-                             &optional (source-time 0.0) (timeout 0.0) 
-                               (target-time source-time target-time-supplied-p)
-                               (fixed-frame source-frame fixed-frame-supplied-p))
-  (ensure-both-or-none-supplied target-time-supplied-p fixed-frame-supplied-p
-                                source-frame target-frame)
-  (multiple-value-bind (result status)
-      (sb-thread:with-recursive-lock ((lock tf))
-        (actionlib:send-goal-and-wait 
-         (client tf)
-         (actionlib:make-action-goal 
-          (client tf)
-          :target_frame target-frame :source_frame source-frame
-          :source_time source-time :timeout timeout
-          :target_time target-time :fixed_frame fixed-frame
-          :advanced (and target-time-supplied-p fixed-frame-supplied-p))
-         :result-timeout timeout))
-    (when (not (eq status :succeeded))
-      (error 'tf2-timeout-error :description "Action call did not succeed."))
-  (process-result result)))
+(defmethod lookup-transform ((buffer buffer-client) target-frame source-frame
+                             time timeout)
+ "Uses buffer-client 'buffer' to query tf for a transform from 'source-frame'
+ to 'target-frame' at 'time'.
 
-(defun ensure-both-or-none-supplied (target-time-supplied-p fixed-frame-supplied-p
-                                     source-frame target-frame)
-  (when (and target-time-supplied-p (not fixed-frame-supplied-p))
-    (error 'fixed-frame-missing-error
-           :source-frame source-frame
-           :target-frame target-frame)))
+ This call will wait for the necessary transform until 'timeout' seconds have
+ passed. If 'timeout' is 0, this call will wait forever until the specified
+ transform is available."
+  (with-slots (client lock) buffer
+    (sb-thread:with-recursive-lock (lock)
+      (let ((goal-msg (actionlib-lisp:make-action-goal-msg client
+                        :target_frame target-frame :source_frame source-frame
+                        :source_time time :timeout timeout)))
+        (actionlib-lisp:send-goal-and-wait client goal-msg 0.1 0.0) ; bug: does not work with timeout 0.0
+        (actionlib-lisp:wait-for-result client 0.0)
+        (process-result client)))))
 
-(defun process-result (result)
-  (with-fields (error transform) result
+;;;
+;;; INTERNAL
+;;;
+
+;; TOOD(Georg): consider moving this function into roslisp-msg-protocol
+(defun code-symbol (msg-type code)
+  "Retrieves the symbol associated with 'code' in the symbol codes of 'msg-type'."
+  (let ((symbol-code
+          (find code (roslisp-msg-protocol:symbol-codes msg-type) :test #'= :key #'rest)))
+    (when symbol-code
+      (car symbol-code))))
+
+(defun process-result (client)
+ "Process the result returned to 'client' from the buffer-server. Either raises an
+ appropriate error or returns the transform stamped."
+  (unless (eql (actionlib-lisp:state client) :succeeded)
+    (error 'tf2-buffer-client-error :description "Action call did not succeed."))
+  (with-fields (error transform) (actionlib-lisp:result client)
     (with-fields (error error_string) error
-      (cond ((eq error 
-                 (roslisp-msg-protocol:symbol-code
-                  'tf2_msgs-msg:tf2error :lookup_error))
-             (error 'tf2-lookup-error () :description error_string))
-            ((eq error 
-                 (roslisp-msg-protocol:symbol-code
-                  'tf2_msgs-msg:tf2error :connectivity_error))
-             (error 'tf2-connectivity-error () :description error_string))
-            ((eq error 
-                 (roslisp-msg-protocol:symbol-code
-                  'tf2_msgs-msg:tf2error :extrapolation_error))
-             (error 'tf2-extrapolation-error () :description error_string))
-            ((eq error 
-                 (roslisp-msg-protocol:symbol-code
-                  'tf2_msgs-msg:tf2error :invalid_argument_error))
-             (error 'tf2-invalid-argument-error () :description error_string))
-            ((eq error 
-                 (roslisp-msg-protocol:symbol-code
-                  'tf2_msgs-msg:tf2error :timeout_error))
-             (error 'tf2-timeout-error () :description error_string))
-            ((eq error 
-                 (roslisp-msg-protocol:symbol-code
-                  'tf2_msgs-msg:tf2error :transform_error))
-             (error 'tf2-transform-error () :description error_string))
-            (t (from-msg transform))))))
+      (case (code-symbol 'tf2_msgs-msg:tf2error error)
+        (:lookup_error (error 'tf2-lookup-error :description error_string))
+        (:connectivity_error (error 'tf2-connectivity-error :description error_string))
+        (:extrapolation_error (error 'tf2-extrapolation-error :description error_string))
+        (:invalid_argument_error (error 'tf2-invalid-argument-error :description error_string))
+        (:timeout_error (error 'tf2-timeout-error :description error_string))
+        (:transform_error (error 'tf2-transform-error :description error_string))
+        (t transform)))))
