@@ -1,4 +1,4 @@
-;;; Copyright (c) 2013, Georg Bartels <georg.bartels@cs.uni-bremen.de>
+;;; Copyright (c) 2015 Georg Bartels <georg.bartels@cs.uni-bremen.de>
 ;;; All rights reserved.
 ;;;
 ;;; Redistribution and use in source and binary forms, with or without
@@ -26,31 +26,12 @@
 ;;; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ;;; POSSIBILITY OF SUCH DAMAGE.
 
-(defsystem "cl-tf2"
-  :author "Georg Bartels <georg.bartels@cs.uni-bremen.de>"
-  :license "BSD"
-  :description "Common Lisp implementation of a TF2 client library."
+(in-package :cl-tf2)
 
-  :depends-on (roslisp tf2_msgs-msg actionlib-lisp)
-  :components
-  ((:module "src"
-            :components
-            ((:file "package")
-             (:file "buffer-interface" :depends-on ("package"))
-             (:file "data-interface" :depends-on ("package"))
-             (:file "broadcaster-interface" :depends-on ("package"))
-;             (:file "errors" :depends-on ("package"))
-             ;; (:file "datatypes" :depends-on ("package"))
-             ;; (:file "message-conversions" :depends-on ("package" "datatypes"))
+(defgeneric send-transform (broadcaster &rest transforms)
+  (:documentation "Uses 'broadcaster' to send 'transforms' as regular transforms
+ to tf."))
 
-             ;; (:file "buffer-client" :depends-on ("package" "errors" "datatypes"
-             ;;                                               "message-conversions"
-             ;;                                               "buffer-interface"))
-             ;; (:file "transform-broadcaster" :depends-on ("package"
-             ;;                                             "datatypes"
-             ;;                                             "message-conversions"))
-             ;; (:file "utilities" :depends-on ("package" "errors"
-             ;;                                           "datatypes"
-             ;;                                           "message-conversions"
-             ;;                                           "buffer-interface"))
-             ))))
+(defgeneric send-static-transform (broadcaster &rest transforms)
+  (:documentation "Uses 'broadcaster' to send 'transforms' as static transforms
+ to tf."))
