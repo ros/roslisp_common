@@ -46,14 +46,20 @@
 
  This call will wait for the necessary transform until 'timeout' seconds have
  passed. If 'timeout' is 0, this call will wait forever until the specified
- transform is available."))
+ transform is available.")
+  (:method (buffer target-frame source-frame time timeout)
+    (handler-case (lookup-transform buffer target-frame source-frame time timeout)
+      (tf2-server-error () nil))))
 
 (defgeneric transform (buffer object target-frame &key timeout)
   (:documentation "Uses 'buffer' to have tf transform 'object' into 'target-frame'.
 
  This call will wait for the necessary transform until 'timeout' seconds have
  passed. If 'timeout' is 0, this call will wait forever until the specified
- transform is available."))
+ transform is available.")
+  (:method (buffer object target-frame &key (timeout 0.0))
+    (apply-transform object (lookup-transform buffer target-frame (get-frame-id object)
+                                              (get-time-stamp object) timeout))))
 
 (defgeneric can-transform (buffer object target-frame &key timeout)
   (:documentation "Predicate using 'buffer' to check whether tf can transform
@@ -61,7 +67,10 @@
 
  This call will wait for the necessary transform until 'timeout' seconds have
  passed. If 'timeout' is 0, this call will wait forever until the specified
- transform is available."))
+ transform is available.")
+  (:method (buffer object target-frame &key timeout)
+    (has-transform
+     buffer target-frame (get-frame-id object) (get-time-stamp object) timeout)))
 
 ;;;
 ;;; ADVANCED API
