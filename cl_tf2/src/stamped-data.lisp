@@ -1,4 +1,4 @@
-;;; Copyright (c) 2013, Georg Bartels <georg.bartels@cs.uni-bremen.de>
+;;; Copyright (c) 2015, Georg Bartels <georg.bartels@cs.uni-bremen.de>
 ;;; All rights reserved.
 ;;;
 ;;; Redistribution and use in source and binary forms, with or without
@@ -26,16 +26,33 @@
 ;;; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ;;; POSSIBILITY OF SUCH DAMAGE.
 
-(in-package :cl-user)
+(in-package :cl-tf2)
 
-(defpackage :cl-tf2
-  (:use #:common-lisp #:roslisp)
-  (:export 
-   ;; data interface
-   get-frame-id get-time-stamp apply-transform
-   ;; buffer interface
-   lookup-transform has-transform transform can-transform
-   ;; broadcaster interface
-   send-transform send-static-transform
-   ;; stamped data
-   header frame-id stamp def-stamped))
+(defclass header ()
+  ((frame-id :initarg :frame-id :initform ""
+             :reader frame-id :type string)
+   (stamp :initarg :stamp :initform 0.0
+          :reader stamp :type float)))
+
+(defmacro def-stamped (name (slot-name slot-type &key (initform nil initform-supplied-p)))
+  "Macro to define a stamped datatype and methods to get frame-id and time-stamp.
+
+ Example usage for creating a stamped number: 
+   (def-stamped number-stamped (num-value number :initform 0.0))"
+  (flet ((to-keyword (sym)
+           (intern (string sym) 'keyword)))
+    `(progn
+       (defclass ,name ()
+         ((header :initarg :header :initform (make-instance 'cl-tf2:header)
+                  :accessor header :type cl-tf2:header)
+          ,(if initform-supplied-p
+               `(,slot-name :initarg ,(to-keyword slot-name) :type ,slot-type
+                            :accessor ,slot-name :initform ,initform)
+               `(,slot-name :initarg ,(to-keyword slot-name) :type ,slot-type
+                            :accessor ,slot-name))))
+       (defmethod cl-tf2:get-time-stamp ((object ,name))
+         (cl-tf2:stamp (cl-tf2:header object)))
+       (defmethod cl-tf2:get-frame-id ((object ,name))
+         (cl-tf2:frame-id (cl-tf2:header object))))))
+
+; (def-stamped string-stamped (str-value string :initform ""))

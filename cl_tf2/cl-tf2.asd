@@ -37,10 +37,12 @@
             :components
             ((:file "package")
              (:file "data-interface" :depends-on ("package"))
+             (:file "stamped-data" :depends-on ("package" "data-interface"))
+             (:file "broadcaster-interface" :depends-on ("package"))
              (:file "errors" :depends-on ("package"))
              (:file "buffer-interface" :depends-on ("package" "errors" "data-interface"))
              
-             (:file "broadcaster-interface" :depends-on ("package"))
+             
 ;             (:file "errors" :depends-on ("package"))
              ;; (:file "datatypes" :depends-on ("package"))
              ;; (:file "message-conversions" :depends-on ("package" "datatypes"))
