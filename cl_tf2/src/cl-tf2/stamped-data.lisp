@@ -40,7 +40,9 @@
  Example usage for creating a stamped number: 
    (def-stamped number-stamped (num-value number :initform 0.0))"
   (flet ((to-keyword (sym)
-           (intern (string sym) 'keyword)))
+           (intern (string sym) 'keyword))
+         (constructor-symbol (name)
+           (intern (concatenate 'string "MAKE-" (symbol-name name)))))
     `(progn
        (defclass ,name ()
          ((header :initarg :header :initform (make-instance 'cl-tf2:header)
@@ -50,9 +52,12 @@
                             :accessor ,slot-name :initform ,initform)
                `(,slot-name :initarg ,(to-keyword slot-name) :type ,slot-type
                             :accessor ,slot-name))))
+       (defun ,(constructor-symbol name) (,slot-name frame-id stamp)
+         (make-instance 
+          ',name ,(to-keyword slot-name) ,slot-name 
+          :header (make-instance 
+                   'cl-tf2:header :frame-id frame-id :stamp stamp)))
        (defmethod cl-tf2:get-time-stamp ((object ,name))
          (cl-tf2:stamp (cl-tf2:header object)))
        (defmethod cl-tf2:get-frame-id ((object ,name))
          (cl-tf2:frame-id (cl-tf2:header object))))))
-
-; (def-stamped string-stamped (str-value string :initform ""))
