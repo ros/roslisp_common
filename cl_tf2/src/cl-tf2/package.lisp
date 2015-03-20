@@ -38,6 +38,8 @@
    ;; buffer interface (advanced)
    lookup-transform-advanced has-transform-advanced
    do-transform-advanced can-transform-advanced
+   ;; buffer client implementation
+   buffer-client
    ;; broadcaster interface
    send-transform send-static-transform
    ;; stamped data
