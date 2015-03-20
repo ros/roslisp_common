@@ -67,12 +67,16 @@
 ;;;
 
 ;; TOOD(Georg): consider moving this function into roslisp-msg-protocol
+(defun code-symbols (msg-type code)
+  "Retrieves the list of symbol-code associations which contain 'code' for 'msg-type'."
+  (remove code (roslisp-msg-protocol:symbol-codes msg-type) :test-not #'= :key #'rest))
+
+;; TOOD(Georg): consider moving this function into roslisp-msg-protocol
 (defun code-symbol (msg-type code)
-  "Retrieves the symbol associated with 'code' in the symbol codes of 'msg-type'."
-  (let ((symbol-code
-          (find code (roslisp-msg-protocol:symbol-codes msg-type) :test #'= :key #'rest)))
-    (when symbol-code
-      (car symbol-code))))
+  "Retrieves the first symbol associated with 'code' in the symbol codes of 'msg-type'."
+  (let ((symbol-codes (code-symbols msg-type code)))
+    (when symbol-codes
+      (caar symbol-codes))))
 
 (defun process-result (client)
  "Process the result returned to 'client' from the buffer-server. Either raises an
