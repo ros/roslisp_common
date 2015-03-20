@@ -31,7 +31,7 @@
   :license "BSD"
   :description "Common Lisp implementation of a TF2 client library."
 
-  :depends-on (roslisp tf2_msgs-msg actionlib-lisp)
+  :depends-on (roslisp tf2_msgs-msg actionlib-lisp cl-transforms)
   :components
   ((:module "src"
             :components
@@ -43,6 +43,7 @@
                        (:file "broadcaster-interface" :depends-on ("package"))
                        (:file "errors" :depends-on ("package"))
                        (:file "buffer-interface" :depends-on ("package" "errors" "data-interface"))
+                       (:file "buffer-client" :depends-on ("package" "buffer-interface"))
              
              
 ;             (:file "errors" :depends-on ("package"))

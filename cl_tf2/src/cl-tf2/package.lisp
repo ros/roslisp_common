@@ -1,4 +1,4 @@
-;;; Copyright (c) 2013, Georg Bartels <georg.bartels@cs.uni-bremen.de>
+;;; Copyright (c) 2013, 2015 Georg Bartels <georg.bartels@cs.uni-bremen.de>
 ;;; All rights reserved.
 ;;;
 ;;; Redistribution and use in source and binary forms, with or without
@@ -33,8 +33,11 @@
   (:export 
    ;; data interface
    get-frame-id get-time-stamp apply-transform
-   ;; buffer interface
-   lookup-transform has-transform transform can-transform
+   ;; buffer interface (simple)
+   lookup-transform has-transform do-transform can-transform
+   ;; buffer interface (advanced)
+   lookup-transform-advanced has-transform-advanced
+   do-transform-advanced can-transform-advanced
    ;; broadcaster interface
    send-transform send-static-transform
    ;; stamped data

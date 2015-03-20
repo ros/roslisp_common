@@ -51,7 +51,7 @@
     (handler-case (lookup-transform buffer target-frame source-frame time timeout)
       (tf2-server-error () nil))))
 
-(defgeneric transform (buffer object target-frame &key timeout)
+(defgeneric do-transform (buffer object target-frame &key timeout)
   (:documentation "Uses 'buffer' to have tf transform 'object' into 'target-frame'.
 
  This call will wait for the necessary transform until 'timeout' seconds have
@@ -98,7 +98,7 @@
  passed. If 'timeout' is 0, this call will wait forever until the specified
  transform is available."))
 
-(defgeneric transform-advanced (buffer object target-frame target-time fixed-frame
+(defgeneric do-transform-advanced (buffer object target-frame target-time fixed-frame
                                 &key timeout)
  (:documentation "Uses 'buffer' to have tf transform 'object' into 'target-frame'.
  'target-frame' shall be interpreted in 'target-time. 'fixed-frame' denotes the frame
