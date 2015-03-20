@@ -29,6 +29,6 @@
 (in-package :cl-user)
 
 (defpackage :cl-transforms-plugin
-  (:use #:common-lisp #:roslisp)
-;  (:export )
+  (:use #:common-lisp #:roslisp #:cl-tf2)
+  (:export point-stamped)
   )

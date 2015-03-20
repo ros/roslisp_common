@@ -27,3 +27,41 @@
 ;;; POSSIBILITY OF SUCH DAMAGE.
 
 (in-package :cl-transforms-plugin)
+
+;;;
+;;; TRANSFORM-STAMPED
+;;;
+
+(defclass transform-stamped ()
+  ((header :initarg :header :reader header :type header)
+   (transform :initarg :transform :reader transform :type cl-transforms:transform)
+   (child-frame-id :initarg :child-frame-id :reader child-frame-id :type string)))
+
+(defun make-transform-stamped (frame-id child-frame-id stamp transform)
+  (make-instance 'transform-stamped
+                 :header (make-instance 'header
+                                        :frame-id frame-id
+                                        :stamp stamp)
+                 :child-frame-id child-frame-id
+                 :transform transform))
+
+;; (defun msg->3d-vector (msg)
+  
+;; (defun msg->transform (msg)
+;;   (with-fields (translation rotation) msg
+;;     (
+
+;; (defun msg->transform-stamped (msg)
+;;   (with-fields ((frame-id (frame_id header)) (child-frame-id child_frame_id)
+;;                 transform) msg
+;;     (values frame-id child-frame-id transform)))
+
+;;;
+;;; POINT-STAMPED
+;;;
+
+(def-stamped point-stamped (point cl-transforms:3d-vector :initform (cl-transforms:make-identity-vector)))
+
+
+(defmethod cl-tf2:apply-transform ((object point-stamped) transform)
+  (values object transform))
