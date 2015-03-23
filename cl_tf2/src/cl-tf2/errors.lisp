@@ -1,4 +1,4 @@
-;;; Copyright (c) 2015, Georg Bartels <georg.bartels@cs.uni-bremen.de>
+;;; Copyright (c) 2013, Georg Bartels <georg.bartels@cs.uni-bremen.de>
 ;;; All rights reserved.
 ;;;
 ;;; Redistribution and use in source and binary forms, with or without
@@ -28,12 +28,19 @@
 
 (in-package :cl-tf2)
 
-(defun make-transform-broadcaster (&key (topic "/tf"))
-  "Returns a publisher that can be used with send-transform. The broadcasting
- topic can be altered through the keyword `topic'."
-  (advertise topic "tf2_msgs/TFMessage"))
+(define-condition tf2-buffer-client-error (error)
+  ((description :initarg :description :reader description))
+  (:report (lambda (condition stream)
+             (format stream (description condition)))))
 
-(defun send-transform (broadcaster &rest transforms)
-  "Uses `broadcaster' to send several stamped `transforms' to TF."
-  (publish broadcaster 
-           (make-message "tf2_msgs/TFMessage" :transforms (to-msg transforms))))
+(define-condition tf2-lookup-error (tf2-buffer-client-error) ())
+
+(define-condition tf2-connectivity-error (tf2-buffer-client-error) ())
+
+(define-condition tf2-extrapolation-error (tf2-buffer-client-error) ())
+
+(define-condition tf2-invalid-argument-error (tf2-buffer-client-error) ())
+
+(define-condition tf2-timeout-error (tf2-buffer-client-error) ())
+
+(define-condition tf2-transform-error (tf2-buffer-client-error) ())

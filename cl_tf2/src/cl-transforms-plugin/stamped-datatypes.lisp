@@ -1,4 +1,4 @@
-;;; Copyright (c) 2013, Georg Bartels <georg.bartels@cs.uni-bremen.de>
+;;; Copyright (c) 2015 Georg Bartels <georg.bartels@cs.uni-bremen.de>
 ;;; All rights reserved.
 ;;;
 ;;; Redistribution and use in source and binary forms, with or without
@@ -26,12 +26,41 @@
 ;;; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ;;; POSSIBILITY OF SUCH DAMAGE.
 
-(in-package :cl-user)
+(in-package :cl-transforms-plugin)
 
-(defpackage :cl-tf2
-  (:use #:common-lisp #:roslisp)
-  (:export buffer-client can-transform lookup-transform
-           make-transform-broadcaster send-transform make-stamped-transform
-           ensure-pose-stamped-transformable
-           ensure-transform-available ensure-pose-stamped-transformed
-           unslash-frame header child-frame-id transform frame-id stamp))
+;;;
+;;; TRANSFORM-STAMPED USING CL-TRANSFORMS
+;;;
+
+(defclass transform-stamped ()
+  ((header :initarg :header :reader header :type header
+           :initform (make-instance 'header))
+   (transform :initarg :transform :reader transform :type cl-transforms:transform
+              :initform (cl-transforms:make-identity-transform))
+   (child-frame-id :initarg :child-frame-id :reader child-frame-id :type string
+                   :initform "")))
+
+(defun make-transform-stamped (frame-id child-frame-id stamp transform)
+  (make-instance 'transform-stamped
+                 :header (make-instance 'header
+                                        :frame-id frame-id
+                                        :stamp stamp)
+                 :child-frame-id child-frame-id
+                 :transform transform))
+
+(defmethod print-object ((obj transform-stamped) strm)
+  (print-unreadable-object (obj strm :type t)
+    (with-slots (header child-frame-id transform) obj
+      (format strm "~%  HEADER:~%    ~a~%  CHILD-FRAME-ID:~%    \"~a\"~%  TRANSFORM:~%    ~a" header child-frame-id transform))))
+
+;;;
+;;; POINT-STAMPED USING CL-TRANSFORMS
+;;;
+
+(def-stamped point-stamped (point cl-transforms:3d-vector :initform (cl-transforms:make-identity-vector)))
+
+;;;
+;;; POSE-STAMPED USING CL-TRANSFORMS
+;;;
+
+(def-stamped pose-stamped (pose cl-transforms:pose :initform (cl-transforms:make-identity-pose)))

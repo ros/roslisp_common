@@ -1,4 +1,4 @@
-;;; Copyright (c) 2013, Georg Bartels <georg.bartels@cs.uni-bremen.de>
+;;; Copyright (c) 2015, Georg Bartels <georg.bartels@cs.uni-bremen.de>
 ;;; All rights reserved.
 ;;;
 ;;; Redistribution and use in source and binary forms, with or without
@@ -26,16 +26,14 @@
 ;;; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ;;; POSSIBILITY OF SUCH DAMAGE.
 
-(in-package :cl-tf2)
+(in-package :cl-user)
 
-(defgeneric can-transform (tf target-frame source-frame &optional source-time timeout
-                                                          target-time fixed-frame)
-  (:documentation "Queries whether 'tf' is aware of a transform from 'source-frame' to 'target-frame'.
-
-Optionally, one can specify a 'timeout' for the query. 'source-time' and 'target-time' specify at which time 'target-frame' and 'source-frame' should be evaluated. 'fixed-frame' denotes the frame in which the transform is assumed to be constant over time. Note: If 'target-time' is specified once also needs to specify 'fixed-frame' to avoid a run-time error."))
-
-(defgeneric lookup-transform (tf target-frame source-frame &optional source-time timeout
-                                                             target-time fixed-frame)
-  (:documentation "Queries 'tf' for the transform from 'source-frame' to 'target-frame'.
-
-Optionally, one can specify a 'timeout' for the query. 'source-time' and 'target-time' specify at which time 'target-frame' and 'source-frame' should be evaluated. 'fixed-frame' denotes the frame in which the transform is assumed to be constant over time. Note: If 'target-time' is specified once also needs to specify 'fixed-frame' to avoid a run-time error."))
+(defpackage :cl-transforms-plugin
+  (:use #:common-lisp #:roslisp #:cl-tf2)
+  (:export 
+   ;; transform-stamped
+   transform-stamped header transform child-frame-id make-transform-stamped
+   ;; point-stamped
+   point-stamped make-point-stamped copy-point-stamped point
+   ;; pose-stamped
+   pose-stamped make-pose-stamped copy-pose-stamped pose))

@@ -1,4 +1,4 @@
-;;; Copyright (c) 2015, Georg Bartels <georg.bartels@cs.uni-bremen.de>
+;;; Copyright (c) 2015 Georg Bartels <georg.bartels@cs.uni-bremen.de>
 ;;; All rights reserved.
 ;;;
 ;;; Redistribution and use in source and binary forms, with or without
@@ -26,28 +26,38 @@
 ;;; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ;;; POSSIBILITY OF SUCH DAMAGE.
 
-(defsystem "cl-tf2"
-  :author "Georg Bartels <georg.bartels@cs.uni-bremen.de>"
-  :license "BSD"
-  :description "Common Lisp implementation of a TF2 client library."
+(in-package :cl-transforms-plugin)
 
-  :depends-on (roslisp tf2_msgs-msg actionlib-lisp cl-transforms)
-  :components
-  ((:module "src"
-            :components
-            ((:module "cl-tf2"
-              :components 
-              ((:file "package")
-               (:file "data-interface" :depends-on ("package"))
-               (:file "stamped-data" :depends-on ("package" "data-interface"))
-               (:file "broadcaster-interface" :depends-on ("package"))
-               (:file "broadcast-publisher" :depends-on ("package" "broadcaster-interface"))
-               (:file "errors" :depends-on ("package"))
-               (:file "buffer-interface" :depends-on ("package" "errors" "data-interface"))
-               (:file "buffer-client" :depends-on ("package" "buffer-interface"))))
-             (:module "cl-transforms-plugin" :depends-on ("cl-tf2")
-              :components
-              ((:file "package")
-               (:file "stamped-datatypes" :depends-on ("package"))
-               (:file "ros-msg-conversions" :depends-on ("package" "stamped-datatypes"))
-               (:file "plugins" :depends-on ("package" "stamped-datatypes" "ros-msg-conversions"))))))))
+;;;
+;;; PLUGIN: USE TRANSFORM-STAMPED IN BUFFER-INTERFACE
+;;;
+
+(defmethod cl-tf2:apply-transform (object (transform-msg geometry_msgs-msg:transformstamped))
+  (apply-transform object (msg->transform-stamped transform-msg)))
+
+;;;
+;;; PLUGIN: USE TRANSFORM-STAMPED IN BROADCASTER-INTERFACE
+;;;
+
+(defmethod cl-tf2:transform-stamped->tf-transform-stamped ((transform-stamped transform-stamped))
+  (transform-stamped->msg transform-stamped))
+
+;;;
+;;; PLUGIN: SUPPORT TRANSFORMING POINT-STAMPED
+;;;
+
+(defmethod cl-tf2:apply-transform ((point point-stamped) (transform transform-stamped))
+  (make-instance
+   'point-stamped
+   :point (cl-transforms:transform-point (transform transform) (point point))
+   :header (header transform)))
+
+;;;
+;;; PLUGIN: SUPPORT TRANSFORMING POSE-STAMPED
+;;;
+
+(defmethod cl-tf2:apply-transform ((pose pose-stamped) (transform transform-stamped))
+  (make-instance
+   'pose-stamped
+   :pose (cl-transforms:transform-pose (transform transform) (pose pose))
+   :header (header transform)))

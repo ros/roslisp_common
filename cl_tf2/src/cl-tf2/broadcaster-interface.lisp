@@ -1,4 +1,4 @@
-;;; Copyright (c) 2013, Georg Bartels <georg.bartels@cs.uni-bremen.de>
+;;; Copyright (c) 2015 Georg Bartels <georg.bartels@cs.uni-bremen.de>
 ;;; All rights reserved.
 ;;;
 ;;; Redistribution and use in source and binary forms, with or without
@@ -28,19 +28,27 @@
 
 (in-package :cl-tf2)
 
-(defclass header ()
-  ((frame-id :initarg :frame-id :reader frame-id :type string)
-   (stamp :initarg :stamp :reader stamp :type float)))
+;;;
+;;; INTERFACE OF TRANSFORM BROADCASTERS
+;;;
 
-(defclass stamped-transform ()
-  ((header :initarg :header :reader header)
-   (transform :initarg :transform :reader transform)
-   (child-frame-id :initarg :child-frame-id :reader child-frame-id :type string)))
+(defgeneric send-transform (broadcaster &rest transforms)
+  (:documentation "Uses `broadcaster' to add 'transforms' as volatile transforms
+ to a tf buffer connected to `broadcaster'. NOTE: Assumes that all `transforms'
+ are of type 'geometry_msgs/TransformStamped.'."))
 
-(defun make-stamped-transform (frame-id child-frame-id stamp transform)
-  (make-instance 'stamped-transform
-                 :header (make-instance 'header
-                                        :frame-id frame-id
-                                        :stamp stamp)
-                 :child-frame-id child-frame-id
-                 :transform transform))
+(defgeneric send-static-transform (broadcaster &rest transforms)
+  (:documentation "Uses `broadcaster' to add 'transforms' as static transforms
+ to a tf buffer connected to `broadcaster'. NOTE: Assumes that all `transforms'
+ are of type 'geometry_msgs/TransformStamped.'."))
+
+;;;
+;;; INTERFACE OF TRANSFORMS WHICH SHALL BE COMMUNICATED TO A BUFFER
+;;;
+
+(defgeneric transform-stamped->tf-transform-stamped (transform-stamped)
+  (:documentation "Types of stamped transforms which shall be communicated to a
+ tf buffer have to implement this interface. Returns the translation of 
+ `transform-stamped' as a 'geometry_msgs/TransformStamped'.")
+  (:method ((transform-stamped geometry_msgs-msg:transformstamped))
+    transform-stamped))

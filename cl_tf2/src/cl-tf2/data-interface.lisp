@@ -1,4 +1,4 @@
-;;; Copyright (c) 2015, Georg Bartels <georg.bartels@cs.uni-bremen.de>
+;;; Copyright (c) 2015 Georg Bartels <georg.bartels@cs.uni-bremen.de>
 ;;; All rights reserved.
 ;;;
 ;;; Redistribution and use in source and binary forms, with or without
@@ -26,28 +26,17 @@
 ;;; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ;;; POSSIBILITY OF SUCH DAMAGE.
 
-(defsystem "cl-tf2"
-  :author "Georg Bartels <georg.bartels@cs.uni-bremen.de>"
-  :license "BSD"
-  :description "Common Lisp implementation of a TF2 client library."
+(in-package :cl-tf2)
 
-  :depends-on (roslisp tf2_msgs-msg actionlib-lisp cl-transforms)
-  :components
-  ((:module "src"
-            :components
-            ((:module "cl-tf2"
-              :components 
-              ((:file "package")
-               (:file "data-interface" :depends-on ("package"))
-               (:file "stamped-data" :depends-on ("package" "data-interface"))
-               (:file "broadcaster-interface" :depends-on ("package"))
-               (:file "broadcast-publisher" :depends-on ("package" "broadcaster-interface"))
-               (:file "errors" :depends-on ("package"))
-               (:file "buffer-interface" :depends-on ("package" "errors" "data-interface"))
-               (:file "buffer-client" :depends-on ("package" "buffer-interface"))))
-             (:module "cl-transforms-plugin" :depends-on ("cl-tf2")
-              :components
-              ((:file "package")
-               (:file "stamped-datatypes" :depends-on ("package"))
-               (:file "ros-msg-conversions" :depends-on ("package" "stamped-datatypes"))
-               (:file "plugins" :depends-on ("package" "stamped-datatypes" "ros-msg-conversions"))))))))
+;;;
+;;; INTERFACE WHICH ALL OBJECS SUBJECT TO TF-REASONING HAVE TO IMPLEMENT
+;;;
+
+(defgeneric get-frame-id (object)
+  (:documentation "Retrieves the frame-id in which 'object' is expressed."))
+
+(defgeneric get-time-stamp (object)
+  (:documentation "Retrieves the time-stamp at which 'object' is expressed."))
+
+(defgeneric apply-transform (object transform)
+  (:documentation "Applies 'transform' to 'object'."))

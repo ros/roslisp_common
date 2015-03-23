@@ -1,4 +1,4 @@
-;;; Copyright (c) 2013, Georg Bartels <georg.bartels@cs.uni-bremen.de>
+;;; Copyright (c) 2015 Georg Bartels <georg.bartels@cs.uni-bremen.de>
 ;;; All rights reserved.
 ;;;
 ;;; Redistribution and use in source and binary forms, with or without
@@ -26,23 +26,26 @@
 ;;; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ;;; POSSIBILITY OF SUCH DAMAGE.
 
-(in-package :cl-tf2)
+(in-package :cl-user)
 
-(define-condition fixed-frame-missing-error (error)
-  ((source-frame :initarg :source-frame :reader source-frame)
-   (target-frame :initarg :target-frame :reader target-frame)))
-
-(define-condition tf2-server-error (error)
-  ((description :initarg :description :reader description)))
-
-(define-condition tf2-lookup-error (tf2-server-error) ())
-
-(define-condition tf2-connectivity-error (tf2-server-error) ())
-
-(define-condition tf2-extrapolation-error (tf2-server-error) ())
-
-(define-condition tf2-invalid-argument-error (tf2-server-error) ())
-
-(define-condition tf2-timeout-error (tf2-server-error) ())
-
-(define-condition tf2-transform-error (tf2-server-error) ())
+(defpackage :cl-tf2
+  (:use #:common-lisp #:roslisp)
+  (:export 
+   ;; data interface
+   get-frame-id get-time-stamp apply-transform
+   ;; buffer interface (simple)
+   lookup-transform has-transform do-transform can-transform
+   ;; buffer interface (advanced)
+   lookup-transform-advanced has-transform-advanced
+   do-transform-advanced can-transform-advanced
+   ;; buffer client implementation
+   make-buffer-client buffer-client
+   ;; broadcaster interface
+   send-transform send-static-transform transform-stamped->tf-transform-stamped
+   ;; broadcast publisher implementation
+   broadcast-publisher make-broadcast-publisher
+   ;; stamped data
+   header frame-id stamp make-header def-stamped
+   ;; errors
+   tf2-buffer-client-error tf2-lookup-error tf2-connectivity-error tf2-extrapolation-error
+   tf2-invalid-argument-error tf2-timeout-error tf2-transform-error))
