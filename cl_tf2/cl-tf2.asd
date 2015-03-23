@@ -36,19 +36,15 @@
   ((:module "src"
             :components
             ((:module "cl-tf2"
-                      :components 
-                      ((:file "package")
-                       (:file "data-interface" :depends-on ("package"))
-                       (:file "stamped-data" :depends-on ("package" "data-interface"))
-                       (:file "broadcaster-interface" :depends-on ("package"))
-                       (:file "broadcast-publisher" :depends-on ("package" "broadcaster-interface"))
-                       (:file "errors" :depends-on ("package"))
-                       (:file "buffer-interface" :depends-on ("package" "errors" "data-interface"))
-                       (:file "buffer-client" :depends-on ("package" "buffer-interface"))
-             ;; (:file "transform-broadcaster" :depends-on ("package"
-             ;;                                             "datatypes"
-             ;;                                             "message-conversions"))
-                       ))
+              :components 
+              ((:file "package")
+               (:file "data-interface" :depends-on ("package"))
+               (:file "stamped-data" :depends-on ("package" "data-interface"))
+               (:file "broadcaster-interface" :depends-on ("package"))
+               (:file "broadcast-publisher" :depends-on ("package" "broadcaster-interface"))
+               (:file "errors" :depends-on ("package"))
+               (:file "buffer-interface" :depends-on ("package" "errors" "data-interface"))
+               (:file "buffer-client" :depends-on ("package" "buffer-interface"))))
              (:module "cl-transforms-plugin" :depends-on ("cl-tf2")
               :components
               ((:file "package")
