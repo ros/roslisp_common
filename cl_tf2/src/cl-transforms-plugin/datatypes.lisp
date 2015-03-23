@@ -87,16 +87,32 @@
     (cl-transforms:make-quaternion x y z w)))
 
 ;;;
+;;; GENERAL CONVERSION
+;;;
+
+(defmethod cl-tf2:apply-transform (object (transform-msg geometry_msgs-msg:transformstamped))
+  (apply-transform object (msg->transform-stamped transform-msg)))
+
+;;;
 ;;; POINT-STAMPED
 ;;;
 
 (def-stamped point-stamped (point cl-transforms:3d-vector :initform (cl-transforms:make-identity-vector)))
 
-(defmethod cl-tf2:apply-transform ((point point-stamped) (transform-msg geometry_msgs-msg:transformstamped))
-  (apply-transform point (msg->transform-stamped transform-msg)))
-
 (defmethod cl-tf2:apply-transform ((point point-stamped) (transform transform-stamped))
   (make-instance
    'point-stamped
    :point (cl-transforms:transform-point (transform transform) (point point))
+   :header (header transform)))
+
+;;;
+;;; POSE-STAMPED
+;;;
+
+(def-stamped pose-stamped (pose cl-transforms:pose :initform (cl-transforms:make-identity-pose)))
+
+(defmethod cl-tf2:apply-transform ((pose pose-stamped) (transform transform-stamped))
+  (make-instance
+   'pose-stamped
+   :pose (cl-transforms:transform-pose (transform transform) (pose pose))
    :header (header transform)))
