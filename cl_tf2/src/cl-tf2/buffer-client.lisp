@@ -56,7 +56,8 @@
   (with-slots (client lock) buffer
     (sb-thread:with-recursive-lock (lock)
       (let ((goal-msg (actionlib-lisp:make-action-goal-msg client
-                        :target_frame target-frame :source_frame source-frame
+                        :target_frame (unslash-frame target-frame)
+                        :source_frame (unslash-frame source-frame)
                         :source_time time :timeout timeout)))
         (actionlib-lisp:send-goal-and-wait client goal-msg 0.1 0.0) ; bug: does not work with timeout 0.0
         (actionlib-lisp:wait-for-result client 0.0)
@@ -77,6 +78,11 @@
   (let ((symbol-codes (code-symbols msg-type code)))
     (when symbol-codes
       (caar symbol-codes))))
+
+(defun unslash-frame (frame)
+  "Removes any leading or trailing '/' characters from the string
+`frame' and returns the resulting string."
+  (string-trim "/" frame))
 
 (defun process-result (client)
  "Process the result returned to 'client' from the buffer-server. Either raises an

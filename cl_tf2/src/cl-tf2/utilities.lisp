@@ -28,11 +28,6 @@
 
 (in-package :cl-tf2)
 
-(defun unslash-frame (frame)
-  "Removes any leading or trailing '/' characters from the string
-`frame' and returns the resulting string."
-  (string-trim "/" frame))
-
 (defun ensure-pose-stamped-transformed (tf pose-stamped target-frame
                                         &key use-current-ros-time)
   (let ((transform (ensure-transform-available
