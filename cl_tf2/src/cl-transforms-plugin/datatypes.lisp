@@ -92,6 +92,22 @@
 
 (def-stamped point-stamped (point cl-transforms:3d-vector :initform (cl-transforms:make-identity-vector)))
 
+(defmethod print-object ((obj point-stamped) strm)
+  (print-unreadable-object (obj strm :type t)
+    (with-slots (header point) obj
+      (format strm "~%  HEADER:~%    ~a~%  POINT:~%    ~a" header point))))
 
-(defmethod cl-tf2:apply-transform ((object point-stamped) transform)
-  (values object transform))
+(defun copy-point-stamped (point-stamped &key header point)
+  (with-slots ((old-header header) (old-point point)) point-stamped
+    (make-instance 'point-stamped
+                   :header (or header old-header)
+                   :point (or point old-point))))
+
+(defmethod cl-tf2:apply-transform ((point point-stamped) (transform-msg geometry_msgs-msg:transformstamped))
+  (apply-transform point (msg->transform-stamped transform-msg)))
+
+(defmethod cl-tf2:apply-transform ((point point-stamped) (transform transform-stamped))
+  (make-instance
+   'point-stamped
+   :point (cl-transforms:transform-point (transform transform) (point point))
+   :header (header transform)))
