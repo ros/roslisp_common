@@ -45,4 +45,7 @@
    ;; broadcast publisher implementation
    broadcast-publisher make-broadcast-publisher
    ;; stamped data
-   header frame-id stamp make-header def-stamped))
+   header frame-id stamp make-header def-stamped
+   ;; errors
+   tf2-buffer-client-error tf2-lookup-error tf2-connectivity-error tf2-extrapolation-error
+   tf2-invalid-argument-error tf2-timeout-error tf2-transform-error))
