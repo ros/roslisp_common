@@ -48,7 +48,7 @@
   "Creates an instance of class 'broadcast-publisher'. Keywords `topic' and `static-topic'
  allow publisher to topics other than the default ones."
   (let ((publisher (advertise topic *tf2-topic-type*))
-        (static-publisher (advertise static-topic *tf2-topic-type*)))
+        (static-publisher (advertise static-topic *tf2-topic-type* :latch t)))
   (make-instance 'broadcast-publisher :publisher publisher :static-publisher static-publisher)))
 
 (defmethod send-transform ((broadcaster broadcast-publisher) &rest transforms)
