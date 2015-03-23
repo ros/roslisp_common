@@ -30,6 +30,7 @@
 
 (defparameter *tf2-buffer-server-goal* "/tf2_buffer_server")
 (defparameter *tf2-buffer-server-goal-type* "tf2_msgs/LookupTransformAction")
+(defparameter *tf2-wait-for-server-timeout* 2.0)
 
 (defclass buffer-client ()
   ((client :initarg :client :reader client
@@ -40,6 +41,9 @@
    (lock :accessor lock :type mutex
          :initform (sb-thread:make-mutex
                     :name (string (gensym "TF2-BUFFER-CLIENT-LOCK-"))))))
+
+(defmethod initialize-instance :after ((buffer buffer-client) &key)
+  (actionlib-lisp:wait-for-server (client buffer) *tf2-wait-for-server-timeout*))
 
 ;;;
 ;;; SIMPLE API
