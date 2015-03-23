@@ -39,6 +39,11 @@
            (type number stamp))
   (make-instance 'header :frame-id frame-id :stamp stamp))
 
+(defmethod print-object ((obj header) strm)
+  (print-unreadable-object (obj strm :type t)
+    (with-slots (frame-id stamp) obj
+      (format strm "(FRAME-ID: \"~a\" STAMP: ~a)" frame-id stamp))))
+
 (defmacro def-stamped (name (slot-name slot-type &key (initform nil initform-supplied-p)))
   "Macro to define a stamped datatype and methods to get frame-id and time-stamp.
 
