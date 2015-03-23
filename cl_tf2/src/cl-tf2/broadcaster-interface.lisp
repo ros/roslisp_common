@@ -28,6 +28,10 @@
 
 (in-package :cl-tf2)
 
+;;;
+;;; INTERFACE OF TRANSFORM BROADCASTERS
+;;;
+
 (defgeneric send-transform (broadcaster &rest transforms)
   (:documentation "Uses `broadcaster' to add 'transforms' as volatile transforms
  to a tf buffer connected to `broadcaster'. NOTE: Assumes that all `transforms'
@@ -37,3 +41,14 @@
   (:documentation "Uses `broadcaster' to add 'transforms' as static transforms
  to a tf buffer connected to `broadcaster'. NOTE: Assumes that all `transforms'
  are of type 'geometry_msgs/TransformStamped.'."))
+
+;;;
+;;; INTERFACE OF TRANSFORMS WHICH SHALL BE COMMUNICATED TO A BUFFER
+;;;
+
+(defgeneric transform-stamped->tf-transform-stamped (transform-stamped)
+  (:documentation "Types of stamped transforms which shall be communicated to a
+ tf buffer have to implement this interface. Returns the translation of 
+ `transform-stamped' as a 'geometry_msgs/TransformStamped'.")
+  (:method ((transform-stamped geometry_msgs-msg:transformstamped))
+    transform-stamped))

@@ -70,4 +70,5 @@
 (defun transform->tf-msg (&rest transforms)
   "Returns a tf-message with `transforms' inside. NOTE: Assumes that all `transforms'
  are of type 'geometry_msgs/TransformStamped.'. NOTE: For internal use only."
-  (make-msg *tf2-topic-type* :transforms (coerce transforms 'vector)))
+  (let ((tf-transforms (mapcar #'transform-stamped->tf-transform-stamped transforms)))
+    (make-msg *tf2-topic-type* :transforms (coerce  tf-transforms 'vector))))

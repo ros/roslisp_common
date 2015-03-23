@@ -41,7 +41,7 @@
    ;; buffer client implementation
    make-buffer-client buffer-client
    ;; broadcaster interface
-   send-transform send-static-transform
+   send-transform send-static-transform transform-stamped->tf-transform-stamped
    ;; broadcast publisher implementation
    broadcast-publisher make-broadcast-publisher
    ;; stamped data
