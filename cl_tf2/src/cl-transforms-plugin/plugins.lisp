@@ -29,38 +29,35 @@
 (in-package :cl-transforms-plugin)
 
 ;;;
-;;; TRANSFORM-STAMPED USING CL-TRANSFORMS
+;;; PLUGIN: USE TRANSFORM-STAMPED IN BUFFER-INTERFACE
 ;;;
 
-(defclass transform-stamped ()
-  ((header :initarg :header :reader header :type header
-           :initform (make-instance 'header))
-   (transform :initarg :transform :reader transform :type cl-transforms:transform
-              :initform (cl-transforms:make-identity-transform))
-   (child-frame-id :initarg :child-frame-id :reader child-frame-id :type string
-                   :initform "")))
-
-(defun make-transform-stamped (frame-id child-frame-id stamp transform)
-  (make-instance 'transform-stamped
-                 :header (make-instance 'header
-                                        :frame-id frame-id
-                                        :stamp stamp)
-                 :child-frame-id child-frame-id
-                 :transform transform))
-
-(defmethod print-object ((obj transform-stamped) strm)
-  (print-unreadable-object (obj strm :type t)
-    (with-slots (header child-frame-id transform) obj
-      (format strm "~%  HEADER:~%    ~a~%  CHILD-FRAME-ID:~%    \"~a\"~%  TRANSFORM:~%    ~a" header child-frame-id transform))))
+(defmethod cl-tf2:apply-transform (object (transform-msg geometry_msgs-msg:transformstamped))
+  (apply-transform object (msg->transform-stamped transform-msg)))
 
 ;;;
-;;; POINT-STAMPED USING CL-TRANSFORMS
+;;; PLUGIN: USE TRANSFORM-STAMPED IN BROADCASTER-INTERFACE
 ;;;
 
-(def-stamped point-stamped (point cl-transforms:3d-vector :initform (cl-transforms:make-identity-vector)))
+(defmethod cl-tf2:transform-stamped->tf-transform-stamped ((transform-stamped transform-stamped))
+  (transform-stamped->msg transform-stamped))
 
 ;;;
-;;; POSE-STAMPED USING CL-TRANSFORMS
+;;; PLUGIN: SUPPORT TRANSFORMING POINT-STAMPED
 ;;;
 
-(def-stamped pose-stamped (pose cl-transforms:pose :initform (cl-transforms:make-identity-pose)))
+(defmethod cl-tf2:apply-transform ((point point-stamped) (transform transform-stamped))
+  (make-instance
+   'point-stamped
+   :point (cl-transforms:transform-point (transform transform) (point point))
+   :header (header transform)))
+
+;;;
+;;; PLUGIN: SUPPORT TRANSFORMING POSE-STAMPED
+;;;
+
+(defmethod cl-tf2:apply-transform ((pose pose-stamped) (transform transform-stamped))
+  (make-instance
+   'pose-stamped
+   :pose (cl-transforms:transform-pose (transform transform) (pose pose))
+   :header (header transform)))
