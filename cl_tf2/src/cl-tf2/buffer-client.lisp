@@ -94,13 +94,13 @@
       (caar symbol-codes))))
 
 (defun unslash-frame (frame)
-  "Removes any leading or trailing '/' characters from the string
-`frame' and returns the resulting string."
+  "Removes any leading or trailing '/' characters from the string `frame' and
+ returns the resulting string. NOTE: For internal use only."
   (string-trim "/" frame))
 
 (defun process-result (client)
  "Process the result returned to 'client' from the buffer-server. Either raises an
- appropriate error or returns the transform stamped."
+ appropriate error or returns the transform stamped. NOTE: For internal use only."
   (unless (eql (actionlib-lisp:state client) :succeeded)
     (error 'tf2-buffer-client-error :description "Action call did not succeed."))
   (with-fields (error transform) (actionlib-lisp:result client)
