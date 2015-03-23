@@ -52,6 +52,6 @@
              (:module "cl-transforms-plugin" :depends-on ("cl-tf2")
               :components
               ((:file "package")
-               (:file "datatypes" :depends-on ("package"))
-               (:file "ros-msg-conversions" :depends-on ("package" "datatypes"))
-               (:file "plugins" :depends-on ("package" "transform-stamped" "ros-msg-conversions"))))))))
+               (:file "stamped-datatypes" :depends-on ("package"))
+               (:file "ros-msg-conversions" :depends-on ("package" "stamped-datatypes"))
+               (:file "plugins" :depends-on ("package" "stamped-datatypes" "ros-msg-conversions"))))))))
