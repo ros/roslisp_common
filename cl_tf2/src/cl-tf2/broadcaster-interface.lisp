@@ -29,9 +29,11 @@
 (in-package :cl-tf2)
 
 (defgeneric send-transform (broadcaster &rest transforms)
-  (:documentation "Uses 'broadcaster' to send 'transforms' as regular transforms
- to tf."))
+  (:documentation "Uses `broadcaster' to add 'transforms' as volatile transforms
+ to a tf buffer connected to `broadcaster'. NOTE: Assumes that all `transforms'
+ are of type 'geometry_msgs/TransformStamped.'."))
 
 (defgeneric send-static-transform (broadcaster &rest transforms)
-  (:documentation "Uses 'broadcaster' to send 'transforms' as static transforms
- to tf."))
+  (:documentation "Uses `broadcaster' to add 'transforms' as static transforms
+ to a tf buffer connected to `broadcaster'. NOTE: Assumes that all `transforms'
+ are of type 'geometry_msgs/TransformStamped.'."))

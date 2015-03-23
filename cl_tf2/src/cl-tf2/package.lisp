@@ -42,5 +42,7 @@
    make-buffer-client buffer-client
    ;; broadcaster interface
    send-transform send-static-transform
+   ;; broadcast publisher implementation
+   broadcast-publisher make-broadcast-publisher
    ;; stamped data
    header frame-id stamp make-header def-stamped))
