@@ -33,9 +33,12 @@
 ;;;
 
 (defclass transform-stamped ()
-  ((header :initarg :header :reader header :type header)
-   (transform :initarg :transform :reader transform :type cl-transforms:transform)
-   (child-frame-id :initarg :child-frame-id :reader child-frame-id :type string)))
+  ((header :initarg :header :reader header :type header
+           :initform (make-instance 'header))
+   (transform :initarg :transform :reader transform :type cl-transforms:transform
+              :initform (cl-transforms:make-identity-transform))
+   (child-frame-id :initarg :child-frame-id :reader child-frame-id :type string
+                   :initform "")))
 
 (defun make-transform-stamped (frame-id child-frame-id stamp transform)
   (make-instance 'transform-stamped
@@ -45,16 +48,43 @@
                  :child-frame-id child-frame-id
                  :transform transform))
 
-;; (defun msg->3d-vector (msg)
-  
-;; (defun msg->transform (msg)
-;;   (with-fields (translation rotation) msg
-;;     (
+(defmethod print-object ((obj transform-stamped) strm)
+  (print-unreadable-object (obj strm :type t)
+    (with-slots (header child-frame-id transform) obj
+      (format strm "~%  HEADER:~%    ~a~%  CHILD-FRAME-ID:~%    \"~a\"~%  TRANSFORM:~%    ~a" header child-frame-id transform))))
 
-;; (defun msg->transform-stamped (msg)
-;;   (with-fields ((frame-id (frame_id header)) (child-frame-id child_frame_id)
-;;                 transform) msg
-;;     (values frame-id child-frame-id transform)))
+;;;
+;;; ROS MESSAGE CONVERSIONS
+;;;
+
+(defun msg->transform-stamped (msg)
+  (declare (type geometry_msgs-msg:transformstamped msg))
+  (with-fields (header child_frame_id transform) msg
+    (make-instance 'transform-stamped 
+                   :header (msg->header header)
+                   :child-frame-id child_frame_id
+                   :transform (msg->transform transform))))
+
+(defun msg->header (msg)
+  (declare (type std_msgs-msg:Header msg))
+  (with-fields (stamp frame_id) msg
+    (make-header frame_id stamp)))
+    
+(defun msg->transform (msg)
+  (declare (type geometry_msgs-msg:transform msg))
+  (with-fields (translation rotation) msg
+    (cl-transforms:make-transform
+     (msg->3d-vector translation) (msg->quaternion rotation))))
+
+(defun msg->3d-vector (msg)
+  (declare (type geometry_msgs-msg:vector3 msg))
+  (with-fields (x y z) msg
+    (cl-transforms:make-3d-vector x y z)))
+
+(defun msg->quaternion (msg)
+  (declare (type geometry_msgs-msg:quaternion msg))
+  (with-fields (x y z w) msg
+    (cl-transforms:make-quaternion x y z w)))
 
 ;;;
 ;;; POINT-STAMPED
