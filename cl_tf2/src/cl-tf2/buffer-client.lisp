@@ -49,7 +49,7 @@
       (:warn (roslisp:ros-warn "tf2/buffer-client" "Wait for server timed out."))
       (:error (roslisp:ros-error "tf2/buffer-client" "Wait for server timed out.")))))
 
-(defun make-buffer-client (action-goal)
+(defun make-buffer-client (&key (action-goal *tf2-buffer-server-goal*))
   "Creates a tf buffer-client connecting to buffer-server at `action-goal'."
   (let ((client (actionlib-lisp:make-simple-action-client
                  action-goal *tf2-buffer-server-goal-type*)))
