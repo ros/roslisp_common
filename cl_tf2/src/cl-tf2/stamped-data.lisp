@@ -28,27 +28,53 @@
 
 (in-package :cl-tf2)
 
+;;;
+;;; Users can use the 'header' class and its related functionality to wrap data in a 
+;;; tf-friendly way, i.e. with a frame-id and stamp. The convenience macro 'def-stamped'
+;;; shall ease the programming effort when plugging a new datatype into tf-reasoning.
+;;;
+
 (defclass header ()
   ((frame-id :initarg :frame-id :initform ""
-             :reader frame-id :type string)
+             :reader frame-id :type string
+             :documentation "ID of the reference frame of data.")
    (stamp :initarg :stamp :initform 0.0
-          :reader stamp :type float)))
+          :reader stamp :type float
+          :documentation "Time-stamp at which data was measured."))
+  (:documentation "Utility class to wrap some measurement data with a
+ time-stamp and reference frame-id."))
 
 (defun make-header (frame-id stamp)
+  "Creates an instance of type 'header' with `frame-id' and `stamp'."
   (declare (type string frame-id)
            (type number stamp))
   (make-instance 'header :frame-id frame-id :stamp stamp))
 
 (defmethod print-object ((obj header) strm)
+  "Overloads pretty printing of instances of type 'header'"
   (print-unreadable-object (obj strm :type t)
     (with-slots (frame-id stamp) obj
       (format strm "(FRAME-ID: \"~a\" STAMP: ~a)" frame-id stamp))))
 
 (defmacro def-stamped (name (slot-name slot-type &key (initform nil initform-supplied-p)))
-  "Macro to define a stamped datatype and methods to get frame-id and time-stamp.
+  "Convenience macro to define a stamped datatype class to wrap a datatype with a
+ header. This macro will also define some convenience functions, and overload methods
+ for the new stamped datatype. `name' will be the name of the new class, `slot-name' 
+ the name of the slot storing the wrapped data, and `slot-type' is the type of the 
+ wrapped data. Additionally, the new class will have a slot 'header' of type 'header.
+ Optionally, an `initform' for the wrapped data can be specified.
 
  Example usage for creating a stamped number: 
-   (def-stamped number-stamped (num-value number :initform 0.0))"
+   (def-stamped number-stamped (num-value number :initform 0.0))
+
+ This call will:
+   - define a class 'number-stamped' with slots 'num-value' and 'header'
+   - define a constructor-function 'make-number-stamped'
+   - define a function 'copy-number-stamped'
+   - overload the method 'print-object' for 'number-stamped'
+   - overload the method 'get-time-stamp' for 'number-stamped'
+   - overload the method 'get-frame-id' for 'number-stamped'"
+
   (flet ((to-keyword (sym)
            (intern (string sym) 'keyword))
          (constructor-symbol (name)
