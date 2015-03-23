@@ -39,7 +39,7 @@
    lookup-transform-advanced has-transform-advanced
    do-transform-advanced can-transform-advanced
    ;; buffer client implementation
-   buffer-client
+   make-buffer-client buffer-client
    ;; broadcaster interface
    send-transform send-static-transform
    ;; stamped data

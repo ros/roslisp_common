@@ -42,8 +42,18 @@
          :initform (sb-thread:make-mutex
                     :name (string (gensym "TF2-BUFFER-CLIENT-LOCK-"))))))
 
-(defmethod initialize-instance :after ((buffer buffer-client) &key)
-  (actionlib-lisp:wait-for-server (client buffer) *tf2-wait-for-server-timeout*))
+(defmethod initialize-instance :after ((buffer buffer-client) &key (verbosity :warn))
+  "Ensures that we have waited for the action server `buffer' connected to."
+  (unless (actionlib-lisp:wait-for-server (client buffer) *tf2-wait-for-server-timeout*)
+    (case verbosity
+      (:warn (roslisp:ros-warn "tf2/buffer-client" "Wait for server timed out."))
+      (:error (roslisp:ros-error "tf2/buffer-client" "Wait for server timed out.")))))
+
+(defun make-buffer-client (action-goal)
+  "Creates a tf buffer-client connecting to buffer-server at `action-goal'."
+  (let ((client (actionlib-lisp:make-simple-action-client
+                 action-goal *tf2-buffer-server-goal-type*)))
+  (make-instance 'buffer-client :client client)))
 
 ;;;
 ;;; SIMPLE API
