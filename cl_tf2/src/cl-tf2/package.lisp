@@ -43,4 +43,4 @@
    ;; broadcaster interface
    send-transform send-static-transform
    ;; stamped data
-   header frame-id stamp def-stamped))
+   header frame-id stamp make-header def-stamped))

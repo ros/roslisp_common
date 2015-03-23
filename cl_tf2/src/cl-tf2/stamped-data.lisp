@@ -34,6 +34,11 @@
    (stamp :initarg :stamp :initform 0.0
           :reader stamp :type float)))
 
+(defun make-header (frame-id stamp)
+  (declare (type string frame-id)
+           (type number stamp))
+  (make-instance 'header :frame-id frame-id :stamp stamp))
+
 (defmacro def-stamped (name (slot-name slot-type &key (initform nil initform-supplied-p)))
   "Macro to define a stamped datatype and methods to get frame-id and time-stamp.
 
@@ -55,8 +60,7 @@
        (defun ,(constructor-symbol name) (,slot-name frame-id stamp)
          (make-instance 
           ',name ,(to-keyword slot-name) ,slot-name 
-          :header (make-instance 
-                   'cl-tf2:header :frame-id frame-id :stamp stamp)))
+          :header (cl-tf2:make-header frame-id stamp)))
        (defmethod cl-tf2:get-time-stamp ((object ,name))
          (cl-tf2:stamp (cl-tf2:header object)))
        (defmethod cl-tf2:get-frame-id ((object ,name))
