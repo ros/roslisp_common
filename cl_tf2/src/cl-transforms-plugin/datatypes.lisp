@@ -86,12 +86,49 @@
   (with-fields (x y z w) msg
     (cl-transforms:make-quaternion x y z w)))
 
+(defun transform-stamped->msg (transform-stamped)
+  (declare (type transform-stamped transform-stamped))
+  (make-msg 
+   "geometry_msgs/TransformStamped"
+   :header (header->msg (header transform-stamped))
+   :child_frame_id (child-frame-id transform-stamped)
+   :transform (transform->msg (transform transform-stamped))))
+
+(defun header->msg (header)
+  (declare (type header header))
+  (make-msg "std_msgs/Header" :stamp (stamp header) :frame_id (frame-id header)))
+
+(defun transform->msg (transform)
+  (declare (type cl-transforms:transform transform))
+  (make-msg 
+   "geometry_msgs/Transform"
+   :translation (3d-vector->msg (cl-transforms:translation transform))
+   :rotation (quaterion->msg (cl-transforms:rotation transform))))
+
+(defun quaterion->msg (quaternion)
+  (declare (type cl-transforms:quaternion quaternion))
+  (make-msg "geometry_msgs/Quaternion"
+            :x (cl-transforms:x quaternion)
+            :y (cl-transforms:y quaternion)
+            :z (cl-transforms:z quaternion)
+            :w (cl-transforms:w quaternion)))
+
+(defun 3d-vector->msg (3d-vector)
+  (declare (type cl-transforms:3d-vector 3d-vector))
+  (make-msg "geometry_msgs/Vector3"
+            :x (cl-transforms:x 3d-vector)
+            :y (cl-transforms:y 3d-vector)
+            :z (cl-transforms:z 3d-vector)))
+
 ;;;
-;;; GENERAL CONVERSION
+;;; PLUGGING THIS IMPLEMENTATION OF TRANSFORM-STAMPED INTO CL-TF2
 ;;;
 
 (defmethod cl-tf2:apply-transform (object (transform-msg geometry_msgs-msg:transformstamped))
   (apply-transform object (msg->transform-stamped transform-msg)))
+
+(defmethod cl-tf2:transform-stamped->tf-transform-stamped ((transform-stamped transform-stamped))
+  (transform-stamped->msg transform-stamped))
 
 ;;;
 ;;; POINT-STAMPED
