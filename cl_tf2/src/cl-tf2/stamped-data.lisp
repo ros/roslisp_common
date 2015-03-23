@@ -52,7 +52,9 @@
   (flet ((to-keyword (sym)
            (intern (string sym) 'keyword))
          (constructor-symbol (name)
-           (intern (concatenate 'string "MAKE-" (symbol-name name)))))
+           (intern (concatenate 'string "MAKE-" (symbol-name name))))
+         (copy-constructor-symbol (name)
+           (intern (concatenate 'string "COPY-" (symbol-name name)))))
     `(progn
        (defclass ,name ()
          ((header :initarg :header :initform (make-instance 'cl-tf2:header)
@@ -66,6 +68,11 @@
          (make-instance 
           ',name ,(to-keyword slot-name) ,slot-name 
           :header (cl-tf2:make-header frame-id stamp)))
+       (defun ,(copy-constructor-symbol name) (,name &key header ,slot-name)
+         (with-slots ((old-header header) (old-data ,slot-name)) ,name
+           (make-instance ',name
+                          :header (or header old-header)
+                          ,(to-keyword slot-name) (or ,slot-name old-data))))
        (defmethod print-object ((obj ,name) strm)
          (print-unreadable-object (obj strm :type t)
            (with-slots (header ,slot-name) obj
