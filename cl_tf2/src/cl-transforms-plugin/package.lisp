@@ -30,5 +30,10 @@
 
 (defpackage :cl-transforms-plugin
   (:use #:common-lisp #:roslisp #:cl-tf2)
-  (:export point-stamped)
-  )
+  (:export 
+   ;; transform-stamped
+   transform-stamped header transform child-frame-id make-transform-stamped
+   ;; point-stamped
+   point-stamped make-point-stamped copy-point-stamped point
+   ;; pose-stamped
+   pose-stamped make-pose-stamped copy-pose-stamped pose))
