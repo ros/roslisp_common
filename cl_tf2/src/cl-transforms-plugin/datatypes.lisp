@@ -92,11 +92,6 @@
 
 (def-stamped point-stamped (point cl-transforms:3d-vector :initform (cl-transforms:make-identity-vector)))
 
-(defmethod print-object ((obj point-stamped) strm)
-  (print-unreadable-object (obj strm :type t)
-    (with-slots (header point) obj
-      (format strm "~%  HEADER:~%    ~a~%  POINT:~%    ~a" header point))))
-
 (defun copy-point-stamped (point-stamped &key header point)
   (with-slots ((old-header header) (old-point point)) point-stamped
     (make-instance 'point-stamped

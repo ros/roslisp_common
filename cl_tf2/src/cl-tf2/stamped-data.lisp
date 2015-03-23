@@ -66,6 +66,11 @@
          (make-instance 
           ',name ,(to-keyword slot-name) ,slot-name 
           :header (cl-tf2:make-header frame-id stamp)))
+       (defmethod print-object ((obj ,name) strm)
+         (print-unreadable-object (obj strm :type t)
+           (with-slots (header ,slot-name) obj
+             (format strm "~%  HEADER:~%    ~a~%  ~a:~%    ~a" 
+                     header ,(string slot-name) ,slot-name))))
        (defmethod cl-tf2:get-time-stamp ((object ,name))
          (cl-tf2:stamp (cl-tf2:header object)))
        (defmethod cl-tf2:get-frame-id ((object ,name))
