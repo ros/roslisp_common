@@ -44,25 +44,11 @@
                        (:file "errors" :depends-on ("package"))
                        (:file "buffer-interface" :depends-on ("package" "errors" "data-interface"))
                        (:file "buffer-client" :depends-on ("package" "buffer-interface"))
-             
-             
-;             (:file "errors" :depends-on ("package"))
-             ;; (:file "datatypes" :depends-on ("package"))
-             ;; (:file "message-conversions" :depends-on ("package" "datatypes"))
-
-             ;; (:file "buffer-client" :depends-on ("package" "errors" "datatypes"
-             ;;                                               "message-conversions"
-             ;;                                               "buffer-interface"))
              ;; (:file "transform-broadcaster" :depends-on ("package"
              ;;                                             "datatypes"
              ;;                                             "message-conversions"))
-             ;; (:file "utilities" :depends-on ("package" "errors"
-             ;;                                           "datatypes"
-             ;;                                           "message-conversions"
-             ;;                                           "buffer-interface"))
                        ))
              (:module "cl-transforms-plugin" :depends-on ("cl-tf2")
               :components
               ((:file "package")
-               (:file "datatypes" :depends-on ("package")))))
-)))
+               (:file "datatypes" :depends-on ("package"))))))))
