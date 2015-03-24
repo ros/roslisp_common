@@ -36,6 +36,9 @@
    (goal-ids :initform nil
              :accessor goal-ids
              :documentation "List of all goal-ids of all monitored goals.")
+   (goal-conditions :initform (make-hash-table :test #'equal)
+                    :accessor goal-conditions
+                    :documentation "Hashtable with conditions for every goal.")
    (waiting-for-goal-ack-timeout :initform 10
                                  :initarg waiting-for-goal-ack-timeout
                                  :accessor waiting-for-goal-ack-timeout
@@ -76,7 +79,10 @@
 (defgeneric goal-with-id (manager id)
   (:documentation "Returns the entry in the goal-hash-tablefor the goal with the given id."))
 
-;;;Implementation
+;;;
+;;; Implementation
+;;;
+
 (defun status-msg->id-status (status-msg)
   "Gets a status msg and returns a the id and status."
   (with-fields (status (id (id goal_id))) status-msg
@@ -95,15 +101,16 @@
          (goal-handle (make-instance 'client-goal-handle))
          (csm (make-instance (csm-type manager)
                              :goal-id goal-id
-                             :transition-cb (if transition-cb 
-                                                #'(lambda () (funcall transition-cb goal-handle)))
-                             :feedback-cb (if feedback-cb
-                                              #'(lambda (feedback) 
-                                                  (funcall feedback-cb goal-handle feedback)))
+                             :transition-cb (when transition-cb 
+                                              #'(lambda () (funcall transition-cb goal-handle)))
+                             :feedback-cb (when feedback-cb
+                                            #'(lambda (feedback) 
+                                                (funcall feedback-cb goal-handle feedback)))
                              :send-cancel-fn #'(lambda () (funcall cancel-fn goal-id)))))
     (setf (comm-state-machine goal-handle) csm)
     (with-recursive-lock ((hash-mutex manager))
-      (setf (gethash goal-id (goals manager)) csm))
+      (setf (gethash goal-id (goals manager)) csm)
+      (setf (gethash goal-id (goal-conditions manager)) (make-waitqueue)))
     (with-recursive-lock ((id-mutex manager))
       (push goal-id (goal-ids manager)))
     goal-handle))

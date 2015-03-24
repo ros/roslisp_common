@@ -1,7 +1,7 @@
 ;;;; -*- Mode: LISP -*-
 
 (defsystem "actionlib-lisp"
-  :depends-on ("roslisp" "roslisp-utilities" "actionlib_msgs-msg" "actionlib_tutorials-msg")
+  :depends-on ("roslisp" "roslisp-utilities" "cl-utils" "actionlib_msgs-msg")
   :components
   ((:file "package")
    (:file "state-machine" :depends-on ("package"))

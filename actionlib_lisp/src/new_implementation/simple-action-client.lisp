@@ -102,32 +102,31 @@
 (defmethod send-goal-and-wait ((client simple-action-client) goal-msg 
                                execute-timeout preempt-timeout)
   "Sends a goal to the action server and loops until the goal is done or
-   the `execute-timeout' is reached and then loops until the goal preempted or
-   the `preempt-timeout' is reached. A timeout of 0 implies forever. Returns 
-   the state information of the goal"
-  (let ((execute-start-time (ros-time))
-        (preempt-start-time nil)
-        (is-done nil))
+   the `execute-timeout' is reached and then cancels the goal and waits until the
+   goal preempted or the `preempt-timeout' is reached. A timeout of 0 implies forever.
+   Returns the state information of the goal"
+  (flet ((execute-timeout-handler ()
+           (cancel-goal client)
+           (with-timeout-handler preempt-timeout
+               #'(lambda () nil)
+             (with-recursive-lock ((client-mutex client))
+               (loop until (goal-finished client) do
+                 (condition-wait (gethash (goal-id (goal-handle client))
+                                          (goal-conditions (goal-manager client)))
+                                 (client-mutex client)))))))
     ;; in case this method is evaporated during execution, unwind-protect
     ;; ensure that we inform the server by canceling the goal
     (unwind-protect
          (progn
-           (send-goal client goal-msg 
-                      :done-cb #'(lambda (state result) 
-                                   (declare (ignore state result))
-                                   (setf is-done t)))
+           (send-goal client goal-msg)
            ;; waiting for execution timeout
-           (loop while (and 
-                        (not is-done)
-                        (timeout-not-reached execute-start-time execute-timeout))
-                 do (sleep 0.01))
-           ;; maybe waiting for preempt timeout
-           (if (not is-done) (cancel-goal client))
-           (setf preempt-start-time (ros-time))
-           (loop while (and 
-                        (not is-done)
-                        (timeout-not-reached preempt-start-time preempt-timeout))
-                 do (sleep 0.01))
+           (with-timeout-handler execute-timeout
+               #'execute-timeout-handler
+             (with-recursive-lock ((client-mutex client))
+               (loop until (goal-finished client) do
+                 (condition-wait (gethash (goal-id (goal-handle client))
+                                          (goal-conditions (goal-manager client)))
+                                 (client-mutex client)))))
            ;; returning the state of the action client
            (state client))
       ;; cancel the goal in case we have been evaporated
@@ -193,3 +192,10 @@
   "Checks if the goal-handle is NIL"
   (assert goal-handle nil
           "The client tracks no goal."))
+
+(defun goal-finished (client)
+  (let ((state (state client)))
+    (when (or (eql state :SUCCEEDED)
+              (eql state :LOST)
+              (eql state :PREEMPTED))
+      t)))

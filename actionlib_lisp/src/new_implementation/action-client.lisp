@@ -165,7 +165,11 @@
   "Callback for the status messages of the action server"
   (update-last-connection client)  
   (setf (last-status-msg client) msg)
-  (update-statuses (goal-manager client) msg))
+  (update-statuses (goal-manager client) msg)
+  (when (goal-ids (goal-manager client))
+    (with-recursive-lock ((client-mutex client))
+      (dolist (id (goal-ids (goal-manager client)))
+        (condition-notify (gethash id (goal-conditions (goal-manager client))))))))
 
 (defun result-callback (client msg)
   "Callback for the result message of the action server"
