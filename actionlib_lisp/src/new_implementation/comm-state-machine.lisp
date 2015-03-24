@@ -30,7 +30,7 @@
 
 (defparameter *states* 
   ;;              State   Signal     Target-State
-  (make-states '((:done (:send-goal :waiting-for-goal-ack))
+  (make-states '((:done ())
                  (:waiting-for-goal-ack (:cancel-goal :waiting-for-cancel-ack
                                          :pending :pending
                                          :active :active

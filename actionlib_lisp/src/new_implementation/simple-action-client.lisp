@@ -105,33 +105,28 @@
    the `execute-timeout' is reached and then cancels the goal and waits until the
    goal preempted or the `preempt-timeout' is reached. A timeout of 0 implies forever.
    Returns the state information of the goal"
-  (flet ((execute-timeout-handler ()
-           (cancel-goal client)
-           (with-timeout-handler preempt-timeout
-               #'(lambda () nil)
-             (with-recursive-lock ((client-mutex client))
-               (loop until (goal-finished client) do
-                 (condition-wait (gethash (goal-id (goal-handle client))
-                                          (goal-conditions (goal-manager client)))
-                                 (client-mutex client)))))))
-    ;; in case this method is evaporated during execution, unwind-protect
-    ;; ensure that we inform the server by canceling the goal
-    (unwind-protect
-         (progn
-           (send-goal client goal-msg)
-           ;; waiting for execution timeout
-           (with-timeout-handler execute-timeout
-               #'execute-timeout-handler
-             (with-recursive-lock ((client-mutex client))
-               (loop until (goal-finished client) do
-                 (condition-wait (gethash (goal-id (goal-handle client))
-                                          (goal-conditions (goal-manager client)))
-                                 (client-mutex client)))))
+  ;; in case this method is evaporated during execution, unwind-protect
+  ;; ensure that we inform the server by canceling the goal
+  (unwind-protect
+       (progn
+         (send-goal client goal-msg)
+         ;; waiting for execution timeout
+         (let ((finish (wait-for-result client execute-timeout)))
+           (unless finish
+             (ros-info (actionlib) "Reached execute timeout.")
+             (cancel-goal client)
+             (with-timeout-handler preempt-timeout
+                 #'(lambda () (ros-info (actionlib) "Reached preempt timeout."))
+               (with-recursive-lock ((client-mutex client))
+                 (loop until (goal-finished client) do
+                   (condition-wait (gethash (goal-id (goal-handle client))
+                                            (goal-conditions (goal-manager client)))
+                                   (client-mutex client))))))
            ;; returning the state of the action client
-           (state client))
-      ;; cancel the goal in case we have been evaporated
-      (when (goal-handle client) ; making sure we still have a goal-handle
-        (cancel-goal client)))))
+           (values (state client) (goal-finished client) finish (comm-state (comm-state-machine (goal-handle client))))))
+    ;; cancel the goal in case we have been evaporated
+    (when (goal-handle client) ; making sure we still have a goal-handle
+      (cancel-goal client))))
   
 (defmethod state ((client simple-action-client))
   "Returns the state information of the goal tracked by the client. 
@@ -167,26 +162,23 @@
   t)
 
 (defmethod wait-for-result ((client simple-action-client) timeout)
-  "Loops until a result is received or the timeout is reached. Returns TRUE
+  "Waits until a result is received or the timeout is reached. Returns TRUE
    if the goal finished before the timeout or NIL otherwise. An Error is
    thrown if the client hasn't sent a goal yet or stopped tracking it."
   (goal-handle-not-nil (goal-handle client))
-  (let ((start-time (ros-time)))
-    (loop while (and (timeout-not-reached start-time timeout)
-                     (not (eql (comm-state (goal-handle client)) :done)))
-          do (sleep 0.01)))
-  (eql (comm-state (goal-handle client)) :done))
+  (with-timeout-handler timeout
+      #'(lambda () (return-from wait-for-result nil))
+    (with-recursive-lock ((client-mutex client))
+      (loop until (is-done client) do
+        (condition-wait (gethash (goal-id (goal-handle client))
+                                 (goal-conditions (goal-manager client)))
+                        (client-mutex client)))))
+  t)
+
 
 ;;;
 ;;; Internal
 ;;;
-
-(defun timeout-not-reached (start-time timeout)
-  "Checks if the `timeout' seconds have passed since `start-time'. If that the case 
-   returns NIL else TRUE"
-  (if (eql timeout 0)
-      t
-      (> timeout (- (ros-time) start-time))))
 
 (defun goal-handle-not-nil (goal-handle)
   "Checks if the goal-handle is NIL"
@@ -194,8 +186,14 @@
           "The client tracks no goal."))
 
 (defun goal-finished (client)
+  "Checks if the goal is in a finished state. This doesn't checks if
+a result was received."
   (let ((state (state client)))
-    (when (or (eql state :SUCCEEDED)
-              (eql state :LOST)
-              (eql state :PREEMPTED))
-      t)))
+    (or (eql state :SUCCEEDED)
+        (eql state :LOST)
+        (eql state :PREEMPTED))))
+
+(defun is-done (client)
+  "Checks if a goal is done."
+  (and (eql (comm-state (goal-handle client)) :done)
+       (goal-finished client)))

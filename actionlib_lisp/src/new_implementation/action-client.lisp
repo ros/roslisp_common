@@ -174,7 +174,11 @@
 (defun result-callback (client msg)
   "Callback for the result message of the action server"
   (update-last-connection client)
-  (update-results (goal-manager client) msg))
+  (update-results (goal-manager client) msg)
+  (when (goal-ids (goal-manager client))
+    (with-recursive-lock ((client-mutex client))
+      (dolist (id (goal-ids (goal-manager client)))
+        (condition-notify (gethash id (goal-conditions (goal-manager client))))))))
 
 (defun update-last-connection (client)
   "Updates the time of the last communication with the action server"
