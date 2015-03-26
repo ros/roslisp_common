@@ -108,6 +108,27 @@ If you need a geometry_msgs/Point use the MAKE-POINT-MSG function."
   (with-fields (x y z w) msg
     (make-instance 'cl-transforms:quaternion :x x :y y :z z :w w)))
 
+(defmethod from-msg ((msg geometry_msgs-msg:Point))
+  (with-fields (x y z) msg
+    (make-instance 'cl-transforms:3d-vector :x x :y y :z z)))
+
+(defmethod from-msg ((msg geometry_msgs-msg:Pose))
+  (with-fields (orientation position) msg
+    (make-instance 'cl-transforms:pose
+      :origin (from-msg position) :orientation (from-msg orientation))))
+
+(defmethod from-msg ((msg geometry_msgs-msg:PoseStamped))
+  (with-fields ((frame-id (frame_id header))
+                (stamp (stamp header))
+                (position-msg (position pose))
+                (orientation-msg (orientation pose)))
+      msg
+    (make-instance 'cl-tf-datatypes:pose-stamped
+                   :frame-id frame-id
+                   :stamp stamp
+                   :origin (from-msg position-msg)
+                   :orientation (from-msg orientation-msg))))
+
 (defun make-header-msg (stamp frame-id)
   (make-msg "std_msgs/Header"
             :stamp stamp
