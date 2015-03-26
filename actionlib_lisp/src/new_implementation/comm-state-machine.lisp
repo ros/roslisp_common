@@ -110,14 +110,8 @@
                   :accessor latest-result)
    (latest-feedback :initform nil
                     :accessor latest-feedback)
-   (stm-mutex :initform (make-mutex :name (string (gensym "state-machine-lock")))
-              :reader stm-mutex)
-   (status-mutex :initform (make-mutex :name (string (gensym "status-lock")))
-                 :reader status-mutex) 
-   (result-mutex :initform (make-mutex :name (string (gensym "result-lock")))
-                 :reader result-mutex) 
-   (feedback-mutex :initform (make-mutex :name (string (gensym "feedback-lock")))
-                   :reader feedback-mutex))
+   (csm-mutex :initform (make-mutex :name (string (gensym "csm-lock")))
+              :reader csm-mutex))
   (:documentation "Monitors the state of the communication between action-client
                    and the server for one goal and executes the callbacks."))
 
@@ -154,22 +148,22 @@
 (defmethod update-status ((csm comm-state-machine) status)
   "If the status is not equal to the last status the comm-state-machine
    gets updated with the new status"
-  (when (not (eql (latest-goal-status csm) status))
-    (with-recursive-lock ((status-mutex csm))
-      (setf (latest-goal-status csm) status)))
-  (if (get-next-state (stm csm) status)
-        (transition-to csm status)))
+  (with-recursive-lock ((csm-mutex csm))
+    (unless (eql (latest-goal-status csm) status)
+      (setf (latest-goal-status csm) status))
+    (if (get-next-state (stm csm) status)
+        (transition-to csm status))))
       
 (defmethod update-result ((csm comm-state-machine) action-result)
   "Updates the result of the comm-state-machine"
-  (with-recursive-lock ((result-mutex csm))
-    (setf (latest-result csm) action-result))
-  (transition-to csm :receive))
+  (with-recursive-lock ((csm-mutex csm))
+    (setf (latest-result csm) action-result)
+    (transition-to csm :receive)))
 
 (defmethod update-feedback ((csm comm-state-machine) action-feedback)
   "Updates the latest feedback of the comm-state-machine and calls 
    the feedback-callback"
-  (with-recursive-lock ((feedback-mutex csm))
+  (with-recursive-lock ((csm-mutex csm))
     (setf (latest-feedback csm) action-feedback))
   (if (feedback-cb csm)
       (funcall (feedback-cb csm) action-feedback)))

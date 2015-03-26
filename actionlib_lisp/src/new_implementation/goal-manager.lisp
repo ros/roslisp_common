@@ -39,7 +39,7 @@
    (goal-conditions :initform (make-hash-table :test #'equal)
                     :accessor goal-conditions
                     :documentation "Hashtable with conditions for every goal.")
-   (waiting-for-goal-ack-timeout :initform 10
+   (waiting-for-goal-ack-timeout :initform 5
                                  :initarg waiting-for-goal-ack-timeout
                                  :accessor waiting-for-goal-ack-timeout
                                  :documentation "Time in seconds to wait for server
@@ -116,33 +116,34 @@
     goal-handle))
 
 (defmethod update-statuses ((manager goal-manager) status-array)
-  "Updates the statuses of all goals that the goal-manager tracks. If the status 
+  "Updates the statuses of all goals that the goal-manager xbtracks. If the status 
    array contains the goal-id of comm-state-machine, the state of the comm-state-machine
    gets updated with the status else the comm-state-machine gets set to lost."
   (let ((goal-ids (with-recursive-lock ((id-mutex manager))
-                    (copy-list (goal-ids manager)))))
+                    (copy-list (goal-ids manager))))
+        (current-time (ros-time)))
     (with-fields ((status-list status_list)) status-array
-      ;;loops over the goals in the status list, updates their status
-      ;;and removes them from the local goal-ids list
+      ;; loops over the goals in the status list, updates their status
+      ;; and removes them from the local goal-ids list
       (loop for goal-status being the elements of status-list
-            do (multiple-value-bind (id status-symbol) (status-msg->id-status goal-status)
-                 (multiple-value-bind (comm-state-machine has-state-machine-p) (goal-with-id manager id)
+            do (multiple-value-bind (id status-symbol)
+                   (status-msg->id-status goal-status)
+                 (multiple-value-bind (comm-state-machine has-state-machine-p)
+                     (goal-with-id manager id)
                    (when has-state-machine-p
                      (setf goal-ids (remove id goal-ids :test #'equal))
                      (update-status comm-state-machine status-symbol)))))
-      ;;loops over the remaining ids in goal-ids and marks them as lost if they aren't
-      ;;waiting-for-goal-ack or if they exceeded the timeout
-      (loop for goal-id in goal-ids
-            do (let ((csm (nth-value 0 (goal-with-id manager goal-id))))
-                 (when (and csm
-                            (or (not (eql (name (get-current-state (stm csm)))
-                                          :waiting-for-goal-ack))
-                                (> (- (ros-time) (start-time csm)) 
-                                   (waiting-for-goal-ack-timeout manager))))
-                   (with-recursive-lock ((id-mutex manager))
-                     (setf (goal-ids manager) 
-                           (remove goal-id (goal-ids manager) :test #'equal)))
-                   (update-status csm :lost)))))))
+      ;; loops over the remaining ids in goal-ids and marks them as lost if they aren't
+      ;; waiting-for-goal-ack or if they exceeded the timeout
+      (dolist (goal-id goal-ids)
+        (let ((csm (nth-value 0 (goal-with-id manager goal-id))))
+          (when (and csm
+                     (> (- current-time (start-time csm)) 
+                        (waiting-for-goal-ack-timeout manager)))
+            (with-recursive-lock ((id-mutex manager))
+              (setf (goal-ids manager) 
+                    (remove goal-id (goal-ids manager) :test #'equal))
+              (update-status csm :lost))))))))
 
 (defmethod update-results ((manager goal-manager) action-result)
   "Updates the comm-state-machine with the goal-id from the result message."
@@ -165,7 +166,8 @@
 (defmethod stop-tracking-goals ((manager goal-manager))
   "Removes all comm-state-machines and goal-ids."
   (setf (goal-ids manager) nil)
-  (setf (goals manager) (make-hash-table :test #'equal)))
+  (setf (goals manager) (make-hash-table :test #'equal))
+  (setf (goal-conditions manager) (make-hash-table :test #'equal)))
 
 (defmethod goal-with-id ((manager goal-manager) id)
   "Returns the values for `id' in the goals-hash-table."

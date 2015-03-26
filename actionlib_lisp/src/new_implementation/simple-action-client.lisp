@@ -83,20 +83,21 @@
                It takes no parameters.
    `feedbak-cb' Callback that gets callback everytime feeback for the goal is received.
                 It takes the feedback message as parameter."
-  (stop-tracking-goal client)
-  (setf (goal-handle client)
-        (call-next-method client goal-msg
-                          :transition-cb #'(lambda (goal-handle)
-                                             (if (eql (comm-state goal-handle) :active)
-                                                 (if active-cb (funcall active-cb))
-                                                 (if (eql (comm-state goal-handle) :done)
-                                                     (if done-cb 
-                                                         (funcall done-cb (state client)
-                                                                  (result goal-handle))))))
-                          :feedback-cb #'(lambda (goal-handle feedback)
-                                           (declare (ignore goal-handle))
-                                           (if feedback-cb
-                                               (funcall feedback-cb feedback)))))
+  (with-recursive-lock ((client-mutex client))
+    (stop-tracking-goal client)
+    (setf (goal-handle client)
+          (call-next-method client goal-msg
+                            :transition-cb #'(lambda (goal-handle)
+                                               (if (eql (comm-state goal-handle) :active)
+                                                   (if active-cb (funcall active-cb))
+                                                   (if (eql (comm-state goal-handle) :done)
+                                                       (if done-cb 
+                                                           (funcall done-cb (state client)
+                                                                    (result goal-handle))))))
+                            :feedback-cb #'(lambda (goal-handle feedback)
+                                             (declare (ignore goal-handle))
+                                             (if feedback-cb
+                                                 (funcall feedback-cb feedback))))))
   t)
 
 (defmethod send-goal-and-wait ((client simple-action-client) goal-msg 
@@ -107,26 +108,30 @@
    Returns the state information of the goal"
   ;; in case this method is evaporated during execution, unwind-protect
   ;; ensure that we inform the server by canceling the goal
-  (unwind-protect
-       (progn
-         (send-goal client goal-msg)
-         ;; waiting for execution timeout
-         (let ((finish (wait-for-result client execute-timeout)))
-           (unless finish
+  (let ((clean-finish nil))
+    (unwind-protect
+         (progn
+           (send-goal client goal-msg)
+           ;; waiting for execution timeout
+           (unless (wait-for-result client execute-timeout)
              (ros-info (actionlib) "Reached execute timeout.")
              (cancel-goal client)
              (with-timeout-handler preempt-timeout
-                 #'(lambda () (ros-info (actionlib) "Reached preempt timeout."))
-               (with-recursive-lock ((client-mutex client))
+                 #'(lambda ()
+                     (ros-info (actionlib) "Reached preempt timeout.")
+                     (setf clean-finish t)
+                     (return-from send-goal-and-wait (state client)))
+               (with-recursive-lock ((csm-mutex (comm-state-machine (goal-handle client))))
                  (loop until (goal-finished client) do
                    (condition-wait (gethash (goal-id (goal-handle client))
                                             (goal-conditions (goal-manager client)))
-                                   (client-mutex client))))))
+                                   (csm-mutex (comm-state-machine (goal-handle client))))))))
            ;; returning the state of the action client
-           (values (state client) (goal-finished client) finish (comm-state (comm-state-machine (goal-handle client))))))
-    ;; cancel the goal in case we have been evaporated
-    (when (goal-handle client) ; making sure we still have a goal-handle
-      (cancel-goal client))))
+           (setf clean-finish t)
+           (state client))
+      ;; cancel the goal in case we have been evaporated
+      (when (and (not clean-finish) (goal-handle client)) ; making sure we still have a goal-handle
+        (cancel-goal client)))))
   
 (defmethod state ((client simple-action-client))
   "Returns the state information of the goal tracked by the client. 
@@ -168,11 +173,11 @@
   (goal-handle-not-nil (goal-handle client))
   (with-timeout-handler timeout
       #'(lambda () (return-from wait-for-result nil))
-    (with-recursive-lock ((client-mutex client))
+    (with-recursive-lock ((csm-mutex (comm-state-machine (goal-handle client))))
       (loop until (is-done client) do
         (condition-wait (gethash (goal-id (goal-handle client))
                                  (goal-conditions (goal-manager client)))
-                        (client-mutex client)))))
+                        (csm-mutex (comm-state-machine (goal-handle client)))))))
   t)
 
 
