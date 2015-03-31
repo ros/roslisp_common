@@ -110,6 +110,8 @@
                   :accessor latest-result)
    (latest-feedback :initform nil
                     :accessor latest-feedback)
+   (lost-ctr :initform 0
+             :accessor lost-ctr)
    (csm-mutex :initform (make-mutex :name (string (gensym "csm-lock")))
               :reader csm-mutex))
   (:documentation "Monitors the state of the communication between action-client
@@ -140,19 +142,20 @@
    transition-callback. If the result was processed before the 
    last status update the transition-callback gets called even
    if the state-machine doesn't change"
-  (if (and (or (eql (name (get-current-state (stm csm))) :done)
-               (process-signal (stm csm) signal))
-           (transition-cb csm))
-      (funcall (transition-cb csm))))
+  (when (and (or (eql (name (get-current-state (stm csm))) :done)
+                 (process-signal (stm csm) signal))
+             (transition-cb csm))
+    (funcall (transition-cb csm))))
 
 (defmethod update-status ((csm comm-state-machine) status)
   "If the status is not equal to the last status the comm-state-machine
    gets updated with the new status"
   (with-recursive-lock ((csm-mutex csm))
-    (unless (eql (latest-goal-status csm) status)
+    (unless (eql status :lost)
+      (setf (lost-ctr csm) 0))
+    (when (get-next-state (stm csm) status)
       (setf (latest-goal-status csm) status))
-    (if (get-next-state (stm csm) status)
-        (transition-to csm status))))
+      (transition-to csm status))))
       
 (defmethod update-result ((csm comm-state-machine) action-result)
   "Updates the result of the comm-state-machine"

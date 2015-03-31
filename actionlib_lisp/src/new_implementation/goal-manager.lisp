@@ -133,17 +133,20 @@
                    (when has-state-machine-p
                      (setf goal-ids (remove id goal-ids :test #'equal))
                      (update-status comm-state-machine status-symbol)))))
-      ;; loops over the remaining ids in goal-ids and marks them as lost if they aren't
-      ;; waiting-for-goal-ack or if they exceeded the timeout
+      ;; loops over the remaining ids in goal-ids and marks them as lost if they
+      ;; exceeded the waiting-for-goal-ack timeout or if they aren't included in
+      ;; the status msgs anymore
       (dolist (goal-id goal-ids)
         (let ((csm (nth-value 0 (goal-with-id manager goal-id))))
-          (when (and csm
-                     (> (- current-time (start-time csm)) 
-                        (waiting-for-goal-ack-timeout manager)))
+          (when csm
+            (setf (lost-ctr csm) (1+ (lost-ctr csm)))
+            (when (or (> (lost-ctr csm) 20)
+                      (> (- current-time (start-time csm)) 
+                         (waiting-for-goal-ack-timeout manager)))
             (with-recursive-lock ((id-mutex manager))
               (setf (goal-ids manager) 
                     (remove goal-id (goal-ids manager) :test #'equal))
-              (update-status csm :lost))))))))
+              (update-status csm :lost)))))))))
 
 (defmethod update-results ((manager goal-manager) action-result)
   "Updates the comm-state-machine with the goal-id from the result message."
