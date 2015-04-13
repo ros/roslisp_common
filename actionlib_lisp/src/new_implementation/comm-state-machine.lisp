@@ -155,7 +155,7 @@
       (setf (lost-ctr csm) 0))
     (when (get-next-state (stm csm) status)
       (setf (latest-goal-status csm) status))
-      (transition-to csm status))))
+      (transition-to csm status)))
       
 (defmethod update-result ((csm comm-state-machine) action-result)
   "Updates the result of the comm-state-machine"
