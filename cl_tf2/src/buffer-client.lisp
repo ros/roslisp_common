@@ -79,7 +79,10 @@
              :advanced fixed-frame) ; <- FIXED-FRAME is converted to a boolean here
            :result-timeout timeout))
       (when (not (eq status :succeeded))
-        (error 'tf2-server-error :description "Action call did not succeed."))
+        (error 'tf2-server-error :description
+               (if result
+                   (roslisp:msg-slot-value (roslisp:msg-slot-value result :error) :error_string)
+                   (format nil "Action call did not succeed. Status: ~a" status))))
       (process-result result))))
 
 (defun process-result (result)
