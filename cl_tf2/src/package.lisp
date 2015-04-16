@@ -34,4 +34,12 @@
            make-transform-broadcaster send-transform make-stamped-transform
            ensure-pose-stamped-transformable
            ensure-transform-available ensure-pose-stamped-transformed
-           unslash-frame header child-frame-id transform frame-id stamp))
+           unslash-frame
+           transform-broadcaster
+           execute-changed-callbacks add-transforms-changed-callback
+           remove-transforms-changed-callback enable-changed-callbacks
+           disable-changed-callbacks with-transforms-changed-callbacks
+           to-msg from-msg transform-pose transform-point
+           tf2-server-error
+           tf2-lookup-error tf2-connectivity-error tf2-extrapolation-error
+           tf2-invalid-argument-error tf2-timeout-error tf2-transform-error))

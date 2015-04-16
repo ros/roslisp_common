@@ -37,17 +37,6 @@
 (defmethod to-msg ((data list))
   (coerce (mapcar #'to-msg data) 'vector))
 
-(defmethod to-msg ((data stamped-transform))
-  (make-msg "geometry_msgs/TransformStamped"
-            :header (to-msg (header data))
-            :child_frame_id (child-frame-id data)
-            :transform (to-msg (transform data))))
-
-(defmethod to-msg ((data header))
-  (make-msg "std_msgs/Header"
-            :stamp (stamp data)
-            :frame_id (frame-id data)))
-
 (defmethod to-msg ((data cl-transforms:transform))
   (make-msg "geometry_msgs/Transform"
             :translation (to-msg (cl-transforms:translation data))
@@ -61,26 +50,55 @@
             :w (cl-transforms:w data)))
 
 (defmethod to-msg ((data cl-transforms:3d-vector))
+  "cl-transforms represents 3d points as objects of class 3D-VECTOR.
+They are automatically converted to geometry_msgs/Vector3.
+If you need a geometry_msgs/Point use the MAKE-POINT-MSG function."
   (make-msg "geometry_msgs/Vector3"
             :x (cl-transforms:x data)
             :y (cl-transforms:y data)
             :z (cl-transforms:z data)))
 
+(defmethod to-msg ((data cl-transforms:pose))
+  (make-msg "geometry_msgs/Pose"
+            :position (make-point-msg (cl-transforms:origin data))
+            :orientation (to-msg (cl-transforms:orientation data))))
+
+(defmethod to-msg ((data cl-tf-datatypes:transform-stamped))
+  (make-msg "geometry_msgs/TransformStamped"
+            :header (make-header-msg
+                     (cl-tf-datatypes:stamp data) (cl-tf-datatypes:frame-id data))
+            :child_frame_id (cl-tf-datatypes:child-frame-id data)
+            :transform (to-msg (cl-transforms:make-transform
+                                (cl-transforms:translation data)
+                                (cl-transforms:rotation data)))))
+
+(defmethod to-msg ((data cl-tf-datatypes:pose-stamped))
+  (make-msg "geometry_msgs/PoseStamped"
+            :header (make-header-msg
+                     (cl-tf-datatypes:stamp data) (cl-tf-datatypes:frame-id data))
+            :pose (to-msg (cl-transforms:make-pose
+                           (cl-transforms:origin data)
+                           (cl-transforms:orientation data)))))
+
+
 (defmethod from-msg ((msg geometry_msgs-msg:TransformStamped))
-  (with-fields (header child_frame_id transform) msg
-    (make-instance 'stamped-transform 
-                   :header (from-msg header)
-                   :child-frame-id child_frame_id
-                   :transform (from-msg transform))))
+  (with-fields ((frame-id (frame_id header))
+                (stamp (stamp header))
+                child_frame_id
+                (translation-msg (translation transform))
+                (rotation-msg (rotation transform)))
+      msg
+    (make-instance 'cl-tf-datatypes:transform-stamped
+      :frame-id frame-id
+      :child-frame-id child_frame_id
+      :stamp stamp
+      :translation (from-msg translation-msg)
+      :rotation (from-msg rotation-msg))))
 
 (defmethod from-msg ((msg geometry_msgs-msg:Transform))
   (with-fields (translation rotation) msg
-    (make-instance 'cl-transforms:transform :translation (from-msg translation)
-                                            :rotation (from-msg rotation))))
-
-(defmethod from-msg ((msg std_msgs-msg:Header))
-  (with-fields (stamp frame_id) msg
-      (make-instance 'header :frame-id frame_id :stamp stamp)))
+    (make-instance 'cl-transforms:transform
+      :translation (from-msg translation) :rotation (from-msg rotation))))
 
 (defmethod from-msg ((msg geometry_msgs-msg:Vector3))
   (with-fields (x y z) msg
@@ -89,3 +107,36 @@
 (defmethod from-msg ((msg geometry_msgs-msg:Quaternion))
   (with-fields (x y z w) msg
     (make-instance 'cl-transforms:quaternion :x x :y y :z z :w w)))
+
+(defmethod from-msg ((msg geometry_msgs-msg:Point))
+  (with-fields (x y z) msg
+    (make-instance 'cl-transforms:3d-vector :x x :y y :z z)))
+
+(defmethod from-msg ((msg geometry_msgs-msg:Pose))
+  (with-fields (orientation position) msg
+    (make-instance 'cl-transforms:pose
+      :origin (from-msg position) :orientation (from-msg orientation))))
+
+(defmethod from-msg ((msg geometry_msgs-msg:PoseStamped))
+  (with-fields ((frame-id (frame_id header))
+                (stamp (stamp header))
+                (position-msg (position pose))
+                (orientation-msg (orientation pose)))
+      msg
+    (make-instance 'cl-tf-datatypes:pose-stamped
+                   :frame-id frame-id
+                   :stamp stamp
+                   :origin (from-msg position-msg)
+                   :orientation (from-msg orientation-msg))))
+
+(defun make-header-msg (stamp frame-id)
+  (make-msg "std_msgs/Header"
+            :stamp stamp
+            :frame_id frame-id))
+
+(defun make-point-msg (data)
+  (declare (type cl-transforms:3d-vector data))
+  (make-msg "geometry_msgs/Point"
+            :x (cl-transforms:x data)
+            :y (cl-transforms:y data)
+            :z (cl-transforms:z data)))

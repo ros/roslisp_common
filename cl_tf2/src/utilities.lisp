@@ -31,7 +31,8 @@
 (defun unslash-frame (frame)
   "Removes any leading or trailing '/' characters from the string
 `frame' and returns the resulting string."
-  (string-trim "/" frame))
+  (when frame ; if not checked for NIL the result would be the string "NIL"
+    (string-trim "/ " frame)))
 
 (defun ensure-pose-stamped-transformed (tf pose-stamped target-frame
                                         &key use-current-ros-time)
@@ -58,13 +59,16 @@ parameter `tf' must be a valid instance of type
                                       tf
                                       target-frame
                                       reference-frame
-                                      rostime 2.0)))
+                                      :time rostime
+                                      :timeout 2.0)))
                          (when can-tr
-                           (tf-types:transform->stamped-transform
+                           (tf-types:transform->transform-stamped
                             reference-frame
                             target-frame
                             rostime
-                            (cl-tf2::transform can-tr))))
+                            (cl-transforms:make-transform
+                             (cl-transforms:translation can-tr)
+                             (cl-transforms:rotation can-tr)))))
           when (progn
                  (setf first-run nil)
                  can-tr)

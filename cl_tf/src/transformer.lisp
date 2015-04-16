@@ -70,9 +70,10 @@
         (time (ensure-null-time time)))
     (when (equal target-frame source-frame)
       (return-from lookup-transform
-        (make-stamped-transform target-frame source-frame (ros-time)
-                                (make-3d-vector 0 0 0)
-                                (make-quaternion 0 0 0 1))))
+        (cl-tf-datatypes:make-transform-stamped
+         target-frame source-frame (ros-time)
+         (make-3d-vector 0 0 0)
+         (make-quaternion 0 0 0 1))))
     (check-transform-exists tf target-frame)
     (check-transform-exists tf source-frame)
     (sb-thread:with-mutex ((slot-value tf 'lock))
@@ -87,14 +88,15 @@
                                 (transform-inv (apply #'transform* down-transforms))))))
           (unless result-tf
             (error 'tf-connectivity-error :source-frame source-frame :target-frame target-frame))
-          (make-stamped-transform target-frame source-frame
-                                  (or time
-                                      (stamp (or (car (last up-transforms))
-                                                 (car down-transforms))))
-                                  (translation result-tf)
-                                  (rotation result-tf)))))))
+          (cl-tf-datatypes:make-transform-stamped
+           target-frame source-frame
+           (or time
+               (stamp (or (car (last up-transforms))
+                          (car down-transforms))))
+           (translation result-tf)
+           (rotation result-tf)))))))
 
-(defmethod set-transform ((tf transformer) (transform stamped-transform) &key suppress-callbacks)
+(defmethod set-transform ((tf transformer) (transform transform-stamped) &key suppress-callbacks)
   (with-slots (transforms set-transform-callbacks lock) tf
     (sb-thread:with-mutex (lock)
       (let ((frame-id (ensure-fully-qualified-name (frame-id transform)))
@@ -105,7 +107,7 @@
             (setf (gethash (ensure-fully-qualified-name child-frame-id)
                            transforms) cache))
           (cache-transform
-           cache (make-stamped-transform
+           cache (make-transform-stamped
                   frame-id child-frame-id (stamp transform)
                   (translation transform) (rotation transform))))
         (unless (gethash frame-id transforms)
