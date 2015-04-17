@@ -45,6 +45,10 @@
                                  :documentation "Time in seconds to wait for server
                                                  to acknowledge the goal before
                                                  goal-status is set to lost.")
+   (goal-lost-threshold :initform 20 :initarg :goal-lost-threshold
+                        :accessor goal-lost-threshold
+                        :documentation "Number of missed status messages from server
+                                        after which to drop a goal.")
    (csm-type :initform 'comm-state-machine
              :initarg :csm-type
              :reader csm-type)
@@ -116,7 +120,7 @@
     goal-handle))
 
 (defmethod update-statuses ((manager goal-manager) status-array)
-  "Updates the statuses of all goals that the goal-manager xbtracks. If the status 
+  "Updates the statuses of all goals that the goal-manager tracks. If the status 
    array contains the goal-id of comm-state-machine, the state of the comm-state-machine
    gets updated with the status else the comm-state-machine gets set to lost."
   (let ((goal-ids (with-recursive-lock ((id-mutex manager))
@@ -139,8 +143,8 @@
       (dolist (goal-id goal-ids)
         (let ((csm (nth-value 0 (goal-with-id manager goal-id))))
           (when csm
-            (setf (lost-ctr csm) (1+ (lost-ctr csm)))
-            (when (or (> (lost-ctr csm) 20)
+            (incf (lost-ctr csm))
+            (when (or (> (lost-ctr csm) (goal-lost-threshold manager))
                       (> (- current-time (start-time csm)) 
                          (waiting-for-goal-ack-timeout manager)))
             (with-recursive-lock ((id-mutex manager))
