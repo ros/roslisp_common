@@ -44,9 +44,9 @@ topic can be altered through the keyword `topic'."
   (:documentation "Uses `broadcaster' to send several stamped `transforms' to TF.")
   (:method ((broadcaster transform-broadcaster) &rest transforms)
     ;; (ros-info (broadcaster) "sending ~a -> ~a (at ~a)~%"
-    ;;           (cl-tf-datatypes:frame-id (first transforms))
-    ;;           (cl-tf-datatypes:child-frame-id (first transforms))
-    ;;           (cl-tf-datatypes:stamp (car transforms)))
+    ;;           (frame-id (first transforms))
+    ;;           (child-frame-id (first transforms))
+    ;;           (stamp (car transforms)))
     (publish (slot-value broadcaster 'publisher)
              (make-message "tf2_msgs/TFMessage" :transforms (to-msg transforms)))
     (when (slot-value broadcaster 'send-transform-callbacks-enabled)

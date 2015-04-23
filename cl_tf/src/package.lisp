@@ -2,7 +2,7 @@
 (in-package :cl-user)
 
 #.`(defpackage :cl-tf
-     (:use :cl :roslisp :tf-msg :cl-transforms :cl-tf-datatypes)
+     (:use :cl :roslisp :tf-msg :cl-transforms :cl-transforms-stamped)
      (:nicknames :tf)
      (:shadow transform-pose transform-point)
      (:export transformer make-transformer
@@ -24,5 +24,6 @@
               msg->point-stamped point-stamped->msg msg->point point->msg
               ,@(let ((r nil))
                   (do-external-symbols (s :cl-transforms r) (push s r)))
-	      ,@(let ((r nil))
-                  (do-external-symbols (s :cl-tf-datatypes r) (push s r)))))
+              ,@(let ((r nil))
+                  (do-external-symbols (s :cl-transforms-stamped r) (push s r)))
+              ))

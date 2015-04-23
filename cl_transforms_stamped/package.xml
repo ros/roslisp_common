@@ -1,5 +1,5 @@
 <package>
-  <name>cl_tf_datatypes</name>
+  <name>cl_transforms_stamped</name>
   <version>0.2.3</version>
   <description>
     Implementation of TF datatypes
@@ -13,7 +13,7 @@
 
   <license>BSD</license>
 
-  <url type="website">http://ros.org/wiki/cl_tf_datatypes</url>
+  <url type="website">http://ros.org/wiki/cl_transforms_stamped</url>
   <url type="bugtracker">https://github.com/ros/roslisp_common/issues</url>
   <url type="repository">https://github.com/ros/roslisp_common</url>
 

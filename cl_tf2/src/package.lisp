@@ -29,7 +29,8 @@
 (in-package :cl-user)
 
 (defpackage :cl-tf2
-  (:use #:common-lisp #:roslisp)
+  (:use #:common-lisp #:roslisp #:cl-transforms-stamped)
+  (:shadow :transform-point :transform-pose)
   (:export buffer-client can-transform lookup-transform
            make-transform-broadcaster send-transform make-stamped-transform
            ensure-pose-stamped-transformable

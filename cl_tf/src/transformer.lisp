@@ -70,7 +70,7 @@
         (time (ensure-null-time time)))
     (when (equal target-frame source-frame)
       (return-from lookup-transform
-        (cl-tf-datatypes:make-transform-stamped
+        (make-transform-stamped
          target-frame source-frame (ros-time)
          (make-3d-vector 0 0 0)
          (make-quaternion 0 0 0 1))))
@@ -88,7 +88,7 @@
                                 (transform-inv (apply #'transform* down-transforms))))))
           (unless result-tf
             (error 'tf-connectivity-error :source-frame source-frame :target-frame target-frame))
-          (cl-tf-datatypes:make-transform-stamped
+          (make-transform-stamped
            target-frame source-frame
            (or time
                (stamp (or (car (last up-transforms))

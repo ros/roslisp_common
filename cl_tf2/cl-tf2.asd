@@ -33,7 +33,7 @@
 
   :depends-on (roslisp cl-transforms actionlib
                        tf2_msgs-msg geometry_msgs-msg std_msgs-msg
-                       cl-tf-datatypes
+                       cl-transforms-stamped
                        cl-utils)
   :components
   ((:module "src"

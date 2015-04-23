@@ -65,6 +65,8 @@
         (fixed-frame (unslash-frame fixed-frame)))
     (unless (actionlib:wait-for-server (client tf) timeout)
       (error 'tf2-server-error :description "Waiting for server timed out."))
+    ;; TODOS: wait-for-server should be called only once at initialization
+    ;; but if the goal keeps getting lost this way is the only way it would work.
     (multiple-value-bind (result status)
         (sb-thread:with-recursive-lock ((lock tf))
           (actionlib:send-goal-and-wait
@@ -72,7 +74,7 @@
            (actionlib:make-action-goal
                (client tf)
              :target_frame target-frame :source_frame source-frame
-             :source_time source-time
+             :source_time 0.0 ;source-time
              :timeout timeout
              :target_time target-time
              :fixed_frame fixed-frame
@@ -122,31 +124,31 @@
 (defmethod transform-pose ((tf buffer-client)
                            &key target-frame pose timeout use-current-ros-time)
   (check-type target-frame string)
-  (check-type pose cl-tf-datatypes:pose-stamped)
+  (check-type pose pose-stamped)
   (let ((target-frame (unslash-frame target-frame))
         (time (if use-current-ros-time
                   (roslisp:ros-time)
-                  (or (cl-tf-datatypes:stamp pose) 0.0)))
-        (source-frame (cl-tf-datatypes:frame-id pose)))
+                  (or (stamp pose) 0.0)))
+        (source-frame (frame-id pose)))
     (let ((transform (lookup-transform tf target-frame source-frame
                                        :time time :timeout timeout)))
-      (cl-tf-datatypes:pose->pose-stamped
+      (pose->pose-stamped
        target-frame
-       (cl-tf-datatypes:stamp transform)
+       (stamp transform)
        (cl-transforms:transform-pose transform pose)))))
 
 (defmethod transform-point ((tf buffer-client)
                             &key target-frame point timeout use-current-ros-time)
   (check-type target-frame string)
-  (check-type point cl-tf-datatypes:point-stamped)
+  (check-type point point-stamped)
   (let ((target-frame (unslash-frame target-frame))
         (time (if use-current-ros-time
                   (roslisp:ros-time)
-                  (or (cl-tf-datatypes:stamp point) 0.0)))
-        (source-frame (cl-tf-datatypes:frame-id point)))
+                  (or (stamp point) 0.0)))
+        (source-frame (frame-id point)))
     (let ((transform (lookup-transform tf target-frame source-frame
                                        :time time :timeout timeout)))
-      (cl-tf-datatypes:point->point-stamped
+      (point->point-stamped
        target-frame
-       (cl-tf-datatypes:stamp transform)
+       (stamp transform)
        (cl-transforms:transform-point transform point)))))

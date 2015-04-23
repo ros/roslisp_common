@@ -1,7 +1,7 @@
 
 (in-package :cl-user)
 
-#.`(defpackage :cl-tf-datatypes
+#.`(defpackage :cl-transforms-stamped
      (:use :cl :roslisp :cl-transforms)
      (:nicknames :tf-types)
      (:export frame-id stamp child-frame-id source-frame target-frame frame

@@ -43,7 +43,7 @@
          msg
        (let ((transform (tf-transform->transform
                          (geometry_msgs-msg:transform msg))))
-         (cl-tf-datatypes:make-transform-stamped
+         (make-transform-stamped
           frame-id child-frame-id stamp
           (translation transform)
           (rotation transform))))))

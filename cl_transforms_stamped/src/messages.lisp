@@ -1,5 +1,5 @@
 
-(in-package :cl-tf-datatypes)
+(in-package :cl-transforms-stamped)
 
 (defclass stamped ()
   ((frame-id :initarg :frame-id :reader frame-id :type string)

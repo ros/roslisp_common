@@ -63,19 +63,17 @@ If you need a geometry_msgs/Point use the MAKE-POINT-MSG function."
             :position (make-point-msg (cl-transforms:origin data))
             :orientation (to-msg (cl-transforms:orientation data))))
 
-(defmethod to-msg ((data cl-tf-datatypes:transform-stamped))
+(defmethod to-msg ((data transform-stamped))
   (make-msg "geometry_msgs/TransformStamped"
-            :header (make-header-msg
-                     (cl-tf-datatypes:stamp data) (cl-tf-datatypes:frame-id data))
-            :child_frame_id (cl-tf-datatypes:child-frame-id data)
+            :header (make-header-msg (stamp data) (frame-id data))
+            :child_frame_id (child-frame-id data)
             :transform (to-msg (cl-transforms:make-transform
                                 (cl-transforms:translation data)
                                 (cl-transforms:rotation data)))))
 
-(defmethod to-msg ((data cl-tf-datatypes:pose-stamped))
+(defmethod to-msg ((data pose-stamped))
   (make-msg "geometry_msgs/PoseStamped"
-            :header (make-header-msg
-                     (cl-tf-datatypes:stamp data) (cl-tf-datatypes:frame-id data))
+            :header (make-header-msg (stamp data) (frame-id data))
             :pose (to-msg (cl-transforms:make-pose
                            (cl-transforms:origin data)
                            (cl-transforms:orientation data)))))
@@ -88,7 +86,7 @@ If you need a geometry_msgs/Point use the MAKE-POINT-MSG function."
                 (translation-msg (translation transform))
                 (rotation-msg (rotation transform)))
       msg
-    (make-instance 'cl-tf-datatypes:transform-stamped
+    (make-instance 'transform-stamped
       :frame-id frame-id
       :child-frame-id child_frame_id
       :stamp stamp
@@ -123,7 +121,7 @@ If you need a geometry_msgs/Point use the MAKE-POINT-MSG function."
                 (position-msg (position pose))
                 (orientation-msg (orientation pose)))
       msg
-    (make-instance 'cl-tf-datatypes:pose-stamped
+    (make-instance 'pose-stamped
                    :frame-id frame-id
                    :stamp stamp
                    :origin (from-msg position-msg)

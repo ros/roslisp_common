@@ -1,7 +1,7 @@
 ;;;; -*- Mode: LISP -*-
 
 (defsystem "cl-tf"
-  :depends-on (cl-transforms roslisp tf-msg cl-tf-datatypes)
+  :depends-on (cl-transforms roslisp tf-msg cl-transforms-stamped)
   :components
   ((:module "src"
             :components
