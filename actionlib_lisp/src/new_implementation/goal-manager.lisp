@@ -45,10 +45,6 @@
                                  :documentation "Time in seconds to wait for server
                                                  to acknowledge the goal before
                                                  goal-status is set to lost.")
-   (goal-lost-threshold :initform 20 :initarg :goal-lost-threshold
-                        :accessor goal-lost-threshold
-                        :documentation "Number of missed status messages from server
-                                        after which to drop a goal.")
    (csm-type :initform 'comm-state-machine
              :initarg :csm-type
              :reader csm-type)
@@ -144,9 +140,8 @@
         (let ((csm (nth-value 0 (goal-with-id manager goal-id))))
           (when csm
             (incf (lost-ctr csm))
-            (when (or (> (lost-ctr csm) (goal-lost-threshold manager))
-                      (> (- current-time (start-time csm)) 
-                         (waiting-for-goal-ack-timeout manager)))
+            (when (> (- current-time (start-time csm)) 
+                     (waiting-for-goal-ack-timeout manager))
             (with-recursive-lock ((id-mutex manager))
               (setf (goal-ids manager) 
                     (remove goal-id (goal-ids manager) :test #'equal))
