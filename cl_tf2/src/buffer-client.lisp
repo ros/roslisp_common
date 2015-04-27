@@ -40,19 +40,8 @@
    (lock :initform (sb-thread:make-mutex :name (string (gensym "TF2-LOCK-")))
          :accessor lock :type mutex)))
 
-(defmethod can-transform ((tf buffer-client) target-frame source-frame
-                          &key time timeout target-time fixed-frame)
-  (declare (type string target-frame source-frame)
-           (type (or number null) time timeout target-time)
-           (type (or string null) fixed-frame))
-  (handler-case
-      (lookup-transform tf target-frame source-frame
-                        :time time :timeout timeout
-                        :target-time target-time :fixed-frame fixed-frame)
-    (tf2-server-error () nil)))
-
-(defmethod lookup-transform ((tf buffer-client) target-frame source-frame
-                             &key time timeout target-time fixed-frame)
+(defmethod lookup-transform-stamped ((tf buffer-client) target-frame source-frame
+                                     &key time timeout target-time fixed-frame)
   (declare (type string target-frame source-frame)
            (type (or number null) time timeout target-time)
            (type (or string null) fixed-frame))
@@ -121,8 +110,8 @@
             (t
              (error 'tf2-server-error :description error_string))))))
 
-(defmethod transform-pose ((tf buffer-client)
-                           &key target-frame pose timeout use-current-ros-time)
+(defmethod transform-pose-stamped ((tf buffer-client)
+                                   &key target-frame pose timeout use-current-ros-time)
   (check-type target-frame string)
   (check-type pose pose-stamped)
   (let ((target-frame (unslash-frame target-frame))
@@ -130,15 +119,15 @@
                   (roslisp:ros-time)
                   (or (stamp pose) 0.0)))
         (source-frame (frame-id pose)))
-    (let ((transform (lookup-transform tf target-frame source-frame
-                                       :time time :timeout timeout)))
+    (let ((transform (lookup-transform-stamped tf target-frame source-frame
+                                               :time time :timeout timeout)))
       (pose->pose-stamped
        target-frame
        (stamp transform)
        (cl-transforms:transform-pose transform pose)))))
 
-(defmethod transform-point ((tf buffer-client)
-                            &key target-frame point timeout use-current-ros-time)
+(defmethod transform-point-stamped ((tf buffer-client)
+                                    &key target-frame point timeout use-current-ros-time)
   (check-type target-frame string)
   (check-type point point-stamped)
   (let ((target-frame (unslash-frame target-frame))
@@ -146,8 +135,8 @@
                   (roslisp:ros-time)
                   (or (stamp point) 0.0)))
         (source-frame (frame-id point)))
-    (let ((transform (lookup-transform tf target-frame source-frame
-                                       :time time :timeout timeout)))
+    (let ((transform (lookup-transform-stamped tf target-frame source-frame
+                                               :time time :timeout timeout)))
       (point->point-stamped
        target-frame
        (stamp transform)

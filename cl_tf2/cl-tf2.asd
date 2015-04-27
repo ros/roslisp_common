@@ -40,20 +40,11 @@
             :components
             ((:file "package")
              (:file "errors" :depends-on ("package"))
-             ;; (:file "datatypes" :depends-on ("package"))
-             (:file "message-conversions" :depends-on ("package"
-                                                       ;; "datatypes"
-                                                       ))
-             (:file "buffer-interface" :depends-on ("package"))
-             (:file "utilities" :depends-on ("package" "errors"
-                                                       ;; "datatypes"
-                                                       "message-conversions"
-                                                       "buffer-interface"))
-             (:file "buffer-client" :depends-on ("package" "errors"
-                                                           ;; "datatypes"
-                                                           "message-conversions"
-                                                           "buffer-interface"
-                                                           "utilities"))
+             (:file "message-conversions" :depends-on ("package"))
+             (:file "utilities" :depends-on ("package"))
+             (:file "buffer-client" :depends-on ("package"
+                                                 "errors"
+                                                 "message-conversions"
+                                                 "utilities"))
              (:file "transform-broadcaster" :depends-on ("package"
-                                                         ;; "datatypes"
                                                          "message-conversions"))))))

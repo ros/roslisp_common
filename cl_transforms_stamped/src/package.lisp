@@ -12,5 +12,6 @@
               stamped-transform
               make-stamped-transform transform->stamped-transform
               stamped-transform->pose-stamped
+              lookup-transform-stamped transform-pose-stamped transform-point-stamped
               ,@(let ((r nil))
                   (do-external-symbols (s :cl-transforms r) (push s r)))))
