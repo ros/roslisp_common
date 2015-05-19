@@ -13,5 +13,5 @@ foreach(dir
       PATTERN ".git" EXCLUDE)
 endforeach()
 
-install (FILES cl-tf-datatypes.asd
+install (FILES cl-transforms-stamped.asd
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
