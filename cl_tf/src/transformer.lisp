@@ -96,6 +96,19 @@
            (translation result-tf)
            (rotation result-tf)))))))
 
+(defmethod lookup-transform-stamped ((tf transformer) target-frame source-frame
+                                     &key time timeout target-time fixed-frame)
+  (declare (type string target-frame source-frame)
+           (type (or number null) time timeout))
+  (when (or target-time fixed-frame)
+    (warn "LOOKUP-TRANSFORM-STAMPED of CL-TF:TRANSFORMER does not support
+TARGET-TIME or FIXED-FRAME arguments."))
+  (if (wait-for-transform tf :time time :timeout timeout
+                             :source-frame source-frame :target-frame target-frame)
+      (lookup-transform tf :time time
+                           :source-frame source-frame :target-frame target-frame)
+      (error 'tf-connectivity-error :target-frame target-frame :source-frame source-frame)))
+
 (defmethod set-transform ((tf transformer) (transform transform-stamped) &key suppress-callbacks)
   (with-slots (transforms set-transform-callbacks lock) tf
     (sb-thread:with-mutex (lock)
@@ -147,6 +160,25 @@
                     (sb-ext:unschedule-timer timer)))
                 (do-wait-for-transform)))))))
 
+(defmethod transform-pose-stamped ((tf transformer)
+                                   &key target-frame pose timeout use-current-ros-time)
+  (check-type target-frame string)
+  (check-type pose pose-stamped)
+  (let ((target-frame (ensure-fully-qualified-name target-frame (tf-prefix tf)))
+        (time (if use-current-ros-time
+                  (roslisp:ros-time)
+                  (ensure-null-time (stamp pose)))))
+    (check-transform-exists tf target-frame)
+    (let ((transform (lookup-transform-stamped
+                      tf target-frame (frame-id pose)
+                      :time time :timeout timeout)))
+      (assert transform () "Transform from `~a' to `~a' not found."
+              (frame-id pose) target-frame)
+      (change-class (cl-transforms:transform-pose transform pose)
+                    'pose-stamped
+                    :frame-id target-frame
+                    :stamp (stamp transform)))))
+
 (defmethod transform-pose ((tf transformer) &key target-frame pose)
   (check-type target-frame string)
   (check-type pose pose-stamped)
@@ -162,6 +194,25 @@
               (frame-id pose) target-frame)
       (change-class (cl-transforms:transform-pose transform pose)
                     'pose-stamped
+                    :frame-id target-frame
+                    :stamp (stamp transform)))))
+
+(defmethod transform-point-stamped ((tf transformer)
+                                   &key target-frame point timeout use-current-ros-time)
+  (check-type target-frame string)
+  (check-type point point-stamped)
+  (let ((target-frame (ensure-fully-qualified-name target-frame (tf-prefix tf)))
+        (time (if use-current-ros-time
+                  (roslisp:ros-time)
+                  (ensure-null-time (stamp point)))))
+    (check-transform-exists tf target-frame)
+    (let ((transform (lookup-transform-stamped
+                      tf target-frame (frame-id point)
+                      :time time :timeout timeout)))
+      (assert transform () "Transform from `~a' to `~a' not found."
+              (frame-id point) target-frame)
+      (change-class (cl-transforms:transform-point transform point)
+                    'point-stamped
                     :frame-id target-frame
                     :stamp (stamp transform)))))
 
