@@ -23,12 +23,15 @@
   ((description :initarg :description)))
 
 (defclass transform-cache ()
-  ((cache-size :initarg :cache-size :initform 10 :reader cache-size)
-   (cache :accessor cache)))
+  ((cache-size :initarg :cache-size
+               :initform +initial-cache-size+ :reader cache-size)
+   (cache :accessor cache
+          :documentation "SIMPLE-ARRAY of CACHE-ENTRY-ies of size `cache-size'")))
 
 (defclass cache-entry ()
   ((newest-stamp :initform 0 :accessor newest-stamp)
-   (fill-pointer :initform 0 :accessor cache-fill-pointer)
+   (fill-pointer :initform 0 :accessor cache-fill-pointer
+                 :documentation "number")
    (transforms-cache :accessor transforms-cache)))
 
 (defgeneric cache-transform (cache transform)
@@ -41,6 +44,7 @@
   `time'."))
 
 (defgeneric cache-empty (cache-entry)
+  (:documentation "Is cache entry empty?")
   (:method ((cache-entry cache-entry))
     (eql (cache-fill-pointer cache-entry) 0)))
 

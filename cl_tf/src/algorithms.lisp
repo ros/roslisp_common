@@ -10,7 +10,7 @@ assumes that `array' is ordered with respect to predicate `lt'.
 
 `lt' is a function that takes two parameters and returns a non-nil
 value if the second parameter is greater than the first parameter.
-If `lt' is something like #'<= bad things can happen happen.
+If `lt' is something like #'<= bad things can happen.
 
 `key' is a function that is applied to single elements of `array'
 if the element is not a trivial data structure. The result is then
