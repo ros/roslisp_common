@@ -30,12 +30,11 @@
 
 (defpackage :cl-tf2
   (:use #:common-lisp #:roslisp #:cl-transforms-stamped)
-  (:export buffer-client ; lookup-transform
+  (:export buffer-client
+           ;; lookup-transform transform-pose transform-point
            make-transform-broadcaster send-transform
            unslash-frame
            transform-broadcaster
            execute-changed-callbacks add-transforms-changed-callback
            remove-transforms-changed-callback enable-changed-callbacks
-           disable-changed-callbacks with-transforms-changed-callbacks
-           to-msg from-msg ; transform-pose transform-point
-           ))
+           disable-changed-callbacks with-transforms-changed-callbacks))

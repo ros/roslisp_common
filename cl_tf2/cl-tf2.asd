@@ -39,10 +39,6 @@
   ((:module "src"
             :components
             ((:file "package")
-             (:file "message-conversions" :depends-on ("package"))
              (:file "utilities" :depends-on ("package"))
-             (:file "buffer-client" :depends-on ("package"
-                                                 "message-conversions"
-                                                 "utilities"))
-             (:file "transform-broadcaster" :depends-on ("package"
-                                                         "message-conversions"))))))
+             (:file "buffer-client" :depends-on ("package" "utilities"))
+             (:file "transform-broadcaster" :depends-on ("package"))))))

@@ -25,8 +25,6 @@
   <build_depend>sbcl</build_depend>
   <build_depend>roslisp</build_depend>
   <build_depend>tf2_msgs</build_depend>
-  <build_depend>geometry_msgs</build_depend>
-  <build_depend>std_msgs</build_depend>
   <build_depend>cl_transforms_stamped</build_depend>
   <build_depend>cl_utils</build_depend>
 
@@ -34,8 +32,6 @@
   <run_depend>sbcl</run_depend>
   <run_depend>roslisp</run_depend>
   <run_depend>tf2_msgs</run_depend>
-  <run_depend>geometry_msgs</run_depend>
-  <run_depend>std_msgs</run_depend>
   <run_depend>cl_transforms_stamped</run_depend>
   <run_depend>cl_utils</run_depend>
 </package>

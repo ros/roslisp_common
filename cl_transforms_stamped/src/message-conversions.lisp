@@ -26,13 +26,13 @@
 ;;; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ;;; POSSIBILITY OF SUCH DAMAGE.
 
-(in-package :cl-tf2)
+(in-package :cl-transforms-stamped)
 
 (defgeneric to-msg (data)
-  (:documentation "Transforms 'data' into an equivalent message from geometry_msgs."))
+  (:documentation "Transforms `data' into an equivalent ROS message"))
 
 (defgeneric from-msg (msg)
-  (:documentation "Transforms 'msg' into suitable cl-tf2 or cl-transforms data structures."))
+  (:documentation "Transforms `msg' into their corresponding Lisp data structures."))
 
 (defmethod to-msg ((data list))
   (coerce (mapcar #'to-msg data) 'vector))

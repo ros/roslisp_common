@@ -7,5 +7,6 @@
             :components
             ((:file "package")
              (:file "datatypes" :depends-on ("package"))
+             (:file "message-conversions" :depends-on ("package" "datatypes"))
              (:file "conditions" :depends-on ("package"))
              (:file "transform-interface" :depends-on ("package"))))))

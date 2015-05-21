@@ -12,6 +12,7 @@
               stamped-transform
               make-stamped-transform transform->stamped-transform
               stamped-transform->pose-stamped
+              to-msg from-msg
               lookup-transform-stamped transform-pose-stamped transform-point-stamped
               transform-stamped-error connectivity-error lookup-error
               extrapolation-error invalid-argument-error timeout-error
