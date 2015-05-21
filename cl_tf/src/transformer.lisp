@@ -9,13 +9,6 @@
           ,@body)
      (remove-transforms-changed-callback ,tf ',name)))
 
-(define-condition tf-connectivity-error (error)
-  ((source-frame :initarg :source-frame :reader source-frame)
-   (target-frame :initarg :target-frame :reader target-frame)))
-
-(define-condition tf-lookup-error (error)
-  ((frame :initarg :frame :reader frame)))
-
 (defclass transformer ()
   ((transforms :initform (make-hash-table :test 'equal)
                :reader transforms)
@@ -57,9 +50,9 @@
                       ((and target-root (not source-root))
                        (equal (frame-id (car target-root))
                               source-frame))))))
-      (tf-cache-error ()
+      (extrapolation-error ()
         nil)
-      (tf-lookup-error ()
+      (lookup-error ()
         nil))))
 
 (defmethod lookup-transform ((tf transformer) &key target-frame source-frame time)
@@ -87,7 +80,8 @@
                                ((and down-transforms (not up-transforms))
                                 (transform-inv (apply #'transform* down-transforms))))))
           (unless result-tf
-            (error 'tf-connectivity-error :source-frame source-frame :target-frame target-frame))
+            (error 'connectivity-error :description (format nil "The frames ~a
+and ~a are not connected in the reference frame tree" source-frame target-frame)))
           (make-transform-stamped
            target-frame source-frame
            (or time
@@ -107,7 +101,9 @@ TARGET-TIME or FIXED-FRAME arguments."))
                              :source-frame source-frame :target-frame target-frame)
       (lookup-transform tf :time time
                            :source-frame source-frame :target-frame target-frame)
-      (error 'tf-connectivity-error :target-frame target-frame :source-frame source-frame)))
+      (error 'timeout-error
+             (format nil "No transform was published between frames ~a and ~a"
+                     source-frame target-frame))))
 
 (defmethod set-transform ((tf transformer) (transform transform-stamped) &key suppress-callbacks)
   (with-slots (transforms set-transform-callbacks lock) tf
@@ -278,5 +274,6 @@ TARGET-TIME or FIXED-FRAME arguments."))
 
 (defun check-transform-exists (transformer frame-id)
   (unless (gethash frame-id (transforms transformer))
-    (error 'tf-lookup-error :frame frame-id))
+    (error 'lookup-error
+           :description (format nil "The frame ~a is not in the graph" frame-id)))
   t)

@@ -19,9 +19,6 @@
 (defconstant +initial-cache-size+ 20)
 (defconstant +cache-adjust-factor+ 1.5)
 
-(define-condition tf-cache-error (error)
-  ((description :initarg :description)))
-
 (defclass transform-cache ()
   ((cache-size :initarg :cache-size
                :initform +initial-cache-size+ :reader cache-size)
@@ -88,8 +85,8 @@
            (cache-entry (aref cache cache-entry-index)))
       (when (> (abs (- time (newest-stamp cache-entry)))
                cache-size)
-          (error 'tf-cache-error
-                 :description "Requested time points to the future. Cannot transform."))
+        (error 'extrapolation-error
+               :description "Requested time points to the future. Cannot transform."))
       (get-cached-transform cache-entry time :interpolate interpolate))))
 
 (defun gc-cache-entry (cache-entry)
@@ -134,7 +131,7 @@
         (aref transforms-cache (1- fill-pointer))))
     (when (or (> time newest-stamp)
               (< time (stamp (aref transforms-cache 0))))
-      (error 'tf-cache-error
+      (error 'extrapolation-error
              :description "The requested time stamp does not point into the cache."))
     (multiple-value-bind (lower upper)
         (binary-search time transforms-cache

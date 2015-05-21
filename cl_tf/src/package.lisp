@@ -18,8 +18,7 @@
               tf-transform->transform tf-message->transforms
               msg->pose msg->pose-stamped
               pose-stamped->msg pose->msg
-              wait-for-transform tf-cache-error tf-connectivity-error
-              tf-lookup-error topic send-transform send-transforms
+              wait-for-transform topic send-transform send-transforms
               send-static-transforms-blocking send-static-transforms with-tf-broadcasting
               msg->point-stamped point-stamped->msg msg->point point->msg
               ,@(let ((r nil))
