@@ -101,7 +101,7 @@ TARGET-TIME or FIXED-FRAME arguments."))
                              :source-frame source-frame :target-frame target-frame)
       (lookup-transform tf :time time
                            :source-frame source-frame :target-frame target-frame)
-      (error 'timeout-error
+      (error 'timeout-error :description
              (format nil "No transform was published between frames ~a and ~a"
                      source-frame target-frame))))
 
@@ -164,7 +164,6 @@ TARGET-TIME or FIXED-FRAME arguments."))
         (time (if use-current-ros-time
                   (roslisp:ros-time)
                   (ensure-null-time (stamp pose)))))
-    (check-transform-exists tf target-frame)
     (let ((transform (lookup-transform-stamped
                       tf target-frame (frame-id pose)
                       :time time :timeout timeout)))
@@ -180,7 +179,6 @@ TARGET-TIME or FIXED-FRAME arguments."))
   (check-type pose pose-stamped)
   (let ((target-frame (ensure-fully-qualified-name target-frame (tf-prefix tf)))
         (time (ensure-null-time (stamp pose))))
-    (check-transform-exists tf target-frame)
     (let ((transform (lookup-transform
                       tf
                       :target-frame target-frame
@@ -274,6 +272,6 @@ TARGET-TIME or FIXED-FRAME arguments."))
 
 (defun check-transform-exists (transformer frame-id)
   (unless (gethash frame-id (transforms transformer))
-    (error 'lookup-error
-           :description (format nil "The frame ~a is not in the graph" frame-id)))
+    (error 'lookup-error :description
+           (format nil "The frame ~a is not in the graph" frame-id)))
   t)
