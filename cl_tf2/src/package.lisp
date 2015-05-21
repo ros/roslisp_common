@@ -38,6 +38,4 @@
            remove-transforms-changed-callback enable-changed-callbacks
            disable-changed-callbacks with-transforms-changed-callbacks
            to-msg from-msg ; transform-pose transform-point
-           tf2-server-error
-           tf2-lookup-error tf2-connectivity-error tf2-extrapolation-error
-           tf2-invalid-argument-error tf2-timeout-error tf2-transform-error))
+           ))
