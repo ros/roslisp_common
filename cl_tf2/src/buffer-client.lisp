@@ -53,7 +53,7 @@
         (source-frame (unslash-frame source-frame))
         (fixed-frame (unslash-frame fixed-frame)))
     (unless (actionlib:wait-for-server (client tf) timeout)
-      (error 'tf2-server-error :description "Waiting for server timed out."))
+      (error 'timeout-error :description "Waiting for action server timed out."))
     ;; TODOS: wait-for-server should be called only once at initialization
     ;; but if the goal keeps getting lost this way is the only way it would work.
     (multiple-value-bind (result status)
@@ -70,7 +70,7 @@
              :advanced fixed-frame) ; <- FIXED-FRAME is converted to a boolean here
            :result-timeout timeout))
       (when (not (eq status :succeeded))
-        (error 'tf2-server-error :description
+        (error 'transform-stamped-error :description
                (if result
                    (roslisp:msg-slot-value (roslisp:msg-slot-value result :error) :error_string)
                    (format nil "Action call did not succeed. Status: ~a" status))))
@@ -86,29 +86,30 @@
             ((eq error
                  (roslisp-msg-protocol:symbol-code
                   'tf2_msgs-msg:tf2error :lookup_error))
-             (error 'tf2-lookup-error :description error_string))
+             (error 'lookup-error :description error_string))
             ((eq error
                  (roslisp-msg-protocol:symbol-code
                   'tf2_msgs-msg:tf2error :connectivity_error))
-             (error 'tf2-connectivity-error :description error_string))
+             (error 'connectivity-error :description error_string))
             ((eq error
                  (roslisp-msg-protocol:symbol-code
                   'tf2_msgs-msg:tf2error :extrapolation_error))
-             (error 'tf2-extrapolation-error :description error_string))
+             (error 'extrapolation-error :description error_string))
             ((eq error
                  (roslisp-msg-protocol:symbol-code
                   'tf2_msgs-msg:tf2error :invalid_argument_error))
-             (error 'tf2-invalid-argument-error :description error_string))
+             (error 'invalid-argument-error :description error_string))
             ((eq error
                  (roslisp-msg-protocol:symbol-code
                   'tf2_msgs-msg:tf2error :timeout_error))
-             (error 'tf2-timeout-error :description error_string))
-            ((eq error
-                 (roslisp-msg-protocol:symbol-code
-                  'tf2_msgs-msg:tf2error :transform_error))
-             (error 'tf2-transform-error :description error_string))
+             (error 'timeout-error :description error_string))
+            ;; :transform_error code is handled in the default case
+            ;; ((eq error
+            ;;      (roslisp-msg-protocol:symbol-code
+            ;;       'tf2_msgs-msg:tf2error :transform_error))
+            ;;  (error 'transform-stamped-error :description error_string))
             (t
-             (error 'tf2-server-error :description error_string))))))
+             (error 'transform-stamped-error :description error_string))))))
 
 (defmethod transform-pose-stamped ((tf buffer-client)
                                    &key target-frame pose timeout use-current-ros-time)
