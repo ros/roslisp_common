@@ -45,3 +45,24 @@ to avoid a run-time error."))
 (defgeneric transform-point-stamped (transformer
                                      &key target-frame point timeout use-current-ros-time)
   (:documentation "Transforms `point' from its own frame into `target-frame'."))
+
+
+(defgeneric add-new-transform-stamped-callback (transformer callback-name
+                                                callback-function)
+  (:documentation "Registers `callback-function' under the name `callback-name'
+as a function to be called whenever a new transform is available."))
+
+(defgeneric remove-new-transform-stamped-callback (transformer callback-name)
+  (:documentation "Unregisters `callback-name' from the list of functions to be
+called whenever a new transform is available."))
+
+(defmacro with-new-transform-stamped-callback
+    ((transformer callback &key (name (gensym "NEW-TRANSFORM-CALLBACK-")))
+     &body body)
+  "Executes `body' in such a way that each time a new transform is available
+to the `transformer' `callback' is called."
+  `(unwind-protect
+        (progn
+          (add-new-transform-stamped-callback ,transformer ',name ,callback)
+          ,@body)
+     (remove-new-transform-stamped-callback ,transformer ',name)))

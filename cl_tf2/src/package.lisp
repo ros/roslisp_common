@@ -35,6 +35,5 @@
            make-transform-broadcaster send-transform
            unslash-frame
            transform-broadcaster
-           execute-changed-callbacks add-transforms-changed-callback
-           remove-transforms-changed-callback enable-changed-callbacks
-           disable-changed-callbacks with-transforms-changed-callbacks))
+           execute-changed-callbacks
+           enable-changed-callbacks disable-changed-callbacks))

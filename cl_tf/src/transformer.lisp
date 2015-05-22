@@ -1,14 +1,6 @@
 
 (in-package :cl-tf)
 
-(defmacro with-transforms-changed-callback
-    ((tf callback &key (name (gensym "TRANSFORMS-CHANGED-CALLBACK-"))) &body body)
-  `(unwind-protect
-        (progn
-          (add-transforms-changed-callback ,tf ',name ,callback)
-          ,@body)
-     (remove-transforms-changed-callback ,tf ',name)))
-
 (defclass transformer ()
   ((transforms :initform (make-hash-table :test 'equal)
                :reader transforms)
@@ -146,7 +138,7 @@ TARGET-TIME or FIXED-FRAME arguments."))
                     tf :time time
                        :target-frame target-frame
                        :source-frame source-frame)
-          (with-transforms-changed-callback (tf #'on-set-transform)
+          (with-new-transform-stamped-callback (tf #'on-set-transform)
             (if timeout
                 (let ((timer (sb-ext:make-timer
                               (lambda ()
@@ -242,18 +234,20 @@ TARGET-TIME or FIXED-FRAME arguments."))
                                   time (cons current-tf result)))
         result)))
 
+
 (defun execute-changed-callbacks (tf)
   (with-slots (set-transform-callbacks) tf
     (map 'nil (cl-utils:compose #'funcall #'cdr) set-transform-callbacks)))
 
-(defun add-transforms-changed-callback (tf name callback)
+(defmethod add-new-transform-stamped-callback ((tf transformer) name callback)
   (with-slots (set-transform-callbacks) tf
     (pushnew (cons name callback) set-transform-callbacks)))
 
-(defun remove-transforms-changed-callback (tf name)
+(defmethod remove-new-transform-stamped-callback ((tf transformer) name)
   (with-slots (set-transform-callbacks) tf
     (setf set-transform-callbacks (remove name set-transform-callbacks
                                           :key #'car))))
+
 
 (defun ensure-fully-qualified-name (frame-id &optional (tf-prefix "/"))
   "Makes sure that the first character in `frame-id' is set to `tf-prefix'"

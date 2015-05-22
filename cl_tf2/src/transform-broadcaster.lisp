@@ -56,30 +56,19 @@ topic can be altered through the keyword `topic'."
   (with-slots (send-transform-callbacks) tf-broadcaster
     (map 'nil (cl-utils:compose #'funcall #'cdr) send-transform-callbacks)))
 
-(defun add-transforms-changed-callback (tf-broadcaster name callback)
+(defmethod add-new-transform-stamped-callback (tf-broadcaster name callback)
   (with-slots (send-transform-callbacks) tf-broadcaster
-    (pushnew (cons name callback) send-transform-callbacks)))
+    (pushnew (cons name callback) send-transform-callbacks))
+  (enable-changed-callbacks tf-broadcaster))
 
-(defun remove-transforms-changed-callback (tf-broadcaster name)
+(defmethod remove-new-transform-stamped-callback (tf-broadcaster name)
   (with-slots (send-transform-callbacks) tf-broadcaster
     (setf send-transform-callbacks
-          (remove name send-transform-callbacks :key #'car))))
+          (remove name send-transform-callbacks :key #'car)))
+  (disable-changed-callbacks tf-broadcaster))
 
 (defun enable-changed-callbacks (tf-broadcaster)
   (setf (slot-value tf-broadcaster 'send-transform-callbacks-enabled) t))
 
 (defun disable-changed-callbacks (tf-broadcaster)
   (setf (slot-value tf-broadcaster 'send-transform-callbacks-enabled) nil))
-
-(defmacro with-transforms-changed-callbacks
-    ((tf-broadcaster callback &key (name (gensym "TRANSFORMS-CHANGED-CALLBACK-")))
-     &body body)
-  "Executes `body' with enabled SEND-TRANSFORM-CALLBACKS.
-`callback' is added to the overall list of the callbacks of `tf-broadcaster'."
-  `(unwind-protect
-        (progn
-          (add-transforms-changed-callback ,tf-broadcaster ',name ,callback)
-          (enable-changed-callbacks ,tf-broadcaster)
-          ,@body)
-     (remove-transforms-changed-callback ,tf-broadcaster ',name)
-     (disable-changed-callbacks ,tf-broadcaster)))

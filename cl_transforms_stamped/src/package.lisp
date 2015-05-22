@@ -15,6 +15,8 @@
               to-msg make-header-msg make-point-msg make-pose-stamped-msg
               from-msg restamp-msg
               lookup-transform-stamped transform-pose-stamped transform-point-stamped
+              add-new-transform-stamped-callback remove-new-transform-stamped-callback
+              with-new-transform-stamped-callback
               transform-stamped-error connectivity-error lookup-error
               extrapolation-error invalid-argument-error timeout-error
               ,@(let ((r nil))

@@ -8,8 +8,7 @@
      (:export transformer make-transformer
               transform-listener
               can-transform lookup-transform set-transform transform-pose transform-point
-              add-transforms-changed-callback remove-transforms-changed-callback
-              with-transforms-changed-callback execute-changed-callbacks
+              execute-changed-callbacks
               tf-msg->transforms transforms->tf-msg transform->tf-msg restamp-tf-msg
               wait-for-transform topic send-transform send-transforms
               send-static-transforms-blocking send-static-transforms with-tf-broadcasting
