@@ -34,6 +34,10 @@
 (defgeneric from-msg (msg)
   (:documentation "Transforms `msg' into their corresponding Lisp data structures."))
 
+(defgeneric restamp-msg (msg stamp)
+  (:documentation "Update all stamp fields of `msg' with new value `stamp'."))
+
+
 (defmethod to-msg ((data list))
   (coerce (mapcar #'to-msg data) 'vector))
 
@@ -78,54 +82,13 @@ If you need a geometry_msgs/Point use the MAKE-POINT-MSG function."
                            (cl-transforms:origin data)
                            (cl-transforms:orientation data)))))
 
-
-(defmethod from-msg ((msg geometry_msgs-msg:TransformStamped))
-  (with-fields ((frame-id (frame_id header))
-                (stamp (stamp header))
-                child_frame_id
-                (translation-msg (translation transform))
-                (rotation-msg (rotation transform)))
-      msg
-    (make-instance 'transform-stamped
-      :frame-id frame-id
-      :child-frame-id child_frame_id
-      :stamp stamp
-      :translation (from-msg translation-msg)
-      :rotation (from-msg rotation-msg))))
-
-(defmethod from-msg ((msg geometry_msgs-msg:Transform))
-  (with-fields (translation rotation) msg
-    (make-instance 'cl-transforms:transform
-      :translation (from-msg translation) :rotation (from-msg rotation))))
-
-(defmethod from-msg ((msg geometry_msgs-msg:Vector3))
-  (with-fields (x y z) msg
-    (make-instance 'cl-transforms:3d-vector :x x :y y :z z)))
-
-(defmethod from-msg ((msg geometry_msgs-msg:Quaternion))
-  (with-fields (x y z w) msg
-    (make-instance 'cl-transforms:quaternion :x x :y y :z z :w w)))
-
-(defmethod from-msg ((msg geometry_msgs-msg:Point))
-  (with-fields (x y z) msg
-    (make-instance 'cl-transforms:3d-vector :x x :y y :z z)))
-
-(defmethod from-msg ((msg geometry_msgs-msg:Pose))
-  (with-fields (orientation position) msg
-    (make-instance 'cl-transforms:pose
-      :origin (from-msg position) :orientation (from-msg orientation))))
-
-(defmethod from-msg ((msg geometry_msgs-msg:PoseStamped))
-  (with-fields ((frame-id (frame_id header))
-                (stamp (stamp header))
-                (position-msg (position pose))
-                (orientation-msg (orientation pose)))
-      msg
-    (make-instance 'pose-stamped
-                   :frame-id frame-id
-                   :stamp stamp
-                   :origin (from-msg position-msg)
-                   :orientation (from-msg orientation-msg))))
+(defmethod to-msg ((data point-stamped))
+  (make-msg "geometry_msgs/PointStamped"
+            (stamp header) (stamp data)
+            (frame_id header) (frame-id data)
+            (x point) (x data)
+            (y point) (y data)
+            (z point) (z data)))
 
 (defun make-header-msg (stamp frame-id)
   (make-msg "std_msgs/Header"
@@ -138,3 +101,63 @@ If you need a geometry_msgs/Point use the MAKE-POINT-MSG function."
             :x (cl-transforms:x data)
             :y (cl-transforms:y data)
             :z (cl-transforms:z data)))
+
+(defun make-pose-stamped-msg (pose frame-id stamp)
+  (declare (type cl-transforms:pose pose))
+  (to-msg (make-pose-stamped frame-id stamp (origin pose) (orientation pose))))
+
+
+(defmethod from-msg ((msg geometry_msgs-msg:TransformStamped))
+  (with-fields ((frame-id (frame_id header))
+                (stamp (stamp header))
+                child_frame_id
+                (translation-msg (translation transform))
+                (rotation-msg (rotation transform)))
+      msg
+    (make-transform-stamped
+     frame-id child_frame_id stamp
+     (from-msg translation-msg) (from-msg rotation-msg))))
+
+(defmethod from-msg ((msg geometry_msgs-msg:Transform))
+  (with-fields (translation rotation) msg
+    (make-transform (from-msg translation) (from-msg rotation))))
+
+(defmethod from-msg ((msg geometry_msgs-msg:Vector3))
+  (with-fields (x y z) msg
+    (make-3d-vector x y z)))
+
+(defmethod from-msg ((msg geometry_msgs-msg:Quaternion))
+  (with-fields (x y z w) msg
+    (make-quaternion x y z w)))
+
+(defmethod from-msg ((msg geometry_msgs-msg:Point))
+  (with-fields (x y z) msg
+    (make-3d-vector x y z)))
+
+(defmethod from-msg ((msg geometry_msgs-msg:Pose))
+  (with-fields (orientation position) msg
+    (make-pose (from-msg position) (from-msg orientation))))
+
+(defmethod from-msg ((msg geometry_msgs-msg:PoseStamped))
+  (with-fields ((frame-id (frame_id header))
+                (stamp (stamp header))
+                (position-msg (position pose))
+                (orientation-msg (orientation pose)))
+      msg
+    (make-pose-stamped frame-id stamp (from-msg position-msg) (from-msg orientation-msg))))
+
+(defmethod from-msg ((msg geometry_msgs-msg:PointStamped))
+  (with-fields ((frame-id (frame_id header))
+                (stamp (stamp header))
+                (x (x point))
+                (y (y point))
+                (z (z point)))
+      msg
+    (make-point-stamped frame-id stamp (make-3d-vector x y z))))
+
+
+(defmethod restamp-msg ((msg geometry_msgs-msg:TransformStamped) new-stamp)
+  (with-slots ((header geometry_msgs-msg:header)) msg
+    (with-slots ((stamp std_msgs-msg:stamp)) header
+      (setf stamp new-stamp)
+      msg)))
