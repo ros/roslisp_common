@@ -39,7 +39,9 @@ Note: If `target-time' is specified once also needs to specify `fixed-frame'
 to avoid a run-time error."))
 
 (defgeneric transform-pose-stamped (transformer
-                                    &key target-frame pose timeout use-current-ros-time))
+                                    &key target-frame pose timeout use-current-ros-time)
+  (:documentation "Transforms `pose' from its own frame into `target-frame'."))
 
 (defgeneric transform-point-stamped (transformer
-                                     &key target-frame point timeout use-current-ros-time))
+                                     &key target-frame point timeout use-current-ros-time)
+  (:documentation "Transforms `point' from its own frame into `target-frame'."))
