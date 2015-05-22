@@ -7,20 +7,12 @@
      (:shadow transform-pose transform-point)
      (:export transformer make-transformer
               transform-listener
-              can-transform lookup-transform
-              set-transform transform-pose
-              add-transforms-changed-callback
-              remove-transforms-changed-callback
-              with-transforms-changed-callback
-              execute-changed-callbacks
-              transform-point
-              transform->stamped-transform
-              tf-transform->transform tf-message->transforms
-              msg->pose msg->pose-stamped
-              pose-stamped->msg pose->msg
+              can-transform lookup-transform set-transform transform-pose transform-point
+              add-transforms-changed-callback remove-transforms-changed-callback
+              with-transforms-changed-callback execute-changed-callbacks
+              tf-msg->transforms transforms->tf-msg transform->tf-msg restamp-tf-msg
               wait-for-transform topic send-transform send-transforms
               send-static-transforms-blocking send-static-transforms with-tf-broadcasting
-              msg->point-stamped point-stamped->msg msg->point point->msg
               ,@(let ((r nil))
                   (do-external-symbols (s :cl-transforms r) (push s r)))
               ,@(let ((r nil))

@@ -21,7 +21,7 @@
 (defun tf-listener-callback (tf msg)
   (mapc (lambda (transform)
           (set-transform tf transform :suppress-callbacks t))
-        (tf-message->transforms msg))
+        (tf-msg->transforms msg))
   (execute-changed-callbacks tf))
 
 (defmethod destroy ((tf transform-listener))

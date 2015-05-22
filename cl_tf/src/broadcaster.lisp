@@ -10,16 +10,14 @@
 
 (defun send-transform (broadcaster tr)
   "Send a stamped transform."
-  (publish broadcaster (transform->tf tr)))
+  (publish broadcaster (transform->tf-msg tr)))
 
 (defun send-transforms (broadcaster &rest transforms)
   "Send stamped transforms."
-  (publish broadcaster (transforms->tf transforms)))
+  (publish broadcaster (transforms->tf-msg transforms)))
 
 (defun send-static-transforms-blocking (broadcaster interval &rest transforms)
-  (let ((msg (make-message
-              "tf/tfmessage" 
-              :transforms (map 'vector #'transform->msg transforms))))
+  (let ((msg (transforms->tf-msg transforms)))
     (loop-at-most-every interval
       (unless (eq (roslisp:node-status) :running) (return))
       (publish 
