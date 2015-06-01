@@ -56,12 +56,14 @@ topic can be altered through the keyword `topic'."
   (with-slots (send-transform-callbacks) tf-broadcaster
     (map 'nil (cl-utils:compose #'funcall #'cdr) send-transform-callbacks)))
 
-(defmethod add-new-transform-stamped-callback (tf-broadcaster name callback)
+(defmethod add-new-transform-stamped-callback ((tf-broadcaster transform-broadcaster)
+                                               name callback)
   (with-slots (send-transform-callbacks) tf-broadcaster
     (pushnew (cons name callback) send-transform-callbacks))
   (enable-changed-callbacks tf-broadcaster))
 
-(defmethod remove-new-transform-stamped-callback (tf-broadcaster name)
+(defmethod remove-new-transform-stamped-callback ((tf-broadcaster transform-broadcaster)
+                                                  name)
   (with-slots (send-transform-callbacks) tf-broadcaster
     (setf send-transform-callbacks
           (remove name send-transform-callbacks :key #'car)))
