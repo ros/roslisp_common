@@ -20,8 +20,7 @@
 (defconstant +cache-adjust-factor+ 1.5)
 
 (defclass transform-cache ()
-  ((cache-size :initarg :cache-size
-               :initform +initial-cache-size+ :reader cache-size)
+  ((cache-size :initarg :cache-size :initform 10 :reader cache-size)
    (cache :accessor cache
           :documentation "SIMPLE-ARRAY of CACHE-ENTRY-ies of size `cache-size'")))
 
