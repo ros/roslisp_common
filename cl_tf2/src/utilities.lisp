@@ -69,3 +69,7 @@ parameter `tf' must be a valid instance of type
                  (setf first-run nil)
                  can-tr)
             do (return can-tr))))
+            
+(defun resolve (prefix frame-name)
+  "Creates a resolved tf name based on a tf-prefix and the actual frame-name."
+  (concatenate 'string (unslash-frame prefix) "/" (unslash-frame frame-name)))
