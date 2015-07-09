@@ -39,6 +39,5 @@
   ((:module "src"
             :components
             ((:file "package")
-             (:file "utilities" :depends-on ("package"))
-             (:file "buffer-client" :depends-on ("package" "utilities"))
+             (:file "buffer-client" :depends-on ("package"))
              (:file "transform-broadcaster" :depends-on ("package"))))))

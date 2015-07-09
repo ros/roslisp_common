@@ -19,5 +19,7 @@
               with-new-transform-stamped-callback
               transform-stamped-error connectivity-error lookup-error
               extrapolation-error invalid-argument-error timeout-error
+              ;; utilities.lisp
+              unslash-frame resolve-frame
               ,@(let ((r nil))
                   (do-external-symbols (s :cl-transforms r) (push s r)))))

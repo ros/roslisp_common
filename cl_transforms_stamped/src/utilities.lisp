@@ -1,18 +1,19 @@
-;;; Copyright (c) 2014, Jan Winkler <winkler@cs.uni-bremen.de>
+;;;
+;;; Copyright (c) 2014, Uni Bremen AI team
 ;;; All rights reserved.
 ;;;
 ;;; Redistribution and use in source and binary forms, with or without
 ;;; modification, are permitted provided that the following conditions are met:
 ;;;
-;;; * Redistributions of source code must retain the above copyright
-;;; notice, this list of conditions and the following disclaimer.
-;;; * Redistributions in binary form must reproduce the above copyright
-;;; notice, this list of conditions and the following disclaimer in the
-;;; documentation and/or other materials provided with the distribution.
-;;; * Neither the name of the Institute for Artificial Intelligence/
-;;; Universitaet Bremen nor the names of its contributors may be used to
-;;; endorse or promote products derived from this software without specific
-;;; prior written permission.
+;;;     * Redistributions of source code must retain the above copyright
+;;;       notice, this list of conditions and the following disclaimer.
+;;;     * Redistributions in binary form must reproduce the above copyright
+;;;       notice, this list of conditions and the following disclaimer in the
+;;;       documentation and/or other materials provided with the distribution.
+;;;     * Neither the name of the Institute for Artificial Intelligence/
+;;;       Universitaet Bremen nor the names of its contributors may be used to
+;;;       endorse or promote products derived from this software without
+;;;       specific prior written permission.
 ;;;
 ;;; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 ;;; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -26,10 +27,14 @@
 ;;; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ;;; POSSIBILITY OF SUCH DAMAGE.
 
-(in-package :cl-tf2)
+(in-package :cl-transforms-stamped)
 
 (defun unslash-frame (frame)
   "Removes any leading or trailing '/' characters from the string
 `frame' and returns the resulting string."
   (when frame ; if not checked for NIL the result would be the string "NIL"
     (string-trim "/ " frame)))
+
+(defun resolve-frame (prefix frame-name)
+  "Creates a resolved tf name based on a tf-prefix and the actual frame-name."
+  (concatenate 'string (unslash-frame prefix) "/" (unslash-frame frame-name)))

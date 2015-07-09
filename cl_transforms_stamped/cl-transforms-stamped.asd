@@ -6,6 +6,7 @@
   ((:module "src"
             :components
             ((:file "package")
+             (:file "utilities" :depends-on ("package"))
              (:file "datatypes" :depends-on ("package"))
              (:file "ros-messages" :depends-on ("package" "datatypes"))
              (:file "conditions" :depends-on ("package"))

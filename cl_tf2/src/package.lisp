@@ -33,7 +33,6 @@
   (:export buffer-client
            ;; lookup-transform transform-pose transform-point
            make-transform-broadcaster send-transform
-           unslash-frame
            transform-broadcaster
            execute-changed-callbacks
            enable-changed-callbacks disable-changed-callbacks))
