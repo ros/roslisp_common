@@ -94,6 +94,22 @@
                   :frame-id child-frame-id
                   :stamp stamp)))
 
+(defgeneric ensure-pose-stamped (position-object &optional frame-id stamp)
+  (:method ((pose-stamped pose-stamped) &optional frame-id stamp)
+    (declare (ignore frame-id stamp))
+    pose-stamped)
+  (:method ((pose cl-transforms:pose) &optional frame-id stamp)
+    (assert (and frame-id stamp) ()
+            "Cannot convert POSE into POSE-STAMPED without `frame-id' and `stamp'.")
+    (pose->pose-stamped frame-id stamp pose))
+  (:method ((transform-stamped transform-stamped) &optional frame-id stamp)
+    (make-pose-stamped
+     (or frame-id (frame-id transform-stamped))
+     (or stamp (stamp transform-stamped))
+     (translation transform-stamped)
+     (rotation transform-stamped))))
+
+
 ;;; Deprecated stamped-transform
 (defclass stamped-transform (transform-stamped) ())
 (defmethod initialize-instance :after ((instance stamped-transform) &key)
