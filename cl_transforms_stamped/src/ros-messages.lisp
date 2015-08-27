@@ -161,3 +161,14 @@ If you need a geometry_msgs/Point use the MAKE-POINT-MSG function."
     (with-slots ((stamp std_msgs-msg:stamp)) header
       (setf stamp new-stamp)
       msg)))
+
+
+;;; misc conversions
+
+(defun pose-stamped->point-stamped-msg (pose)
+  (make-msg "geometry_msgs/PointStamped"
+            (stamp header) (stamp pose)
+            (frame_id header) (frame-id pose)
+            (x point) (cl-transforms:x (cl-transforms:origin pose))
+            (y point) (cl-transforms:y (cl-transforms:origin pose))
+            (z point) (cl-transforms:z (cl-transforms:origin pose))))

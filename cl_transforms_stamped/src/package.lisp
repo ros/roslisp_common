@@ -15,6 +15,7 @@
               stamped-transform->pose-stamped
               to-msg make-header-msg make-point-msg make-pose-stamped-msg
               from-msg restamp-msg
+              pose-stamped->point-stamped-msg
               lookup-transform-stamped transform-pose-stamped transform-point-stamped
               add-new-transform-stamped-callback remove-new-transform-stamped-callback
               with-new-transform-stamped-callback
