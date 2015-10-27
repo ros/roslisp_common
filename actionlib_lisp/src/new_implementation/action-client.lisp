@@ -45,6 +45,8 @@
                     :accessor last-status-msg)
    (last-connection :initform nil
                     :accessor last-connection)
+   (last-connection-condition :initform (make-waitqueue)
+                              :accessor last-connection-condition)
    (connection-timeout :initform 2
                        :initarg :connection-timeout
                        :reader connection-timeout)
@@ -111,22 +113,22 @@
   "Sends a cancel msg with an empty goal-id"
   (send-cancel-msg client ""))
 
-(defmethod wait-for-server ((client action-client) &optional timeout)
+(defmethod wait-for-server ((client action-client) &optional (timeout 0))
   "Loops until the client connects with the action server"
-  (let ((start-time (ros-time)))
-    (loop while (and (not (is-connected client))
-                     (if timeout 
-                         (< (- (ros-time) start-time) timeout)
-                         t))
-          do (sleep 0.01)))
-  (is-connected client))
+  (with-recursive-lock ((client-mutex client))
+    (with-timeout-handler timeout
+        #'(lambda () (return-from wait-for-server nil))
+      (loop until (is-connected client) do
+        (condition-wait (last-connection-condition client)
+                        (client-mutex client)))))
+  t)
 
 (defmethod is-connected ((client action-client))
   "Checks if the client has recently heard anything from the action server"
-  (if (with-recursive-lock ((client-mutex client))
-        (last-connection client))
+  (with-recursive-lock ((client-mutex client))
+    (when (last-connection client)
       (< (- (ros-time) (last-connection client)) 
-         (connection-timeout client))))
+         (connection-timeout client)))))
 
 ;;;
 ;;; Internal
@@ -163,19 +165,33 @@
 
 (defun status-callback (client msg)
   "Callback for the status messages of the action server"
-  (update-last-connection client)  
-  (setf (last-status-msg client) msg)
-  (update-statuses (goal-manager client) msg))
-
+  (with-recursive-lock ((client-mutex client))
+    (update-last-connection client)  
+    (setf (last-status-msg client) msg)
+    (update-statuses (goal-manager client) msg)
+    (notify client)))
+    
 (defun result-callback (client msg)
   "Callback for the result message of the action server"
-  (update-last-connection client)
-  (update-results (goal-manager client) msg))
+  (with-recursive-lock ((client-mutex client))
+    (update-last-connection client)
+    (update-results (goal-manager client) msg)
+    (notify client)))
+  
+
+(defun notify (client)
+  (when (goal-ids (goal-manager client))
+    (dolist (id (goal-ids (goal-manager client)))
+      (with-recursive-lock ((csm-mutex (gethash id (goals (goal-manager client)))))
+        (when (gethash id (goal-conditions (goal-manager client)))
+          (condition-notify (gethash id (goal-conditions (goal-manager client)))))))))
+
 
 (defun update-last-connection (client)
   "Updates the time of the last communication with the action server"
   (with-recursive-lock ((client-mutex client))
-    (setf (last-connection client) (ros-time))))
+    (setf (last-connection client) (ros-time))
+    (condition-notify (last-connection-condition client))))
 
 (defun send-cancel-msg (client goal-id)
   "Publishes a msg with the goal-id on the cancel topic"

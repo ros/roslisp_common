@@ -77,3 +77,15 @@
 (defun action-goal-type (a)
   "Creates an action-msg-type for the goal."
   (action-msg-type a "Goal"))
+
+(defmacro with-timeout-handler (expires handler &body body)
+  "Like sbcl's timeout macro but safe. Instead of signaling a timeout
+condition, handler is executed."
+  (cl-utils:with-gensyms (timer body-fun)
+    `(flet ((,body-fun () ,@body))
+       (if (= ,expires 0)
+           (,body-fun)
+           (let ((,timer (sb-ext:make-timer ,handler)))
+             (sb-ext:schedule-timer ,timer ,expires)
+             (unwind-protect (,body-fun)
+               (sb-ext:unschedule-timer ,timer)))))))
