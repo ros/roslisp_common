@@ -46,4 +46,5 @@
    urdf-type-not-supported urdf-attribute-not-supported urdf-malformed
    parse-urdf
    generate-urdf-xml
-   generate-urdf-string))
+   generate-urdf-string
+   *display-ignored-warning*))

@@ -36,7 +36,10 @@
    (goal-ids :initform nil
              :accessor goal-ids
              :documentation "List of all goal-ids of all monitored goals.")
-   (waiting-for-goal-ack-timeout :initform 10
+   (goal-conditions :initform (make-hash-table :test #'equal)
+                    :accessor goal-conditions
+                    :documentation "Hashtable with conditions for every goal.")
+   (waiting-for-goal-ack-timeout :initform 5
                                  :initarg waiting-for-goal-ack-timeout
                                  :accessor waiting-for-goal-ack-timeout
                                  :documentation "Time in seconds to wait for server
@@ -76,7 +79,10 @@
 (defgeneric goal-with-id (manager id)
   (:documentation "Returns the entry in the goal-hash-tablefor the goal with the given id."))
 
-;;;Implementation
+;;;
+;;; Implementation
+;;;
+
 (defun status-msg->id-status (status-msg)
   "Gets a status msg and returns a the id and status."
   (with-fields (status (id (id goal_id))) status-msg
@@ -95,15 +101,16 @@
          (goal-handle (make-instance 'client-goal-handle))
          (csm (make-instance (csm-type manager)
                              :goal-id goal-id
-                             :transition-cb (if transition-cb 
-                                                #'(lambda () (funcall transition-cb goal-handle)))
-                             :feedback-cb (if feedback-cb
-                                              #'(lambda (feedback) 
-                                                  (funcall feedback-cb goal-handle feedback)))
+                             :transition-cb (when transition-cb 
+                                              #'(lambda () (funcall transition-cb goal-handle)))
+                             :feedback-cb (when feedback-cb
+                                            #'(lambda (feedback) 
+                                                (funcall feedback-cb goal-handle feedback)))
                              :send-cancel-fn #'(lambda () (funcall cancel-fn goal-id)))))
     (setf (comm-state-machine goal-handle) csm)
     (with-recursive-lock ((hash-mutex manager))
-      (setf (gethash goal-id (goals manager)) csm))
+      (setf (gethash goal-id (goals manager)) csm)
+      (setf (gethash goal-id (goal-conditions manager)) (make-waitqueue)))
     (with-recursive-lock ((id-mutex manager))
       (push goal-id (goal-ids manager)))
     goal-handle))
@@ -113,29 +120,32 @@
    array contains the goal-id of comm-state-machine, the state of the comm-state-machine
    gets updated with the status else the comm-state-machine gets set to lost."
   (let ((goal-ids (with-recursive-lock ((id-mutex manager))
-                    (copy-list (goal-ids manager)))))
+                    (copy-list (goal-ids manager))))
+        (current-time (ros-time)))
     (with-fields ((status-list status_list)) status-array
-      ;;loops over the goals in the status list, updates their status
-      ;;and removes them from the local goal-ids list
+      ;; loops over the goals in the status list, updates their status
+      ;; and removes them from the local goal-ids list
       (loop for goal-status being the elements of status-list
-            do (multiple-value-bind (id status-symbol) (status-msg->id-status goal-status)
-                 (multiple-value-bind (comm-state-machine has-state-machine-p) (goal-with-id manager id)
+            do (multiple-value-bind (id status-symbol)
+                   (status-msg->id-status goal-status)
+                 (multiple-value-bind (comm-state-machine has-state-machine-p)
+                     (goal-with-id manager id)
                    (when has-state-machine-p
                      (setf goal-ids (remove id goal-ids :test #'equal))
                      (update-status comm-state-machine status-symbol)))))
-      ;;loops over the remaining ids in goal-ids and marks them as lost if they aren't
-      ;;waiting-for-goal-ack or if they exceeded the timeout
-      (loop for goal-id in goal-ids
-            do (let ((csm (nth-value 0 (goal-with-id manager goal-id))))
-                 (when (and csm
-                            (or (not (eql (name (get-current-state (stm csm)))
-                                          :waiting-for-goal-ack))
-                                (> (- (ros-time) (start-time csm)) 
-                                   (waiting-for-goal-ack-timeout manager))))
-                   (with-recursive-lock ((id-mutex manager))
-                     (setf (goal-ids manager) 
-                           (remove goal-id (goal-ids manager) :test #'equal)))
-                   (update-status csm :lost)))))))
+      ;; loops over the remaining ids in goal-ids and marks them as lost if they
+      ;; exceeded the waiting-for-goal-ack timeout or if they aren't included in
+      ;; the status msgs anymore
+      (dolist (goal-id goal-ids)
+        (let ((csm (nth-value 0 (goal-with-id manager goal-id))))
+          (when csm
+            (incf (lost-ctr csm))
+            (when (> (- current-time (start-time csm)) 
+                     (waiting-for-goal-ack-timeout manager))
+            (with-recursive-lock ((id-mutex manager))
+              (setf (goal-ids manager) 
+                    (remove goal-id (goal-ids manager) :test #'equal))
+              (update-status csm :lost)))))))))
 
 (defmethod update-results ((manager goal-manager) action-result)
   "Updates the comm-state-machine with the goal-id from the result message."
@@ -158,7 +168,8 @@
 (defmethod stop-tracking-goals ((manager goal-manager))
   "Removes all comm-state-machines and goal-ids."
   (setf (goal-ids manager) nil)
-  (setf (goals manager) (make-hash-table :test #'equal)))
+  (setf (goals manager) (make-hash-table :test #'equal))
+  (setf (goal-conditions manager) (make-hash-table :test #'equal)))
 
 (defmethod goal-with-id ((manager goal-manager) id)
   "Returns the values for `id' in the goals-hash-table."
