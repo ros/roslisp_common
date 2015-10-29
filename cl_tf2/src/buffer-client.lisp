@@ -63,7 +63,7 @@
            (actionlib:make-action-goal
                (client tf)
              :target_frame target-frame :source_frame source-frame
-             :source_time 0.0 ;source-time
+             :source_time source-time
              :timeout timeout
              :target_time target-time
              :fixed_frame fixed-frame
