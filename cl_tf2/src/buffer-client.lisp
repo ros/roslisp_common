@@ -40,8 +40,8 @@
    (lock :initform (sb-thread:make-mutex :name (string (gensym "TF2-LOCK-")))
          :accessor lock :type mutex)))
 
-(defmethod lookup-transform-stamped ((tf buffer-client) target-frame source-frame
-                                     &key time timeout target-time fixed-frame)
+(defmethod lookup-transform ((tf buffer-client) target-frame source-frame
+                             &key time timeout target-time fixed-frame)
   (declare (type string target-frame source-frame)
            (type (or number null) time timeout target-time)
            (type (or string null) fixed-frame))
@@ -120,8 +120,8 @@
                   (roslisp:ros-time)
                   (or (stamp pose) 0.0)))
         (source-frame (frame-id pose)))
-    (let ((transform (lookup-transform-stamped tf target-frame source-frame
-                                               :time time :timeout timeout)))
+    (let ((transform (lookup-transform tf target-frame source-frame
+                                       :time time :timeout timeout)))
       (pose->pose-stamped
        target-frame
        (stamp transform)
@@ -136,8 +136,8 @@
                   (roslisp:ros-time)
                   (or (stamp point) 0.0)))
         (source-frame (frame-id point)))
-    (let ((transform (lookup-transform-stamped tf target-frame source-frame
-                                               :time time :timeout timeout)))
+    (let ((transform (lookup-transform tf target-frame source-frame
+                                       :time time :timeout timeout)))
       (point->point-stamped
        target-frame
        (stamp transform)

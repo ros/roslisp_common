@@ -35,10 +35,11 @@
      (:shadow transform-pose transform-point)
      (:export transformer make-transformer
               transform-listener
-              can-transform lookup-transform set-transform transform-pose transform-point
+              can-transform lookup-cached-transform set-transform wait-for-transform
+              transform-pose transform-point
               execute-changed-callbacks
               tf-msg->transforms transforms->tf-msg transform->tf-msg restamp-tf-msg
-              wait-for-transform topic send-transform send-transforms
+              topic send-transform send-transforms
               make-transform-broadcaster
               send-static-transforms-blocking send-static-transforms with-tf-broadcasting
               ,@(let ((r nil))

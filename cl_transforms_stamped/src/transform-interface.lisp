@@ -28,8 +28,8 @@
 
 (in-package :cl-transforms-stamped)
 
-(defgeneric lookup-transform-stamped (transformer target-frame source-frame
-                                      &key time timeout target-time fixed-frame)
+(defgeneric lookup-transform (transformer target-frame source-frame
+                              &key time timeout target-time fixed-frame)
   (:documentation "Queries `transformer' for the transform from `source-frame' to `target-frame'.
 
 Optionally, one can specify a `timeout' for the query. `source-time' and `target-time'

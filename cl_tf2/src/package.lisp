@@ -31,7 +31,6 @@
 (defpackage :cl-tf2
   (:use #:common-lisp #:roslisp #:cl-transforms-stamped)
   (:export buffer-client
-           ;; lookup-transform transform-pose transform-point
            make-transform-broadcaster send-transform
            transform-broadcaster
            execute-changed-callbacks

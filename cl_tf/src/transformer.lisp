@@ -38,7 +38,7 @@
 
 (defgeneric can-transform (tf &key target-frame source-frame time))
 
-(defgeneric lookup-transform (tf &key target-frame source-frame time))
+(defgeneric lookup-cached-transform (tf &key target-frame source-frame time))
 
 (defgeneric wait-for-transform (tf &key target-frame source-frame time))
 
@@ -75,14 +75,14 @@
       (lookup-error ()
         nil))))
 
-(defmethod lookup-transform ((tf transformer) &key target-frame source-frame time)
+(defmethod lookup-cached-transform ((tf transformer) &key target-frame source-frame time)
   (check-type target-frame string)
   (check-type source-frame string)
   (let ((target-frame (ensure-fully-qualified-name target-frame (tf-prefix tf)))
         (source-frame (ensure-fully-qualified-name source-frame (tf-prefix tf)))
         (time (ensure-null-time time)))
     (when (equal target-frame source-frame)
-      (return-from lookup-transform
+      (return-from lookup-cached-transform
         (make-transform-stamped
          target-frame source-frame (ros-time)
          (make-3d-vector 0 0 0)
@@ -110,16 +110,16 @@ and ~a are not connected in the reference frame tree" source-frame target-frame)
            (translation result-tf)
            (rotation result-tf)))))))
 
-(defmethod lookup-transform-stamped ((tf transformer) target-frame source-frame
-                                     &key time timeout target-time fixed-frame)
+(defmethod lookup-transform ((tf transformer) target-frame source-frame
+                             &key time timeout target-time fixed-frame)
   (declare (type string target-frame source-frame)
            (type (or number null) time timeout))
   (when (or target-time fixed-frame)
-    (warn "LOOKUP-TRANSFORM-STAMPED of CL-TF:TRANSFORMER does not support
+    (warn "LOOKUP-TRANSFORM of CL-TF:TRANSFORMER does not support
 TARGET-TIME or FIXED-FRAME arguments."))
   (if (wait-for-transform tf :time time :timeout timeout
                              :source-frame source-frame :target-frame target-frame)
-      (lookup-transform tf :time time
+      (lookup-cached-transform tf :time time
                            :source-frame source-frame :target-frame target-frame)
       (error 'timeout-error :description
              (format nil "No transform was published between frames ~a and ~a"
@@ -184,9 +184,8 @@ TARGET-TIME or FIXED-FRAME arguments."))
         (time (if use-current-ros-time
                   (roslisp:ros-time)
                   (ensure-null-time (stamp pose)))))
-    (let ((transform (lookup-transform-stamped
-                      tf target-frame (frame-id pose)
-                      :time time :timeout timeout)))
+    (let ((transform (lookup-transform tf target-frame (frame-id pose)
+                                       :time time :timeout timeout)))
       (assert transform () "Transform from `~a' to `~a' not found."
               (frame-id pose) target-frame)
       (change-class (cl-transforms:transform-pose transform pose)
@@ -199,7 +198,7 @@ TARGET-TIME or FIXED-FRAME arguments."))
   (check-type pose pose-stamped)
   (let ((target-frame (ensure-fully-qualified-name target-frame (tf-prefix tf)))
         (time (ensure-null-time (stamp pose))))
-    (let ((transform (lookup-transform
+    (let ((transform (lookup-cached-transform
                       tf
                       :target-frame target-frame
                       :source-frame (frame-id pose)
@@ -220,9 +219,8 @@ TARGET-TIME or FIXED-FRAME arguments."))
                   (roslisp:ros-time)
                   (ensure-null-time (stamp point)))))
     (check-transform-exists tf target-frame)
-    (let ((transform (lookup-transform-stamped
-                      tf target-frame (frame-id point)
-                      :time time :timeout timeout)))
+    (let ((transform (lookup-transform tf target-frame (frame-id point)
+                                       :time time :timeout timeout)))
       (assert transform () "Transform from `~a' to `~a' not found."
               (frame-id point) target-frame)
       (change-class (cl-transforms:transform-point transform point)
@@ -236,7 +234,7 @@ TARGET-TIME or FIXED-FRAME arguments."))
   (let ((target-frame (ensure-fully-qualified-name target-frame (tf-prefix tf)))
         (time (ensure-null-time (stamp point))))
     (check-transform-exists tf target-frame)
-    (let ((transform (lookup-transform
+    (let ((transform (lookup-cached-transform
                       tf
                       :target-frame target-frame
                       :source-frame (frame-id point)
