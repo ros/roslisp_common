@@ -48,29 +48,4 @@ topic can be altered through the keyword `topic'."
     ;;           (child-frame-id (first transforms))
     ;;           (stamp (car transforms)))
     (publish (slot-value broadcaster 'publisher)
-             (make-message "tf2_msgs/TFMessage" :transforms (to-msg transforms)))
-    (when (slot-value broadcaster 'send-transform-callbacks-enabled)
-      (execute-changed-callbacks broadcaster))))
-
-(defun execute-changed-callbacks (tf-broadcaster)
-  (with-slots (send-transform-callbacks) tf-broadcaster
-    (map 'nil (cl-utils:compose #'funcall #'cdr) send-transform-callbacks)))
-
-(defmethod add-new-transform-stamped-callback ((tf-broadcaster transform-broadcaster)
-                                               name callback)
-  (with-slots (send-transform-callbacks) tf-broadcaster
-    (pushnew (cons name callback) send-transform-callbacks))
-  (enable-changed-callbacks tf-broadcaster))
-
-(defmethod remove-new-transform-stamped-callback ((tf-broadcaster transform-broadcaster)
-                                                  name)
-  (with-slots (send-transform-callbacks) tf-broadcaster
-    (setf send-transform-callbacks
-          (remove name send-transform-callbacks :key #'car)))
-  (disable-changed-callbacks tf-broadcaster))
-
-(defun enable-changed-callbacks (tf-broadcaster)
-  (setf (slot-value tf-broadcaster 'send-transform-callbacks-enabled) t))
-
-(defun disable-changed-callbacks (tf-broadcaster)
-  (setf (slot-value tf-broadcaster 'send-transform-callbacks-enabled) nil))
+             (make-message "tf2_msgs/TFMessage" :transforms (to-msg transforms)))))

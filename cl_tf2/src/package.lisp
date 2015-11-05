@@ -32,6 +32,4 @@
   (:use #:common-lisp #:roslisp #:cl-transforms-stamped)
   (:export buffer-client
            make-transform-broadcaster send-transform
-           transform-broadcaster
-           execute-changed-callbacks
-           enable-changed-callbacks disable-changed-callbacks))
+           transform-broadcaster))

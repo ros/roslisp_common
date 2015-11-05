@@ -17,8 +17,6 @@
               from-msg restamp-msg
               pose-stamped->point-stamped-msg
               lookup-transform transform-pose-stamped transform-point-stamped
-              add-new-transform-stamped-callback remove-new-transform-stamped-callback
-              with-new-transform-stamped-callback
               transform-stamped-error connectivity-error lookup-error
               extrapolation-error invalid-argument-error timeout-error
               ;; utilities.lisp
