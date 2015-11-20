@@ -48,6 +48,32 @@
 
 (defgeneric transform-point (tf &key target-frame point))
 
+
+(defun execute-changed-callbacks (tf)
+  (with-slots (set-transform-callbacks) tf
+    (map 'nil (cl-utils:compose #'funcall #'cdr) set-transform-callbacks)))
+
+(defun add-new-transform-stamped-callback (tf name callback)
+  (with-slots (set-transform-callbacks) tf
+    (pushnew (cons name callback) set-transform-callbacks)))
+
+(defun remove-new-transform-stamped-callback (tf name)
+  (with-slots (set-transform-callbacks) tf
+    (setf set-transform-callbacks (remove name set-transform-callbacks
+                                          :key #'car))))
+
+(defmacro with-new-transform-stamped-callback
+    ((transformer callback &key (name (gensym "NEW-TRANSFORM-CALLBACK-")))
+     &body body)
+  "Executes `body' in such a way that each time a new transform is available
+to the `transformer' `callback' is called."
+  `(unwind-protect
+        (progn
+          (add-new-transform-stamped-callback ,transformer ',name ,callback)
+          ,@body)
+     (remove-new-transform-stamped-callback ,transformer ',name)))
+
+
 (defmethod can-transform ((tf transformer) &key target-frame source-frame time)
   (check-type target-frame string)
   (check-type source-frame string)
@@ -259,31 +285,6 @@ TARGET-TIME or FIXED-FRAME arguments."))
           (get-transforms-to-root transforms (frame-id current-tf)
                                   time (cons current-tf result)))
         result)))
-
-
-(defun execute-changed-callbacks (tf)
-  (with-slots (set-transform-callbacks) tf
-    (map 'nil (cl-utils:compose #'funcall #'cdr) set-transform-callbacks)))
-
-(defun add-new-transform-stamped-callback (tf name callback)
-  (with-slots (set-transform-callbacks) tf
-    (pushnew (cons name callback) set-transform-callbacks)))
-
-(defun remove-new-transform-stamped-callback (tf name)
-  (with-slots (set-transform-callbacks) tf
-    (setf set-transform-callbacks (remove name set-transform-callbacks
-                                          :key #'car))))
-
-(defmacro with-new-transform-stamped-callback
-    ((transformer callback &key (name (gensym "NEW-TRANSFORM-CALLBACK-")))
-     &body body)
-  "Executes `body' in such a way that each time a new transform is available
-to the `transformer' `callback' is called."
-  `(unwind-protect
-        (progn
-          (add-new-transform-stamped-callback ,transformer ',name ,callback)
-          ,@body)
-     (remove-new-transform-stamped-callback ,transformer ',name)))
 
 (defun ensure-fully-qualified-name (frame-id &optional (tf-prefix "/"))
   "Makes sure that the first character in `frame-id' is set to `tf-prefix'"
