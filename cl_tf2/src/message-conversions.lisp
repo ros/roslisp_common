@@ -75,8 +75,11 @@
 
 (defmethod from-msg ((msg geometry_msgs-msg:Transform))
   (with-fields (translation rotation) msg
-    (make-instance 'cl-transforms:transform :translation (from-msg translation)
-                                            :rotation (from-msg rotation))))
+    (make-instance
+     'cl-transforms:transform
+     :translation (from-msg translation)
+     :rotation (from-msg rotation)
+     :validate-args nil)))
 
 (defmethod from-msg ((msg std_msgs-msg:Header))
   (with-fields (stamp frame_id) msg
@@ -88,4 +91,4 @@
 
 (defmethod from-msg ((msg geometry_msgs-msg:Quaternion))
   (with-fields (x y z w) msg
-    (make-instance 'cl-transforms:quaternion :x x :y y :z z :w w)))
+    (make-instance 'cl-transforms:quaternion :x x :y y :z z :w w )))
