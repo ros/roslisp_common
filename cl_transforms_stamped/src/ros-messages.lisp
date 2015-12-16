@@ -120,7 +120,8 @@ If you need a geometry_msgs/Point use the MAKE-POINT-MSG function."
 
 (defmethod from-msg ((msg geometry_msgs-msg:Transform))
   (with-fields (translation rotation) msg
-    (make-transform (from-msg translation) (from-msg rotation))))
+    (make-transform (from-msg translation) (from-msg rotation)
+                    :validate-args nil)))
 
 (defmethod from-msg ((msg geometry_msgs-msg:Vector3))
   (with-fields (x y z) msg
