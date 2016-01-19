@@ -61,8 +61,10 @@
 ;;;
 
 (defclass wrench ()
-  ((translation :initarg :translation :reader translation :type point)
-   (rotation :initarg :rotation :reader rotation :type point)))
+  ((translation :initarg :translation :initform (make-identity-vector)
+                :reader translation :type point)
+   (rotation :initarg :rotation :initform (make-identity-vector)
+             :reader rotation :type point)))
 
 (defun make-wrench (translation rotation)
   (make-instance 'wrench :translation translation :rotation rotation))
