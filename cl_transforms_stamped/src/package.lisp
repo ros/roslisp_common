@@ -8,7 +8,8 @@
               stamped transform-stamped pose-stamped point-stamped
               make-pose-stamped make-point-stamped make-transform-stamped
               copy-pose-stamped
-              pose->pose-stamped transform->transform-stamped point->point-stamped
+              pose->pose-stamped pose-stamped->pose
+              transform->transform-stamped point->point-stamped
               ensure-pose-stamped
               stamped-transform
               make-stamped-transform transform->stamped-transform

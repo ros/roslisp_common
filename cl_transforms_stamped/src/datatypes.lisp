@@ -87,6 +87,9 @@
     :origin (origin pose)
     :orientation (orientation pose)))
 
+(defun pose-stamped->pose (pose-stamped)
+  (make-pose (origin pose-stamped) (orientation pose-stamped)))
+
 (defun transform-stamped->pose-stamped (transform)
   (with-slots (child-frame-id stamp)
       transform
