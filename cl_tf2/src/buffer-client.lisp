@@ -79,37 +79,14 @@
 (defun process-result (result)
   (with-fields (error transform) result
     (with-fields (error error_string) error
-      (cond ((eq error
-                 (roslisp-msg-protocol:symbol-code
-                  'tf2_msgs-msg:tf2error :no_error))
-             (from-msg transform))
-            ((eq error
-                 (roslisp-msg-protocol:symbol-code
-                  'tf2_msgs-msg:tf2error :lookup_error))
-             (error 'lookup-error :description error_string))
-            ((eq error
-                 (roslisp-msg-protocol:symbol-code
-                  'tf2_msgs-msg:tf2error :connectivity_error))
-             (error 'connectivity-error :description error_string))
-            ((eq error
-                 (roslisp-msg-protocol:symbol-code
-                  'tf2_msgs-msg:tf2error :extrapolation_error))
-             (error 'extrapolation-error :description error_string))
-            ((eq error
-                 (roslisp-msg-protocol:symbol-code
-                  'tf2_msgs-msg:tf2error :invalid_argument_error))
-             (error 'invalid-argument-error :description error_string))
-            ((eq error
-                 (roslisp-msg-protocol:symbol-code
-                  'tf2_msgs-msg:tf2error :timeout_error))
-             (error 'timeout-error :description error_string))
-            ;; :transform_error code is handled in the default case
-            ;; ((eq error
-            ;;      (roslisp-msg-protocol:symbol-code
-            ;;       'tf2_msgs-msg:tf2error :transform_error))
-            ;;  (error 'transform-stamped-error :description error_string))
-            (t
-             (error 'transform-stamped-error :description error_string))))))
+      (ecase (roslisp-msg-protocol:code-symbol 'tf2_msgs-msg:tf2error error)
+        (:no_error (from-msg transform))
+        (:lookup_error (error 'lookup-error :description error_string))
+        (:connectivity_error (error 'connectivity-error :description error_string))
+        (:extrapolation_error (error 'extrapolation-error :description error_string))
+        (:invalid_argument_error (error 'invalid-argument-error :description error_string))
+        (:timeout_error (error 'timeout-error :description error_string))
+        (:transform_error (error 'transform-stamped-error :description error_string))))))
 
 (defmethod transform-pose-stamped ((tf buffer-client)
                                    &key target-frame pose timeout use-current-ros-time)
