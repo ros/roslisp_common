@@ -40,6 +40,10 @@
    (lock :initform (sb-thread:make-mutex :name (string (gensym "TF2-LOCK-")))
          :accessor lock :type mutex)))
 
+(defmethod initialize-instance :after ((client buffer-client) &key (timeout 0.0))
+  (unless (actionlib:wait-for-server (client client) timeout)
+    (error 'timeout-error :description "Waiting for action server timed out.")))
+  
 (defmethod lookup-transform ((tf buffer-client) target-frame source-frame
                              &key time timeout target-time fixed-frame)
   (declare (type string target-frame source-frame)
@@ -52,10 +56,6 @@
         (target-frame (unslash-frame target-frame))
         (source-frame (unslash-frame source-frame))
         (fixed-frame (unslash-frame fixed-frame)))
-    (unless (actionlib:wait-for-server (client tf) timeout)
-      (error 'timeout-error :description "Waiting for action server timed out."))
-    ;; TODOS: wait-for-server should be called only once at initialization
-    ;; but if the goal keeps getting lost this way is the only way it would work.
     (multiple-value-bind (result status)
         (sb-thread:with-recursive-lock ((lock tf))
           (actionlib:send-goal-and-wait
