@@ -1,28 +1,49 @@
+;;;
+;;; Copyright (c) 2010, Lorenz Moesenlechner <moesenle@in.tum.de>
+;;; All rights reserved.
+;;;
+;;; Redistribution and use in source and binary forms, with or without
+;;; modification, are permitted provided that the following conditions are met:
+;;;
+;;;     * Redistributions of source code must retain the above copyright
+;;;       notice, this list of conditions and the following disclaimer.
+;;;     * Redistributions in binary form must reproduce the above copyright
+;;;       notice, this list of conditions and the following disclaimer in the
+;;;       documentation and/or other materials provided with the distribution.
+;;;     * Neither the name of the Intelligent Autonomous Systems Group/
+;;;       Technische Universitaet Muenchen nor the names of its contributors 
+;;;       may be used to endorse or promote products derived from this software 
+;;;       without specific prior written permission.
+;;;
+;;; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+;;; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+;;; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+;;; ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+;;; LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+;;; CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+;;; SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+;;; INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+;;; CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+;;; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+;;; POSSIBILITY OF SUCH DAMAGE.
 
 (in-package :cl-user)
 
 #.`(defpackage :cl-tf
-     (:use :cl :roslisp :tf-msg :cl-transforms :cl-tf-datatypes)
+     (:use :cl :roslisp :tf-msg :cl-transforms :cl-transforms-stamped)
      (:nicknames :tf)
      (:shadow transform-pose transform-point)
      (:export transformer make-transformer
               transform-listener
-              can-transform lookup-transform
-              set-transform transform-pose
-              add-transforms-changed-callback
-              remove-transforms-changed-callback
-              with-transforms-changed-callback
+              can-transform lookup-cached-transform set-transform wait-for-transform
+              transform-pose transform-point
               execute-changed-callbacks
-              transform-point
-              transform->stamped-transform
-              tf-transform->transform tf-message->transforms
-              msg->pose msg->pose-stamped
-              pose-stamped->msg pose->msg
-              wait-for-transform tf-cache-error tf-connectivity-error
-              tf-lookup-error topic send-transform send-transforms
+              tf-msg->transforms transforms->tf-msg transform->tf-msg restamp-tf-msg
+              topic send-transform send-transforms
+              make-transform-broadcaster
               send-static-transforms-blocking send-static-transforms with-tf-broadcasting
-              msg->point-stamped point-stamped->msg msg->point point->msg
               ,@(let ((r nil))
                   (do-external-symbols (s :cl-transforms r) (push s r)))
-	      ,@(let ((r nil))
-                  (do-external-symbols (s :cl-tf-datatypes r) (push s r)))))
+              ,@(let ((r nil))
+                  (do-external-symbols (s :cl-transforms-stamped r) (push s r)))
+              ))

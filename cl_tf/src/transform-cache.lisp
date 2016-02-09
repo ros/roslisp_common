@@ -1,3 +1,31 @@
+;;;
+;;; Copyright (c) 2010, Lorenz Moesenlechner <moesenle@in.tum.de>
+;;; All rights reserved.
+;;;
+;;; Redistribution and use in source and binary forms, with or without
+;;; modification, are permitted provided that the following conditions are met:
+;;;
+;;;     * Redistributions of source code must retain the above copyright
+;;;       notice, this list of conditions and the following disclaimer.
+;;;     * Redistributions in binary form must reproduce the above copyright
+;;;       notice, this list of conditions and the following disclaimer in the
+;;;       documentation and/or other materials provided with the distribution.
+;;;     * Neither the name of the Intelligent Autonomous Systems Group/
+;;;       Technische Universitaet Muenchen nor the names of its contributors 
+;;;       may be used to endorse or promote products derived from this software 
+;;;       without specific prior written permission.
+;;;
+;;; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+;;; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+;;; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+;;; ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+;;; LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+;;; CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+;;; SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+;;; INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+;;; CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+;;; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+;;; POSSIBILITY OF SUCH DAMAGE.
 
 (in-package :cl-tf)
 
@@ -19,16 +47,15 @@
 (defconstant +initial-cache-size+ 20)
 (defconstant +cache-adjust-factor+ 1.5)
 
-(define-condition tf-cache-error (error)
-  ((description :initarg :description)))
-
 (defclass transform-cache ()
   ((cache-size :initarg :cache-size :initform 10 :reader cache-size)
-   (cache :accessor cache)))
+   (cache :accessor cache
+          :documentation "SIMPLE-ARRAY of CACHE-ENTRY-ies of size `cache-size'")))
 
 (defclass cache-entry ()
   ((newest-stamp :initform 0 :accessor newest-stamp)
-   (fill-pointer :initform 0 :accessor cache-fill-pointer)
+   (fill-pointer :initform 0 :accessor cache-fill-pointer
+                 :documentation "number")
    (transforms-cache :accessor transforms-cache)))
 
 (defgeneric cache-transform (cache transform)
@@ -41,6 +68,7 @@
   `time'."))
 
 (defgeneric cache-empty (cache-entry)
+  (:documentation "Is cache entry empty?")
   (:method ((cache-entry cache-entry))
     (eql (cache-fill-pointer cache-entry) 0)))
 
@@ -84,8 +112,8 @@
            (cache-entry (aref cache cache-entry-index)))
       (when (> (abs (- time (newest-stamp cache-entry)))
                cache-size)
-          (error 'tf-cache-error
-                 :description "Requested time points to the future. Cannot transform."))
+        (error 'extrapolation-error :description
+               "Requested time points to the future. Cannot transform."))
       (get-cached-transform cache-entry time :interpolate interpolate))))
 
 (defun gc-cache-entry (cache-entry)
@@ -97,13 +125,13 @@
 
 (defmethod initialize-instance :after ((cache-entry cache-entry) &key)
   (setf (slot-value cache-entry 'transforms-cache)
-        (make-array +initial-cache-size+ :element-type '(or null stamped-transform)
+        (make-array +initial-cache-size+ :element-type '(or null transform-stamped)
                     :initial-element nil)))
 
 (defmethod cache-transform ((cache-entry cache-entry) transform)
   (let ((cache-size (array-dimension (transforms-cache cache-entry) 0))
         (cache (transforms-cache cache-entry)))
-    (declare (type (simple-array (or null stamped-transform) 1) cache))
+    (declare (type (simple-array (or null transform-stamped) 1) cache))
     (unless (>= (stamp transform) (newest-stamp cache-entry))
       (ros-debug
        (cl-tf cache)
@@ -130,8 +158,8 @@
         (aref transforms-cache (1- fill-pointer))))
     (when (or (> time newest-stamp)
               (< time (stamp (aref transforms-cache 0))))
-      (error 'tf-cache-error
-             :description "The requested time stamp does not point into the cache."))
+      (error 'extrapolation-error :description
+             "The requested time stamp does not point into the cache."))
     (multiple-value-bind (lower upper)
         (binary-search time transforms-cache
                        :end (1- fill-pointer) :key #'stamp)
@@ -146,7 +174,7 @@
             (interpolate
              (let ((ratio (/ (- time (stamp lower))
                              (- (stamp upper) (stamp lower)))))
-               (make-stamped-transform
+               (make-transform-stamped
                 (frame-id lower)
                 (child-frame-id lower)
                 time

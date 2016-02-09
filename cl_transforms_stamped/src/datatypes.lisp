@@ -1,18 +1,18 @@
 
-(in-package :cl-tf-datatypes)
+(in-package :cl-transforms-stamped)
 
 (defclass stamped ()
   ((frame-id :initarg :frame-id :reader frame-id :type string)
    (stamp :initarg :stamp :reader stamp :type float)))
 
-(defclass stamped-transform (transform stamped)
+(defclass transform-stamped (transform stamped)
   ((child-frame-id :initarg :child-frame-id :reader child-frame-id :type string)))
 
 (defclass pose-stamped (pose stamped) ())
 
 (defclass point-stamped (3d-vector stamped) ())
 
-(defmethod print-object ((tr stamped-transform) strm)
+(defmethod print-object ((tr transform-stamped) strm)
   (print-unreadable-object (tr strm :type t)
     (with-slots (frame-id child-frame-id stamp translation rotation)
         tr
@@ -38,14 +38,13 @@
                  :origin translation
                  :orientation rotation))
 
-(defun transform->stamped-transform (frame-id child-frame-id stamp transform)
-  (make-instance 'stamped-transform
+(defun transform->transform-stamped (frame-id child-frame-id stamp transform)
+  (make-instance 'transform-stamped
                  :frame-id frame-id
                  :child-frame-id child-frame-id
                  :stamp stamp
                  :translation (translation transform)
                  :rotation (rotation transform)))
-
 
 (defun make-point-stamped (frame-id stamp 3d-vector)
   (make-instance 'point-stamped
@@ -55,8 +54,16 @@
                  :y (y 3d-vector)
                  :z (z 3d-vector)))
 
-(defun make-stamped-transform (frame-id child-frame-id stamp translation rotation)
-  (make-instance 'stamped-transform
+(defun point->point-stamped (frame-id stamp point)
+  (make-instance 'point-stamped
+    :frame-id frame-id
+    :stamp stamp
+    :x (cl-transforms:x point)
+    :y (cl-transforms:y point)
+    :z (cl-transforms:z point)))
+
+(defun make-transform-stamped (frame-id child-frame-id stamp translation rotation)
+  (make-instance 'transform-stamped
                  :frame-id frame-id
                  :child-frame-id child-frame-id
                  :stamp stamp
@@ -80,9 +87,41 @@
     :origin (origin pose)
     :orientation (orientation pose)))
 
-(defun stamped-transform->pose-stamped (transform)
+(defun transform-stamped->pose-stamped (transform)
   (with-slots (child-frame-id stamp)
       transform
     (change-class (make-identity-pose) 'pose-stamped
                   :frame-id child-frame-id
                   :stamp stamp)))
+
+(defgeneric ensure-pose-stamped (position-object &optional frame-id stamp)
+  (:method ((pose-stamped pose-stamped) &optional frame-id stamp)
+    (declare (ignore frame-id stamp))
+    pose-stamped)
+  (:method ((pose cl-transforms:pose) &optional frame-id stamp)
+    (assert (and frame-id stamp) ()
+            "Cannot convert POSE into POSE-STAMPED without `frame-id' and `stamp'.")
+    (pose->pose-stamped frame-id stamp pose))
+  (:method ((transform-stamped transform-stamped) &optional frame-id stamp)
+    (make-pose-stamped
+     (or frame-id (frame-id transform-stamped))
+     (or stamp (stamp transform-stamped))
+     (translation transform-stamped)
+     (rotation transform-stamped))))
+
+
+;;; Deprecated stamped-transform
+(defclass stamped-transform (transform-stamped) ())
+(defmethod initialize-instance :after ((instance stamped-transform) &key)
+  (warn "STAMPED-TRANSFORM is deprecated. Use TRANSFORM-STAMPED instead."))
+(defun make-stamped-transform (frame-id child-frame-id stamp translation rotation)
+  (warn "MAKE-STAMPED-TRANSFORM is deprecated. Use MAKE-TRANSFORM-STAMPED instead.")
+  (make-transform-stamped frame-id child-frame-id stamp translation rotation))
+(defun transform->stamped-transform (frame-id child-frame-id stamp transform)
+  (warn "TRANSFORM->STAMPED-TRANSFORM is deprecated.
+Use TRANSFORM->TRANSFORM-STAMPED instead.")
+  (transform->transform-stamped frame-id child-frame-id stamp transform))
+(defun stamped-transform->pose-stamped (transform)
+  (warn "STAMPED-TRANSFORM->POSE-STAMPED is deprecated.
+Use TRANSFORM-STAMPED->POSE-STAMPED instead.")
+  (transform-stamped->pose-stamped transform))

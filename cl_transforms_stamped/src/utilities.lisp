@@ -1,5 +1,5 @@
 ;;;
-;;; Copyright (c) 2010, Lorenz Moesenlechner <moesenle@in.tum.de>
+;;; Copyright (c) 2014, Uni Bremen AI team
 ;;; All rights reserved.
 ;;;
 ;;; Redistribution and use in source and binary forms, with or without
@@ -10,10 +10,10 @@
 ;;;     * Redistributions in binary form must reproduce the above copyright
 ;;;       notice, this list of conditions and the following disclaimer in the
 ;;;       documentation and/or other materials provided with the distribution.
-;;;     * Neither the name of the Intelligent Autonomous Systems Group/
-;;;       Technische Universitaet Muenchen nor the names of its contributors 
-;;;       may be used to endorse or promote products derived from this software 
-;;;       without specific prior written permission.
+;;;     * Neither the name of the Institute for Artificial Intelligence/
+;;;       Universitaet Bremen nor the names of its contributors may be used to
+;;;       endorse or promote products derived from this software without
+;;;       specific prior written permission.
 ;;;
 ;;; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 ;;; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -27,20 +27,14 @@
 ;;; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ;;; POSSIBILITY OF SUCH DAMAGE.
 
-(in-package :cl-tf)
+(in-package :cl-transforms-stamped)
 
-(defun transforms->tf-msg (transforms)
-  (make-message "tf/tfMessage" :transforms (map 'vector #'to-msg transforms)))
+(defun unslash-frame (frame)
+  "Removes any leading or trailing '/' characters from the string
+`frame' and returns the resulting string."
+  (when frame ; if not checked for NIL the result would be the string "NIL"
+    (string-trim "/ " frame)))
 
-(defun transform->tf-msg (tr)
-  (make-message "tf/tfMessage" :transforms (vector (to-msg tr))))
-
-(defun tf-msg->transforms (tf-msgs)
-  "Return the transform that corresponds to a tf message."
-  (loop for msg across (tf-msg:transforms tf-msgs) collecting (from-msg msg)))
-
-(defun restamp-tf-msg (msg new-stamp)
-  (with-slots (tf-msg:transforms) msg
-    (loop for transform-msg across tf-msg:transforms do
-      (restamp-msg transform-msg new-stamp))
-    msg))
+(defun resolve-frame (prefix frame-name)
+  "Creates a resolved tf name based on a tf-prefix and the actual frame-name."
+  (concatenate 'string (unslash-frame prefix) "/" (unslash-frame frame-name)))

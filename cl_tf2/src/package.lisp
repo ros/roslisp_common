@@ -28,10 +28,13 @@
 
 (in-package :cl-user)
 
-(defpackage :cl-tf2
-  (:use #:common-lisp #:roslisp)
-  (:export buffer-client can-transform lookup-transform
-           make-transform-broadcaster send-transform make-stamped-transform
-           ensure-pose-stamped-transformable resolve
-           ensure-transform-available ensure-pose-stamped-transformed
-           unslash-frame header child-frame-id transform frame-id stamp))
+#.`(defpackage :cl-tf2
+     (:use #:common-lisp #:roslisp #:cl-transforms #:cl-transforms-stamped)
+     (:export buffer-client
+              make-transform-broadcaster send-transform
+              transform-broadcaster
+              ,@(let ((r nil))
+                  (do-external-symbols (s :cl-transforms r) (push s r)))
+              ,@(let ((r nil))
+                  (do-external-symbols (s :cl-transforms-stamped r) (push s r)))
+              ))

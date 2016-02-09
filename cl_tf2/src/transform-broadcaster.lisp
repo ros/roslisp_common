@@ -28,12 +28,24 @@
 
 (in-package :cl-tf2)
 
-(defun make-transform-broadcaster (&key (topic "/tf"))
-  "Returns a publisher that can be used with send-transform. The broadcasting
- topic can be altered through the keyword `topic'."
-  (advertise topic "tf2_msgs/TFMessage"))
+(defclass transform-broadcaster ()
+  ((publisher :initarg :publisher
+              :reader publisher)
+   (send-transform-callbacks :initform '())
+   (send-transform-callbacks-enabled :initform nil)))
 
-(defun send-transform (broadcaster &rest transforms)
-  "Uses `broadcaster' to send several stamped `transforms' to TF."
-  (publish broadcaster 
-           (make-message "tf2_msgs/TFMessage" :transforms (to-msg transforms))))
+(defun make-transform-broadcaster (&key (topic "/tf") (static nil))
+  "Returns a publisher that can be used with send-transform. The broadcasting
+topic can be altered through the keyword `topic'."
+  (make-instance 'transform-broadcaster
+    :publisher (advertise topic "tf2_msgs/TFMessage" :latch static)))
+
+(defgeneric send-transform (broadcaster &rest transforms)
+  (:documentation "Uses `broadcaster' to send several stamped `transforms' to TF.")
+  (:method ((broadcaster transform-broadcaster) &rest transforms)
+    ;; (ros-info (broadcaster) "sending ~a -> ~a (at ~a)~%"
+    ;;           (frame-id (first transforms))
+    ;;           (child-frame-id (first transforms))
+    ;;           (stamp (car transforms)))
+    (publish (slot-value broadcaster 'publisher)
+             (make-message "tf2_msgs/TFMessage" :transforms (to-msg transforms)))))

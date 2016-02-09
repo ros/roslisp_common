@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(cl_tf_datatypes)
+project(cl_transforms_stamped)
 
-find_package(catkin REQUIRED) 
+find_package(catkin REQUIRED)
 
 catkin_package()
 
@@ -13,5 +13,5 @@ foreach(dir
       PATTERN ".git" EXCLUDE)
 endforeach()
 
-install (FILES cl-tf-datatypes.asd
+install (FILES cl-transforms-stamped.asd
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
