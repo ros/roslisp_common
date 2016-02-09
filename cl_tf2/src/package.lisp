@@ -29,7 +29,7 @@
 (in-package :cl-user)
 
 #.`(defpackage :cl-tf2
-     (:use #:common-lisp #:roslisp #:cl-transforms #:cl-transforms-stamped)
+     (:use #:common-lisp #:roslisp #:cl-transforms #:cl-transforms-stamped #:actionlib-lisp)
      (:export buffer-client
               make-transform-broadcaster send-transform
               transform-broadcaster

@@ -33,7 +33,7 @@
 
 (defclass buffer-client ()
   ((client :initarg :client
-           :initform (actionlib:make-action-client
+           :initform (make-simple-action-client
                       *buffer-server-action-topic*
                       *buffer-server-action-type*)
            :reader client)
@@ -41,7 +41,7 @@
          :accessor lock :type mutex)))
 
 (defmethod initialize-instance :after ((client buffer-client) &key (timeout 0.0))
-  (unless (actionlib:wait-for-server (client client) timeout)
+  (unless (wait-for-server (client client) timeout)
     (error 'timeout-error :description "Waiting for action server timed out.")))
   
 (defmethod lookup-transform ((tf buffer-client) target-frame source-frame
@@ -56,25 +56,25 @@
         (target-frame (unslash-frame target-frame))
         (source-frame (unslash-frame source-frame))
         (fixed-frame (unslash-frame fixed-frame)))
-    (multiple-value-bind (result status)
-        (sb-thread:with-recursive-lock ((lock tf))
-          (actionlib:send-goal-and-wait
-           (client tf)
-           (actionlib:make-action-goal
-               (client tf)
-             :target_frame target-frame :source_frame source-frame
-             :source_time source-time
-             :timeout timeout
-             :target_time target-time
-             :fixed_frame fixed-frame
-             :advanced fixed-frame) ; <- FIXED-FRAME is converted to a boolean here
-           :result-timeout timeout))
-      (when (not (eq status :succeeded))
-        (error 'transform-stamped-error :description
-               (if result
-                   (roslisp:msg-slot-value (roslisp:msg-slot-value result :error) :error_string)
-                   (format nil "Action call did not succeed. Status: ~a" status))))
-      (process-result result))))
+    (sb-thread:with-recursive-lock ((lock tf))
+      (let* ((action-client (client tf))
+             (goal-msg (make-action-goal-msg action-client
+                         :target_frame target-frame
+                         :source_frame source-frame
+                         :source_time source-time
+                         :timeout timeout
+                         :target_time target-time
+                         :fixed_frame fixed-frame
+                         :advanced fixed-frame)) ; <- FIXED-FRAME is converted to a boolean here
+             (status
+               (send-goal-and-wait action-client goal-msg timeout timeout))
+             (result (result action-client)))
+        (unless (eq status :succeeded)
+          (error 'transform-stamped-error :description
+                 (if result
+                     (roslisp:msg-slot-value (roslisp:msg-slot-value result :error) :error_string)
+                     (format nil "Action call did not succeed. Status: ~a" status))))
+        (process-result result)))))
 
 (defun process-result (result)
   (with-fields (error transform) result
