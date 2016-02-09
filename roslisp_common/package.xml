@@ -21,7 +21,9 @@
 
   <run_depend>actionlib_lisp</run_depend> 
   <run_depend>cl_tf</run_depend> 
+  <run_depend>cl_tf2</run_depend> 
   <run_depend>cl_transforms</run_depend> 
+  <run_depend>cl_transforms_stamped</run_depend> 
   <run_depend>cl_utils</run_depend> 
   <run_depend>cl_urdf</run_depend>
   <run_depend>roslisp_utilities</run_depend> 
