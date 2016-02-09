@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>cl_tf2</name>
-  <version>0.2.4</version>
+  <version>0.2.5</version>
   <description>
     Client implementation to use TF2 from Common Lisp
   </description>
