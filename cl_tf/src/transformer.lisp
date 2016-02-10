@@ -143,13 +143,14 @@ and ~a are not connected in the reference frame tree" source-frame target-frame)
   (when (or target-time fixed-frame)
     (warn "LOOKUP-TRANSFORM of CL-TF:TRANSFORMER does not support
 TARGET-TIME or FIXED-FRAME arguments."))
-  (if (wait-for-transform tf :time time :timeout timeout
-                             :source-frame source-frame :target-frame target-frame)
-      (lookup-cached-transform tf :time time
-                           :source-frame source-frame :target-frame target-frame)
-      (error 'timeout-error :description
-             (format nil "No transform was published between frames ~a and ~a"
-                     source-frame target-frame))))
+  (let ((timeout (or timeout 0.0))) ; check in case timeout explicitly set to NIL
+    (if (wait-for-transform tf :time time :timeout timeout
+                               :source-frame source-frame :target-frame target-frame)
+        (lookup-cached-transform tf :time time
+                                    :source-frame source-frame :target-frame target-frame)
+        (error 'timeout-error :description
+               (format nil "No transform was published between frames ~a and ~a"
+                       source-frame target-frame)))))
 
 (defmethod set-transform ((tf transformer) (transform transform-stamped) &key suppress-callbacks)
   (with-slots (transforms set-transform-callbacks lock) tf
@@ -188,10 +189,10 @@ TARGET-TIME or FIXED-FRAME arguments."))
                          :target-frame target-frame
                          :source-frame source-frame)
                finally (return t))))
-      (or (can-transform
-                    tf :time time
-                       :target-frame target-frame
-                       :source-frame source-frame)
+      (or (can-transform tf
+                         :time time
+                         :target-frame target-frame
+                         :source-frame source-frame)
           (with-new-transform-stamped-callback (tf #'on-set-transform)
             (if timeout
                 (let ((timer (sb-ext:make-timer
@@ -209,7 +210,8 @@ TARGET-TIME or FIXED-FRAME arguments."))
   (let ((target-frame (ensure-fully-qualified-name target-frame (tf-prefix tf)))
         (time (if use-current-ros-time
                   (roslisp:ros-time)
-                  (ensure-null-time (stamp pose)))))
+                  (ensure-null-time (stamp pose))))
+        (timeout (or timeout 0.0))) ; check in case timeout explicitly set to NIL
     (let ((transform (lookup-transform tf target-frame (frame-id pose)
                                        :time time :timeout timeout)))
       (assert transform () "Transform from `~a' to `~a' not found."
@@ -237,13 +239,14 @@ TARGET-TIME or FIXED-FRAME arguments."))
                     :stamp (stamp transform)))))
 
 (defmethod transform-point-stamped ((tf transformer)
-                                   &key target-frame point timeout use-current-ros-time)
+                                    &key target-frame point timeout use-current-ros-time)
   (check-type target-frame string)
   (check-type point point-stamped)
   (let ((target-frame (ensure-fully-qualified-name target-frame (tf-prefix tf)))
         (time (if use-current-ros-time
                   (roslisp:ros-time)
-                  (ensure-null-time (stamp point)))))
+                  (ensure-null-time (stamp point))))
+        (timeout (or timeout 0.0))) ; check in case timeout explicitly set to NIL
     (check-transform-exists tf target-frame)
     (let ((transform (lookup-transform tf target-frame (frame-id point)
                                        :time time :timeout timeout)))
