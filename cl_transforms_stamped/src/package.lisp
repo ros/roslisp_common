@@ -18,8 +18,10 @@
               from-msg restamp-msg
               pose-stamped->point-stamped-msg
               lookup-transform transform-pose-stamped transform-point-stamped
+              ;; conditions
               transform-stamped-error connectivity-error lookup-error
               extrapolation-error invalid-argument-error timeout-error
+              description
               ;; utilities.lisp
               unslash-frame resolve-frame
               ,@(let ((r nil))
