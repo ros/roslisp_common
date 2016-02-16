@@ -48,6 +48,8 @@
                     (cmd-line-args nil cmds-supplied-p?)
                     (name "cram_hl")
                     (anonymous t))
+  (when (eql roslisp::*node-status* :running)
+    (shutdown-ros))
   (if master-uri?
       (if cmds-supplied-p?
     	    (start-ros-node name :anonymous anonymous :master-uri master-uri :cmd-line-args cmd-line-args)
