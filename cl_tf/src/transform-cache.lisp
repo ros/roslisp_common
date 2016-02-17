@@ -114,7 +114,15 @@
                cache-size)
         (error 'extrapolation-error :description
                "Requested time points to the future. Cannot transform."))
-      (get-cached-transform cache-entry time :interpolate interpolate))))
+      (if (< (cache-fill-pointer cache-entry) 2)
+          ;; If our CACHE-ENTRY has only one element
+          ;; our search won't be able to find TIME as we need lower and upper bounds.
+          ;; In that case, search in the previous cache entry, as the first entry
+          ;; in a cache-entry is always present in its predecessor as well.
+          (let ((prev-entry-index (truncate (mod (1- time) cache-size))))
+            (get-cached-transform (aref cache prev-entry-index)
+                                  time :interpolate interpolate))
+          (get-cached-transform cache-entry time :interpolate interpolate)))))
 
 (defun gc-cache-entry (cache-entry)
   (with-slots (fill-pointer newest-stamp) cache-entry
