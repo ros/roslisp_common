@@ -30,10 +30,10 @@
 (in-package :cl-transforms-stamped)
 
 (define-condition transform-stamped-error (error)
-  ((description :initarg :description :reader description))
+  ((description :initarg :description :reader error-description))
   (:documentation "A base class for all transform stamped conditions")
   (:report (lambda (condition stream)
-             (format stream (description condition)))))
+             (format stream (error-description condition)))))
 
 (define-condition connectivity-error (transform-stamped-error) ()
   (:documentation "The frames requested are not connected in the reference frame tree"))
