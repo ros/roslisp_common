@@ -21,7 +21,7 @@
               ;; conditions
               transform-stamped-error connectivity-error lookup-error
               extrapolation-error invalid-argument-error timeout-error
-              description
+              error-description
               ;; utilities.lisp
               unslash-frame resolve-frame
               ,@(let ((r nil))
