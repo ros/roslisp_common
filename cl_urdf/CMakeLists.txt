@@ -6,10 +6,15 @@ find_package(catkin REQUIRED COMPONENTS
   cl_transforms
 )
 
-#set the default path for built executables to the "bin" directory
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
-#set the default path for built libraries to the "lib" directory
-set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
-
 catkin_package()
 
+foreach(dir
+    src)
+  install(DIRECTORY ${dir}
+      DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+      PATTERN ".svn" EXCLUDE
+      PATTERN ".git" EXCLUDE)
+endforeach()
+
+install (FILES cl-urdf.asd
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
