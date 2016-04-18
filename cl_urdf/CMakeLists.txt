@@ -1,10 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(cl_urdf)
 
-find_package(catkin REQUIRED COMPONENTS
-  roslisp
-  cl_transforms
-)
+find_package(catkin REQUIRED)
 
 catkin_package()
 
