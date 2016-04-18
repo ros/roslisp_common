@@ -1,6 +1,6 @@
 <package>
   <name>roslisp_common</name>
-  <version>0.2.6</version>
+  <version>0.2.7</version>
   <description>
     Common libraries to control ROS based robots. This stack contains
     an implementation of actionlib (client and server) in Common Lisp,
