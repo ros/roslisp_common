@@ -12,8 +12,6 @@
   <url>http://ros.org/wiki/cl_urdf</url>
 
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>roslisp</build_depend>
-  <build_depend>cl_transforms</build_depend>
   <run_depend>roslisp</run_depend>
   <run_depend>cl_transforms</run_depend>
 
