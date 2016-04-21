@@ -33,6 +33,16 @@
      (:export buffer-client
               make-transform-broadcaster send-transform
               transform-broadcaster
+              ;; static-transform-broadcaster classes
+              static-transform-broadcaster static-transform-periodic-broadcaster
+              ;; static-transform-broadcaster init/clean
+              make-static-transform-broadcaster make-static-transform-periodic-broadcaster
+              destroy-transform-broadcaster
+              ;; basic function to use a static-transform-broadcaster
+              send-restamped-transforms
+              ;; functions to use a static-transform-periodic-broadcaster
+              start-broadcasting-transforms stop-broadcasting-transforms
+
               ,@(let ((r nil))
                   (do-external-symbols (s :cl-transforms r) (push s r)))
               ,@(let ((r nil))
