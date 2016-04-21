@@ -1,6 +1,6 @@
 <package>
   <name>cl_transforms_stamped</name>
-  <version>0.2.7</version>
+  <version>0.2.8</version>
   <description>
     Implementation of TF datatypes
   </description>
