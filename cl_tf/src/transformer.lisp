@@ -34,7 +34,7 @@
                :reader transforms)
    (set-transform-callbacks :initform nil)
    (lock :initform (sb-thread:make-mutex))
-   (tf-prefix :initarg :tf-prefix :initform "/" :reader tf-prefix)))
+   (tf-prefix :initarg :tf-prefix :initform "" :reader tf-prefix)))
 
 (defgeneric can-transform (tf &key target-frame source-frame time))
 
@@ -289,12 +289,10 @@ TARGET-TIME or FIXED-FRAME arguments."))
                                   time (cons current-tf result)))
         result)))
 
-(defun ensure-fully-qualified-name (frame-id &optional (tf-prefix "/"))
+(defun ensure-fully-qualified-name (frame-id &optional (tf-prefix ""))
   "Makes sure that the first character in `frame-id' is set to `tf-prefix'"
   (declare (type string frame-id tf-prefix))
-  (if (eql (elt frame-id 0) #\/)
-      frame-id
-      (concatenate 'string tf-prefix frame-id)))
+  (concatenate 'string tf-prefix frame-id))
 
 (defun ensure-null-time (time)
   "Makes sure that time is NIL if it is either NIL or 0"

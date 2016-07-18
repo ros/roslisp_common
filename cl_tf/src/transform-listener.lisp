@@ -40,10 +40,9 @@
                       "/tf" "tf/tfMessage"
                       (lambda (msg)
                         (tf-listener-callback tf msg))))
-    (setf tf-prefix (get-param "~tf_prefix" "/"))
-    (unless (eql (elt tf-prefix 0) #\/)
-      (setf tf-prefix (concatenate 'string "/" tf-prefix)))
-    (unless (eql (elt tf-prefix (1- (length tf-prefix))) #\/)
+    (setf tf-prefix (get-param "~tf_prefix" ""))
+    (when (and (> (length tf-prefix) 0)
+               (not (eql (elt tf-prefix (1- (length tf-prefix))) #\/)))
       (setf tf-prefix (concatenate 'string tf-prefix "/")))))
 
 (defun tf-listener-callback (tf msg)
