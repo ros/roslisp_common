@@ -23,6 +23,10 @@
               *transform-broadcaster*
               get-transform-broadcaster destroy-transform-broadcaster
               broadcast-transforms
+              ;; transforms broadcaster static
+              *transform-broadcaster-static*
+              get-transform-broadcaster-static destroy-transform-broadcaster-static
+              start-broadcasting-transforms-static stop-broadcasting-transforms-static
               ;; conditions
               transform-stamped-error connectivity-error lookup-error
               extrapolation-error invalid-argument-error timeout-error
