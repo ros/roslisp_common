@@ -19,6 +19,10 @@
               from-msg restamp-msg restamp-transform-stamped
               pose-stamped->point-stamped-msg
               lookup-transform transform-pose-stamped transform-point-stamped
+              ;; transforms broadcaster
+              *transform-broadcaster*
+              get-transform-broadcaster destroy-transform-broadcaster
+              broadcast-transforms
               ;; conditions
               transform-stamped-error connectivity-error lookup-error
               extrapolation-error invalid-argument-error timeout-error
