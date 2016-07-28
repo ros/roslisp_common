@@ -70,6 +70,10 @@
                  :translation translation
                  :rotation rotation))
 
+(defun restamp-transform-stamped (transform-stamped new-stamp)
+  "Replace the `stamp' field of the `transform-stamped' with the `new-stamp'."
+  (setf (slot-value transform-stamped 'stamp) new-stamp))
+
 (defun copy-pose-stamped (pose &key origin orientation stamp)
   "Copies a pose-stamped. If either `origin' or `orientation' is
   specified, replaces the corresponding entry in the new pose."

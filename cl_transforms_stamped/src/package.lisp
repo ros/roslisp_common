@@ -16,7 +16,7 @@
               make-stamped-transform transform->stamped-transform
               stamped-transform->pose-stamped
               to-msg make-header-msg make-point-msg make-pose-stamped-msg
-              from-msg restamp-msg
+              from-msg restamp-msg restamp-transform-stamped
               pose-stamped->point-stamped-msg
               lookup-transform transform-pose-stamped transform-point-stamped
               ;; conditions
