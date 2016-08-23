@@ -126,7 +126,8 @@
                "Requested time points to the future. Cannot transform."))
       (if (or (< (cache-fill-pointer cache-entry) 2)
               (< time (stamp (aref (slot-value cache-entry 'transforms-cache) 0))))
-          ;; If our CACHE-ENTRY has only one element
+          ;; If our CACHE-ENTRY has only one element because we just started with
+          ;; this entry
           ;; our search won't be able to find TIME as we need lower and upper bounds
           ;; and the upper bound is missing.
           ;; In that case, search in the previous cache entry, as the first entry
