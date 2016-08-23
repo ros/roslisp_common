@@ -114,9 +114,14 @@
                cache-size)
         (error 'extrapolation-error :description
                "Requested time points to the future. Cannot transform."))
-      (if (< (cache-fill-pointer cache-entry) 2)
+      (if (or (< (cache-fill-pointer cache-entry) 2)
+              (< time (stamp (aref (slot-value cache-entry 'transforms-cache) 0))))
           ;; If our CACHE-ENTRY has only one element
-          ;; our search won't be able to find TIME as we need lower and upper bounds.
+          ;; our search won't be able to find TIME as we need lower and upper bounds
+          ;; and the upper bound is missing.
+          ;; Also, if we're asking for an element smaller than first cache entry,
+          ;; e.g. we're asking for 1234.000001 and the first entry is 1234.01
+          ;; we need to look in the previous entry again.
           ;; In that case, search in the previous cache entry, as the first entry
           ;; in a cache-entry is always present in its predecessor as well.
           (let ((prev-entry-index (truncate (mod (1- time) cache-size))))

@@ -292,7 +292,7 @@ TARGET-TIME or FIXED-FRAME arguments."))
 (defun ensure-fully-qualified-name (frame-id &optional (tf-prefix ""))
   "Makes sure that the first character in `frame-id' is set to `tf-prefix'"
   (declare (type string frame-id tf-prefix))
-  (concatenate 'string tf-prefix frame-id))
+  (unslash-frame (concatenate 'string tf-prefix frame-id)))
 
 (defun ensure-null-time (time)
   "Makes sure that time is NIL if it is either NIL or 0"
