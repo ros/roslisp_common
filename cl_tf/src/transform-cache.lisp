@@ -89,7 +89,17 @@
         ;; work. Otherwise, we cannot request transforms between the
         ;; last transform of the previous cache entry and the first
         ;; transform of the current cache entry.
-        (let ((prev-entry-index (truncate (mod (1- (stamp transform)) cache-size))))
+        (let* ((prev-entry-index (truncate (mod (1- (stamp transform)) cache-size)))
+               (prev-entry (aref cache prev-entry-index)))
+          ;; If there was a delay in TF publishing for more than one second
+          ;; looking in the previous cache entry will not help.
+          ;; We need to go all the way back to the last published entry
+          ;; and put the new one next to it.
+          (loop while (> (- (stamp transform) (newest-stamp prev-entry)) (- cache-size 2))
+                repeat (1- cache-size)
+                do (cache-transform prev-entry transform)
+                   (setf prev-entry-index (truncate (mod (1- prev-entry-index) cache-size)))
+                   (setf prev-entry (aref cache prev-entry-index)))
           (cache-transform (aref cache prev-entry-index) transform))
         (gc-cache-entry cache-entry))
       (cache-transform cache-entry transform))))
@@ -116,14 +126,15 @@
                "Requested time points to the future. Cannot transform."))
       (if (or (< (cache-fill-pointer cache-entry) 2)
               (< time (stamp (aref (slot-value cache-entry 'transforms-cache) 0))))
-          ;; If our CACHE-ENTRY has only one element
+          ;; If our CACHE-ENTRY has only one element because we just started with
+          ;; this entry
           ;; our search won't be able to find TIME as we need lower and upper bounds
           ;; and the upper bound is missing.
+          ;; In that case, search in the previous cache entry, as the first entry
+          ;; in a cache-entry is always present in its predecessor as well.
           ;; Also, if we're asking for an element smaller than first cache entry,
           ;; e.g. we're asking for 1234.000001 and the first entry is 1234.01
           ;; we need to look in the previous entry again.
-          ;; In that case, search in the previous cache entry, as the first entry
-          ;; in a cache-entry is always present in its predecessor as well.
           (let ((prev-entry-index (truncate (mod (1- time) cache-size))))
             (get-cached-transform (aref cache prev-entry-index)
                                   time :interpolate interpolate))
