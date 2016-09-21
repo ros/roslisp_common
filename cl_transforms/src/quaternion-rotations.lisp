@@ -44,6 +44,33 @@
                      (- (* (cos phi) (cos the) (sin psi)) (* (sin phi) (sin the) (cos psi)))
                      (+ (* (cos phi) (cos the) (cos psi)) (* (sin phi) (sin the) (sin psi))))))
 
+(defun quaternion->euler (q &key (just-values nil))
+  (let* ((qx (cl-transforms:x q))
+         (qy (cl-transforms:y q))
+         (qz (cl-transforms:z q))
+         (qw (cl-transforms:w q))
+         (pole-cond (- (* qw qy) (* qz qx)))
+         (at-north (< (abs (- pole-cond  0.5)) 0.00001))
+         (at-south (< (abs (- pole-cond -0.5)) 0.00001))
+         (roll (if at-north
+                 0
+                 (if at-south
+                   0
+                   (atan (+ (* qw qx 2) (* qy qz 2)) (- 1 (* 2 qx qx) (* 2 qy qy))))))
+         (pitch (if at-north
+                  (/ pi 2)
+                  (if at-south
+                    (/ pi -2)
+                    (asin (* pole-cond 2)))))
+         (yaw (if at-north
+                (* (atan qx qw) -2)
+                (if at-south
+                  (* (atan qx qw) 2)
+                  (atan (+ (* qx qy 2) (* qw qz 2)) (- 1 (* 2 qy qy) (* 2 qz qz)))))))
+    (if just-values
+      (list roll pitch yaw)
+      (list :ax roll :ay pitch :az yaw))))
+
 (defun get-yaw (quaternion)
   (with-slots (x y z w) quaternion
     (atan (* 2 (+ (* x y) (* w z)))

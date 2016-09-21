@@ -7,7 +7,7 @@
            :make-identity-vector :v+ :v- :v* :v-inv :dot-product :normalize-vector
            :cross-product :v-dist :v-norm :rotate :axis-angle->quaternion
            :quaternion->axis-angle :yaw :get-yaw
-           :euler->quaternion :matrix->quaternion :normalize
+           :euler->quaternion :quaternion->euler :matrix->quaternion :normalize
            :is-normalized :rotate :angle-between-quaternions
            :normalize-angle
            :transform :make-transform :make-identity-transform :copy-transform
