@@ -45,6 +45,29 @@
                      (+ (* (cos phi) (cos the) (cos psi)) (* (sin phi) (sin the) (sin psi))))))
 
 (defun quaternion->euler (q &key (just-values nil))
+  "Return a set of Euler/RPY angles corresponding to a particular quaternion.
+   Parameters:
+     Q : the quaternion to process
+     JUST-VALUES : if nil, the result is a list with content (:AX value-x :AY value-y :AZ value-z)
+                   if not nil, the result is a list with content (value-x value-y value-z)
+
+The angles returned are in the following intervals:
+  :AX (roll) between -pi and pi
+  :AY (pitch) between -pi/2 and pi/2
+  :AZ (yaw) between -pi and pi
+
+Function is defined so that (except for numerical precision error)
+
+(lambda (arg)
+  (apply #'cl-tf:euler->quaternion (cl-tf:quaternion->euler arg)))
+
+is equal to arg when arg is of type cl-tf:quaternion. Also, assuming the :AX, :AY, :AZ angles
+are in the ranges given above,
+
+(lambda (arg)
+  (cl-tf:quaternion->euler (apply #'cl-tf:euler->quaternion arg)))
+
+is equal to arg, except in cases where the pitch is +/-0.5*pi. In such cases, the resulting roll is set to zero and the resulting yaw is set to the difference (pitch pi/2) or sum (pitch pi/-2) of the yaw and roll values in arg."
   (let* ((qx (cl-transforms:x q))
          (qy (cl-transforms:y q))
          (qz (cl-transforms:z q))
