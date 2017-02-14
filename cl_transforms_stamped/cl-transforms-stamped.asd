@@ -10,4 +10,5 @@
              (:file "datatypes" :depends-on ("package"))
              (:file "ros-messages" :depends-on ("package" "datatypes"))
              (:file "conditions" :depends-on ("package"))
-             (:file "transform-interface" :depends-on ("package"))))))
+             (:file "transform-interface" :depends-on ("package"))
+             (:file "broadcaster" :depends-on ("package"))))))

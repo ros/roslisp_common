@@ -28,7 +28,7 @@
 ;;; POSSIBILITY OF SUCH DAMAGE.
 ;;;
 
-(in-package :cl-tf)
+(in-package :cl-transforms-stamped)
 
 (defparameter *tf-broadcasting-interval* 0.1)
 

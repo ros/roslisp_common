@@ -40,5 +40,4 @@
              (:file "transform-cache" :depends-on ("package" "algorithms"))
              (:file "transformer" :depends-on ("package" "transform-cache" "messages"))
              (:file "transform-listener"
-                    :depends-on ("package" "messages" "transformer"))
-             (:file "broadcaster" :depends-on ("package" "messages"))))))
+                    :depends-on ("package" "messages" "transformer"))))))

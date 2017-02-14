@@ -16,9 +16,17 @@
               make-stamped-transform transform->stamped-transform
               stamped-transform->pose-stamped
               to-msg make-header-msg make-point-msg make-pose-stamped-msg
-              from-msg restamp-msg
+              from-msg restamp-msg restamp-transform-stamped
               pose-stamped->point-stamped-msg
               lookup-transform transform-pose-stamped transform-point-stamped
+              ;; transforms broadcaster
+              *transform-broadcaster*
+              get-transform-broadcaster destroy-transform-broadcaster
+              broadcast-transforms
+              ;; transforms broadcaster static
+              *transform-broadcaster-static*
+              get-transform-broadcaster-static destroy-transform-broadcaster-static
+              start-broadcasting-transforms-static stop-broadcasting-transforms-static
               ;; conditions
               transform-stamped-error connectivity-error lookup-error
               extrapolation-error invalid-argument-error timeout-error
