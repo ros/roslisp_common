@@ -30,8 +30,6 @@
 
 (in-package :cl-urdf)
 
-(defparameter *display-ignored-warning* nil)
-
 (define-condition urdf-type-not-supported (simple-warning) ())
 (define-condition urdf-attribute-not-supported (simple-warning) ())
 (define-condition urdf-malformed (simple-error) ())
@@ -39,10 +37,9 @@
 (defgeneric parse-xml-node (name node &optional robot)
   (:method (name node &optional robot)
     (declare (ignore node robot))
-    (when *display-ignored-warning*
-      (warn 'urdf-type-not-supported
-            :format-control "URDF element type `~a' not supported. Ignoring it."
-            :format-arguments (list name)))))
+    (warn 'urdf-type-not-supported
+          :format-control "URDF element type `~a' not supported. Ignoring it."
+          :format-arguments (list name))))
 
 (defun read-fields (str)
   "Returns a list of space-separated fields in `str'. This function uses
