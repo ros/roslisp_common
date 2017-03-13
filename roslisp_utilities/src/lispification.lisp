@@ -62,3 +62,25 @@
                     (princ (char-upcase ch) strm)
                     (princ (char-downcase ch) strm))
                 (setf upcase nil)))))
+
+(defun lispify-ros-underscore-name (ros-string &optional package)
+  (declare (type string ros-string))
+  "Returns a lispified symbol replacing all underscores with dashes."
+  (intern (string-upcase (substitute #\- #\_ ros-string))
+          (or package *package*)))
+
+(defun rosify-underscores-lisp-name (lispy-symbol)
+  (declare (type symbol lispy-symbol))
+  "Returns a string where all dashes are substituted with underscores.
+Taken from cram_json_prolog PROLOGIFY function"
+  (flet ((contains-lower-case-char (symbol)
+           (and
+            (find-if (lambda (ch)
+                       (let ((lch (char-downcase ch)))
+                         (and (find lch "abcdefghijklmnopqrstuvwxyz")
+                              (eq lch ch))))
+                     (symbol-name symbol))
+            t)))
+    (if (contains-lower-case-char lispy-symbol)
+        (string lispy-symbol)
+        (string-downcase (substitute #\_ #\- (copy-seq (string lispy-symbol)))))))
