@@ -37,4 +37,6 @@
            #:startup-ros
            #:shutdown-ros
            #:lispify-ros-name
-           #:rosify-lisp-name))
+           #:rosify-lisp-name
+           #:lispify-ros-underscore-name
+           #:rosify-underscores-lisp-name))
