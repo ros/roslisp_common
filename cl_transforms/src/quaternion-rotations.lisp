@@ -44,6 +44,56 @@
                      (- (* (cos phi) (cos the) (sin psi)) (* (sin phi) (sin the) (cos psi)))
                      (+ (* (cos phi) (cos the) (cos psi)) (* (sin phi) (sin the) (sin psi))))))
 
+(defun quaternion->euler (q &key (just-values nil))
+  "Return a set of Euler/RPY angles corresponding to a particular quaternion.
+   Parameters:
+     Q : the quaternion to process
+     JUST-VALUES : if nil, the result is a list with content (:AX value-x :AY value-y :AZ value-z)
+                   if not nil, the result is a list with content (value-x value-y value-z)
+
+The angles returned are in the following intervals:
+  :AX (roll) between -pi and pi
+  :AY (pitch) between -pi/2 and pi/2
+  :AZ (yaw) between -pi and pi
+
+Function is defined so that (except for numerical precision error)
+
+(lambda (arg)
+  (apply #'cl-tf:euler->quaternion (cl-tf:quaternion->euler arg)))
+
+is equal to arg when arg is of type cl-tf:quaternion. Also, assuming the :AX, :AY, :AZ angles
+are in the ranges given above,
+
+(lambda (arg)
+  (cl-tf:quaternion->euler (apply #'cl-tf:euler->quaternion arg)))
+
+is equal to arg, except in cases where the pitch is +/-0.5*pi. In such cases, the resulting roll is set to zero and the resulting yaw is set to the difference (pitch pi/2) or sum (pitch pi/-2) of the yaw and roll values in arg."
+  (let* ((qx (cl-transforms:x q))
+         (qy (cl-transforms:y q))
+         (qz (cl-transforms:z q))
+         (qw (cl-transforms:w q))
+         (pole-cond (- (* qw qy) (* qz qx)))
+         (at-north (< (abs (- pole-cond  0.5)) 0.00001))
+         (at-south (< (abs (- pole-cond -0.5)) 0.00001))
+         (roll (if at-north
+                 0
+                 (if at-south
+                   0
+                   (atan (+ (* qw qx 2) (* qy qz 2)) (- 1 (* 2 qx qx) (* 2 qy qy))))))
+         (pitch (if at-north
+                  (/ pi 2)
+                  (if at-south
+                    (/ pi -2)
+                    (asin (* pole-cond 2)))))
+         (yaw (if at-north
+                (* (atan qx qw) -2)
+                (if at-south
+                  (* (atan qx qw) 2)
+                  (atan (+ (* qx qy 2) (* qw qz 2)) (- 1 (* 2 qy qy) (* 2 qz qz)))))))
+    (if just-values
+      (list roll pitch yaw)
+      (list :ax roll :ay pitch :az yaw))))
+
 (defun get-yaw (quaternion)
   (with-slots (x y z w) quaternion
     (atan (* 2 (+ (* x y) (* w z)))
