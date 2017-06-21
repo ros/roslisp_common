@@ -47,4 +47,6 @@
    parse-urdf
    generate-urdf-xml
    generate-urdf-string
-   *display-ignored-warning*))
+   *display-ignored-warning*
+   ;; utils
+   get-link-chain get-joint-chain))

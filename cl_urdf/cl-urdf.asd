@@ -30,7 +30,7 @@
 
 (defsystem cl-urdf
   :author "Lorenz Moesenlechner"
-  :license "BSD"  
+  :license "BSD"
   :depends-on (s-xml cl-transforms)
   :components
   ((:module "src"
@@ -40,4 +40,5 @@
      (:file "joint" :depends-on ("package" "link"))
      (:file "robot" :depends-on ("package" "link" "joint"))
      (:file "parser" :depends-on ("package" "robot"))
-     (:file "writer" :depends-on ("package" "robot"))))))
+     (:file "writer" :depends-on ("package" "robot"))
+     (:file "utils" :depends-on ("package" "link" "joint"))))))
