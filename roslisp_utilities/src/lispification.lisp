@@ -71,8 +71,7 @@
 
 (defun rosify-underscores-lisp-name (lispy-symbol)
   (declare (type symbol lispy-symbol))
-  "Returns a string where all dashes are substituted with underscores.
-Taken from cram_json_prolog PROLOGIFY function"
+  "Returns a string where all dashes are substituted with underscores."
   (flet ((contains-lower-case-char (symbol)
            (and
             (find-if (lambda (ch)
