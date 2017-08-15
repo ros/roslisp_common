@@ -69,7 +69,7 @@
              (status
                (send-goal-and-wait action-client goal-msg timeout timeout))
              (result (result action-client)))
-        (unless (eq status :succeeded)
+        (unless (and result (eq status :succeeded))
           (error 'transform-stamped-error :description
                  (if result
                      (roslisp:msg-slot-value (roslisp:msg-slot-value result :error) :error_string)
