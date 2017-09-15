@@ -1,6 +1,6 @@
 <package>
   <name>cl_urdf</name>
-  <version>0.2.9</version>
+  <version>0.2.10</version>
   <description>cl_urdf</description>
   <author>Lorenz Moesenlechner</author>
   <maintainer email="kazhoyan@cs.uni-bremen.de">Gayane Kazhoyan</maintainer>
