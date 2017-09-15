@@ -20,15 +20,18 @@
      (or origin (copy-3d-vector old-origin))
      (or orientation (copy-quaternion old-orientation)))))
 
-(defmethod initialize-instance :after ((p pose) &key (validate-args :warn))
+(defmethod initialize-instance :after ((p pose) &key (validate-args :no-warn))
   (when validate-args
     (with-slots (orientation) p
       (unless (is-normalized orientation)
-        (if (eq validate-args :warn)
-            (progn
-              (setq orientation (normalize orientation))
-              (warn "Normalized orientation component to ~a" orientation))
-            (error "Orientation component ~a not normalized" orientation))))))
+        (case validate-args
+          (:warn
+           (setq orientation (normalize orientation))
+           (warn "Normalized orientation component to ~a" orientation))
+          (:no-warn
+           (setq orientation (normalize orientation)))
+          (t
+           (error "Orientation component ~a not normalized" orientation)))))))
 
 (defmethod print-object ((obj pose) strm)
   (print-unreadable-object (obj strm :type t)
