@@ -7,7 +7,7 @@
 
   <author>Bhaskara Marthi</author>
 
-  <maintainer email="moesenle@cs.tum.edu">Lorenz Moesenlechner</maintainer>
+  <maintainer email="kazhoyan@cs.uni-bremen.de">Gayane Kazhoyan</maintainer>
   <maintainer email="georg.bartels@cs.uni-bremen.de">Georg Bartels</maintainer>
 
   <license>BSD</license>
@@ -18,5 +18,5 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <run_depend>sbcl</run_depend> 
+  <run_depend>sbcl</run_depend>
 </package>

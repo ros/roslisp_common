@@ -6,9 +6,9 @@
   </description>
 
   <author>Bhaskara Marthi</author>
-  <author email="moesenle@cs.tum.edu">Lorenz Moesenlechner</author>
+  <author>Lorenz Moesenlechner</author>
 
-  <maintainer email="moesenle@cs.tum.edu">Lorenz Moesenlechner</maintainer>
+  <maintainer email="kazhoyan@cs.uni-bremen.de">Gayane Kazhoyan</maintainer>
   <maintainer email="georg.bartels@cs.uni-bremen.de">Georg Bartels</maintainer>
 
   <license>BSD</license>

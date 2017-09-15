@@ -1,12 +1,9 @@
 <package>
   <name>cl_urdf</name>
   <version>0.2.9</version>
-  <description>
-
-     cl_urdf
-
-  </description>
+  <description>cl_urdf</description>
   <author>Lorenz Moesenlechner</author>
+  <maintainer email="kazhoyan@cs.uni-bremen.de">Gayane Kazhoyan</maintainer>
   <maintainer email="georg.bartels@cs.uni-bremen.de">Georg Bartels</maintainer>
   <license>BSD</license>
   <url>http://ros.org/wiki/cl_urdf</url>
