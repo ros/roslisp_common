@@ -1,5 +1,6 @@
 ;;;
 ;;; Copyright (c) 2010, Lorenz Moesenlechner <moesenle@in.tum.de>
+;;; Copyright (c) 2019, Vanessa Hassouna <hassouna@uni-bremen.de>
 ;;; All rights reserved.
 ;;; 
 ;;; Redistribution and use in source and binary forms, with or without
@@ -30,6 +31,11 @@
 
 (in-package :cl-urdf)
 
+(defclass mimics ()
+  ((joint :reader joint :initarg :joint)
+   (multiplier :reader multiplier :initarg :multiplier :initform 0)
+   (offset :reader offset :initarg :offset :initform 0)))
+
 (defclass limits ()
   ((upper :reader upper :initarg :upper :initform 0)
    (lower :reader lower :initarg :lower :initform 0)
@@ -47,4 +53,5 @@
                       (cl-transforms:make-quaternion 0 0 0 1)))
    (parent :reader parent :initarg :parent)
    (child :reader child :initarg :child)
-   (limits :reader limits :initarg :limits)))
+   (limits :reader limits :initarg :limits)
+   (mimics :reader mimics :initarg :mimics)))

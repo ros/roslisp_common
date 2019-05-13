@@ -1,5 +1,6 @@
 ;;;
 ;;; Copyright (c) 2010, Lorenz Moesenlechner <moesenle@in.tum.de>
+;;; Copyright (c) 2019, Vanessa Hassouna <hassouna@uni-bremen.de>
 ;;; All rights reserved.
 ;;; 
 ;;; Redistribution and use in source and binary forms, with or without
@@ -219,6 +220,7 @@
          (limits-node (xml-element-child node :|limit|))
          (parent-name (parse-xml-node :|parent| (xml-element-child node :|parent|) robot))
          (child-name (parse-xml-node :|child| (xml-element-child node :|child|) robot))
+         (mimics-node (xml-element-child node :|mimic|))
          (joint
           (make-instance 'joint
                          :name (s-xml:xml-element-attribute node :|name|)
@@ -227,13 +229,15 @@
                                        (find-package :keyword))
                          :parent (gethash parent-name (links robot))
                          :child (gethash child-name (links robot)))))
-    (with-slots (axis origin limits parent child) joint
+    (with-slots (axis origin limits parent child mimics) joint
       (when axis-node
         (setf axis (parse-xml-node :|axis| axis-node robot)))
       (when origin-node
         (setf origin (parse-xml-node :|origin| origin-node robot)))
       (when limits-node
         (setf limits (parse-xml-node :|limit| limits-node robot)))
+      (when mimics-node
+        (setf mimics (parse-xml-node :|mimic| mimics-node robot)))
       (push joint (slot-value parent 'to-joints))
       (if (from-joint child)
           (error 'urdf-malformed
@@ -288,6 +292,23 @@
       (when upper-str
         (setf upper (read-number upper-str))))
     limits))
+
+(defmethod parse-xml-node ((name (eql :|mimic|)) node &optional robot)
+  (declare (ignore robot))
+  (let ((joint-str (s-xml:xml-element-attribute node :|joint|))
+        (multiplier-str (s-xml:xml-element-attribute node :|multiplier|))
+        (offset-str (s-xml:xml-element-attribute node :|offset|))
+        (mimics (make-instance
+                'mimics
+                :joint (s-xml:xml-element-attribute node :|joint|))))
+    (with-slots (joint multiplier offset) mimics
+      (when joint-str
+        (setf joint joint-str))
+      (when multiplier-str
+        (setf multiplier (read-number multiplier-str)))
+      (when offset-str
+        (setf offset (read-number offset-str))))
+    mimics))
 
 (defgeneric parse-urdf (identifier)
   (:documentation "Parses a URDF file and returns the corresponding

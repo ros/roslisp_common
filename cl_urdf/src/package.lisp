@@ -1,5 +1,6 @@
 ;;;
 ;;; Copyright (c) 2010, Lorenz Moesenlechner <moesenle@in.tum.de>
+;;; Copyright (c) 2019, Vanessa Hassouna <hassouna@uni-bremen.de>
 ;;; All rights reserved.
 ;;; 
 ;;; Redistribution and use in source and binary forms, with or without
@@ -34,7 +35,7 @@
   (:use #:common-lisp)
   (:export
    upper lower effort velocity joint-type
-   joint type name axis origin parent child limits
+   joint type name axis origin parent child limits mimics
    inertial mass inertia
    geometry box size cylinder radius length cylinder-length sphere
    mesh filename scale
