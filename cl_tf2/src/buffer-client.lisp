@@ -40,7 +40,7 @@
    (lock :initform (sb-thread:make-mutex :name (string (gensym "TF2-LOCK-")))
          :accessor lock :type mutex)))
 
-(defmethod initialize-instance :after ((client buffer-client) &key (timeout 0.0))
+(defmethod initialize-instance :after ((client buffer-client) &key (timeout 10.0))
   (unless (wait-for-server (client client) timeout)
     (error 'timeout-error :description "Waiting for action server timed out.")))
   
