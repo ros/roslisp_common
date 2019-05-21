@@ -167,9 +167,10 @@ This guarantees that Q represents a rotation."
 
 (defun normalize-angle (angle)
   "Ensures that `angle' is within the interval [-PI;PI)."
-  (let ((2pi (* 2 pi)))
-    (loop while (< angle pi) do
-      (setf angle (+ angle 2pi)))
-    (loop while (> angle pi) do
-      (setf angle (- angle 2pi))))
+  (when (or (>= angle pi) (< angle (- pi)))
+    (let ((2pi (* 2 pi)))
+      (loop while (< angle pi) do
+        (setf angle (+ angle 2pi)))
+      (loop while (> angle pi) do
+        (setf angle (- angle 2pi)))))
   angle)
