@@ -34,7 +34,7 @@
   (:use #:common-lisp)
   (:export
    upper lower effort velocity joint-type
-   joint type name axis origin parent child limits mimics
+   joint type name axis origin parent child limits mimics multiplier offset
    inertial mass inertia
    geometry box size cylinder radius length cylinder-length sphere
    mesh filename scale
