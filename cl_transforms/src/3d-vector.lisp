@@ -76,6 +76,16 @@
                   (* (y v) scalar)
                   (* (z v) scalar)))
 
+(defun v*-pairwise (v-1 v-2)
+  (make-3d-vector (* (x v-1) (x v-2))
+                  (* (y v-1) (y v-2))
+                  (* (z v-1) (z v-2))))
+
+(defun v/-pairwise (v-1 v-2)
+  (make-3d-vector (/ (x v-1) (x v-2))
+                  (/ (y v-1) (y v-2))
+                  (/ (z v-1) (z v-2))))
+
 (defun v-inv (v)
   (v* v -1))
 
