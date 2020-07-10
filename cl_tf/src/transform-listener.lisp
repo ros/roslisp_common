@@ -30,14 +30,19 @@
 (in-package :cl-tf)
 
 (defclass transform-listener (transformer)
-  ((subscriber)))
+  ((subscriber)
+   (subscriber-static)))
 
 (defgeneric destroy (obj))
 
 (defmethod initialize-instance :after ((tf transform-listener) &key)
-  (with-slots (subscriber tf-prefix) tf
+  (with-slots (subscriber subscriber-static tf-prefix) tf
     (setf subscriber (subscribe
                       "/tf" "tf/tfMessage"
+                      (lambda (msg)
+                        (tf-listener-callback tf msg))))
+    (setf subscriber (subscribe
+                      "/tf_static" "tf/tfMessage"
                       (lambda (msg)
                         (tf-listener-callback tf msg))))
     (setf tf-prefix (get-param "~tf_prefix" ""))
@@ -52,4 +57,5 @@
   (execute-changed-callbacks tf))
 
 (defmethod destroy ((tf transform-listener))
-  (roslisp:unsubscribe (slot-value tf 'subscriber)))
+  (roslisp:unsubscribe (slot-value tf 'subscriber))
+  (roslisp:unsubscribe (slot-value tf 'subscriber-static)))
