@@ -5,12 +5,12 @@
      (:use :cl :roslisp :cl-transforms)
      (:nicknames :tf-types)
      (:export frame-id stamp child-frame-id source-frame target-frame frame
-              stamped transform-stamped pose-stamped point-stamped
-              make-pose-stamped make-point-stamped make-transform-stamped
-              copy-pose-stamped
+              stamped transform-stamped pose-stamped point-stamped vector-stamped
+              make-pose-stamped make-point-stamped make-vector-stamped
+              make-transform-stamped copy-pose-stamped
               pose->pose-stamped pose-stamped->pose
-              transform-stamped->pose-stamped
-              transform->transform-stamped point->point-stamped
+              transform-stamped->pose-stamped transform->transform-stamped
+              point->point-stamped vector->vector-stamped
               ensure-pose-stamped
               stamped-transform
               make-stamped-transform transform->stamped-transform

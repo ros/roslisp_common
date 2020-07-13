@@ -12,6 +12,9 @@
 
 (defclass point-stamped (3d-vector stamped) ())
 
+;; to have the equivalent to rospy and roscpp datatype
+(defclass vector-stamped (3d-vector stamped) ())
+
 (defmethod print-object ((tr transform-stamped) strm)
   (print-unreadable-object (tr strm :type t)
     (with-slots (frame-id child-frame-id stamp translation rotation)
@@ -31,28 +34,34 @@
       (format strm "~<~%   FRAME-ID: \"~a\" STAMP: ~a~>~%   ~<V: (~a ~a ~a)~>"
               frame-id stamp x y z))))
 
+(defmethod print-object ((p vector-stamped) strm)
+  (print-unreadable-object (p strm :type t)
+    (with-slots (frame-id stamp x y z) p
+      (format strm "~<~%   FRAME-ID: \"~a\" STAMP: ~a~>~%   ~<V: (~a ~a ~a)~>"
+              frame-id stamp x y z))))
+
 (defun make-pose-stamped (frame-id stamp translation rotation)
   (make-instance 'pose-stamped
-                 :frame-id frame-id
-                 :stamp stamp
-                 :origin translation
-                 :orientation rotation))
+    :frame-id frame-id
+    :stamp stamp
+    :origin translation
+    :orientation rotation))
 
 (defun transform->transform-stamped (frame-id child-frame-id stamp transform)
   (make-instance 'transform-stamped
-                 :frame-id frame-id
-                 :child-frame-id child-frame-id
-                 :stamp stamp
-                 :translation (translation transform)
-                 :rotation (rotation transform)))
+    :frame-id frame-id
+    :child-frame-id child-frame-id
+    :stamp stamp
+    :translation (translation transform)
+    :rotation (rotation transform)))
 
 (defun make-point-stamped (frame-id stamp 3d-vector)
   (make-instance 'point-stamped
-                 :frame-id frame-id
-                 :stamp stamp
-                 :x (x 3d-vector)
-                 :y (y 3d-vector)
-                 :z (z 3d-vector)))
+    :frame-id frame-id
+    :stamp stamp
+    :x (x 3d-vector)
+    :y (y 3d-vector)
+    :z (z 3d-vector)))
 
 (defun point->point-stamped (frame-id stamp point)
   (make-instance 'point-stamped
@@ -62,13 +71,29 @@
     :y (cl-transforms:y point)
     :z (cl-transforms:z point)))
 
+(defun make-vector-stamped (frame-id stamp 3d-vector)
+  (make-instance 'vector-stamped
+    :frame-id frame-id
+    :stamp stamp
+    :x (x 3d-vector)
+    :y (y 3d-vector)
+    :z (z 3d-vector)))
+
+(defun vector->vector-stamped (frame-id stamp vector)
+  (make-instance 'vector-stamped
+    :frame-id frame-id
+    :stamp stamp
+    :x (cl-transforms:x vector)
+    :y (cl-transforms:y vector)
+    :z (cl-transforms:z vector)))
+
 (defun make-transform-stamped (frame-id child-frame-id stamp translation rotation)
   (make-instance 'transform-stamped
-                 :frame-id frame-id
-                 :child-frame-id child-frame-id
-                 :stamp stamp
-                 :translation translation
-                 :rotation rotation))
+    :frame-id frame-id
+    :child-frame-id child-frame-id
+    :stamp stamp
+    :translation translation
+    :rotation rotation))
 
 (defun copy-pose-stamped (pose &key origin orientation stamp)
   "Copies a pose-stamped. If either `origin' or `orientation' is
