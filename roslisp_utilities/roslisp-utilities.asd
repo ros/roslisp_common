@@ -32,7 +32,7 @@
   :license "BSD"
   :description "Utility functionalities to interact with ROS using roslisp."
 
-  :depends-on ("roslisp")
+  :depends-on ("roslisp" "alexandria")
   :components
   ((:module "src"
             :components

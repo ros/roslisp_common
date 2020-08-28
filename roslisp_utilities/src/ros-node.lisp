@@ -30,18 +30,27 @@
 
 (in-package :roslisp-utilities)
 
+(defvar *ranking-of-ros-init-functions* (make-hash-table :test 'eq))
 (defvar *ros-init-functions* (make-hash-table :test 'eq))
 (defvar *ros-cleanup-functions* (make-hash-table :test 'eq))
 
-(defmacro register-ros-init-function (name)
-  `(setf (gethash ',name *ros-init-functions*)
-         (symbol-function ',name)))
+(defmacro register-ros-init-function (name &optional rank)
+  `(when ',name
+     (setf (gethash ',name *ranking-of-ros-init-functions*) 
+           (if ,rank ,rank most-positive-fixnum))
+     (setf (gethash ',name *ros-init-functions*)
+           (symbol-function ',name))))
 
 (defmacro register-ros-cleanup-function (name)
   `(setf (gethash ',name *ros-cleanup-functions*)
          (symbol-function ',name)))
 
-
+(defun sorted-init-functions ()
+  (mapcar #'cdr
+          (sort (alexandria:hash-table-alist *ros-init-functions*) #'<
+                :key (alexandria:compose 
+                      (alexandria:rcurry #'gethash *ranking-of-ros-init-functions*)
+                      #'car))))
 
 (defun startup-ros (&key
                     (master-uri (make-uri "localhost" 11311) master-uri?)
@@ -57,9 +66,11 @@
       (if cmds-supplied-p?
 	        (start-ros-node name :anonymous anonymous :cmd-line-args cmd-line-args)
 	        (start-ros-node name :anonymous anonymous)))
-  (loop for f being the hash-values of *ros-init-functions* do
+  (loop for f in (sorted-init-functions) do
     (ros-info (rosnode) "ROS init ~a." f)
     (funcall f)))
+  
+
 
 
 (defun shutdown-ros ()
