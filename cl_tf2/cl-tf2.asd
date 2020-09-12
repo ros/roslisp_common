@@ -40,4 +40,5 @@
             :components
             ((:file "package")
              (:file "buffer-client" :depends-on ("package"))
-             (:file "transform-broadcaster" :depends-on ("package"))))))
+             (:file "transform-broadcaster" :depends-on ("package"))
+             (:file "static-transform-broadcaster" :depends-on ("package"))))))
