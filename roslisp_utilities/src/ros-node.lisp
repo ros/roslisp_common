@@ -45,12 +45,20 @@
   `(setf (gethash ',name *ros-cleanup-functions*)
          (symbol-function ',name)))
 
+(defun hash-table-alist (table)
+  (let ((alist '()))
+    (maphash (lambda (k v)
+               (push (cons k v) alist))
+             table)
+    alist))
+
 (defun sorted-init-functions ()
   (mapcar #'cdr
-          (sort (alexandria:hash-table-alist *ros-init-functions*) #'<
-                :key (alexandria:compose 
-                      (alexandria:rcurry #'gethash *ranking-of-ros-init-functions*)
-                      #'car))))
+          (sort (hash-table-alist *ros-init-functions*)
+                (lambda (function-name other-function-name)
+                  (< (gethash function-name *ranking-of-ros-init-functions*)
+                     (gethash other-function-name *ranking-of-ros-init-functions*)))
+                :key #'car)))
 
 (defun startup-ros (&key
                     (master-uri (make-uri "localhost" 11311) master-uri?)
