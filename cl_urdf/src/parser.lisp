@@ -135,6 +135,7 @@
 (defmethod parse-xml-node ((name (eql :|link|)) node &optional robot)
   (let ((inertial (xml-element-child node :|inertial|))
         (visual (xml-element-child node :|visual|))
+        (visuals (xml-element-children-list node :|visual|))
         (collision (xml-element-child node :|collision|))
         (collisions (xml-element-children-list node :|collision|)))
     (make-instance
@@ -144,6 +145,10 @@
                  (parse-xml-node :|inertial| inertial robot))
      :visual (when visual
                (parse-xml-node :|visual| visual robot))
+     :visuals (when visuals
+                (mapcar (lambda (visual)
+                          (parse-xml-node :|visual| visual robot))
+                        visuals))
      :collision (when collision
                   (parse-xml-node :|collision| collision robot))
      :collisions (when collisions
