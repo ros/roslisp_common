@@ -63,9 +63,18 @@
       value)))
 
 (defun xml-element-child (node name)
+  "Returns first child of the `node' with given key `name'."
   (when (s-xml:xml-element-p (car (s-xml:xml-element-children node)))
     (find name (s-xml:xml-element-children node)
           :key #'s-xml:xml-element-name)))
+
+(defun xml-element-children-list (node name)
+  "Returns all children of the `node' with given key `name'."
+  (when (s-xml:xml-element-p (car (s-xml:xml-element-children node)))
+    (flet ((searched-name (child)
+             (eq (s-xml:xml-element-name child) name)))
+      (remove-if-not #'searched-name
+                     (s-xml:xml-element-children node)))))
 
 (defun parse-child-node (node name &optional robot)
   (let ((child-node (xml-element-child node name)))
@@ -126,7 +135,8 @@
 (defmethod parse-xml-node ((name (eql :|link|)) node &optional robot)
   (let ((inertial (xml-element-child node :|inertial|))
         (visual (xml-element-child node :|visual|))
-        (collision (xml-element-child node :|collision|)))
+        (collision (xml-element-child node :|collision|))
+        (collisions (xml-element-children-list node :|collision|)))
     (make-instance
      'link
      :name (s-xml:xml-element-attribute node :|name|)
@@ -135,7 +145,11 @@
      :visual (when visual
                (parse-xml-node :|visual| visual robot))
      :collision (when collision
-                  (parse-xml-node :|collision| collision robot)))))
+                  (parse-xml-node :|collision| collision robot))
+     :collisions (when collisions
+                   (mapcar (lambda (collision)
+                             (parse-xml-node :|collision| collision robot))
+                           collisions)))))
 
 (defmethod parse-xml-node ((name (eql :|inertial|)) node &optional robot)
   (let ((mass-node (xml-element-child node :|mass|))

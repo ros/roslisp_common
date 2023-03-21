@@ -90,5 +90,10 @@
    (name :reader name :initarg :name)
    (intertial :reader inertial :initarg :inertial)
    (visual :reader visual :initarg :visual)
-   (collision :reader collision :initarg :collision)))
+   ;; URDF supports mutiple collision entries per link.
+   ;; Keep single collision for backwards compatibility.
+   (collision :reader collision :initarg :collision
+              :documentation "The first collision element of this link.")
+   (collisions :reader collisions :initarg :collisions
+               :documentation "List of all collision elements of this link.")))
 

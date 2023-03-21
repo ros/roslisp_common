@@ -40,7 +40,7 @@
    mesh filename scale
    material color texture
    visual
-   collision
+   collision collisions
    link from-joint to-joints
    robot links joints root-link materials
    urdf-type-not-supported urdf-attribute-not-supported urdf-malformed
