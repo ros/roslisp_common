@@ -89,7 +89,7 @@
               link with its children")
    (name :reader name :initarg :name)
    (intertial :reader inertial :initarg :inertial)
-   ;; URDF supports mutiple entries of visual and collision per link.
+   ;; URDF supports multiple entries of visual and collision per link.
    ;; Keep single visual and collision for backwards compatibility.
    (visual :reader visual :initarg :visual
            :documentation "The first visual element of this link.")
