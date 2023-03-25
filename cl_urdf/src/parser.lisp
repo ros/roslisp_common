@@ -58,18 +58,18 @@
 (defun read-number (str)
   (let ((*read-eval* nil))
     (let ((value
-           (read-from-string str)))
+            (read-from-string str)))
       (assert (typep value 'number))
       value)))
 
 (defun xml-element-child (node name)
-  "Returns first child of the `node' with given key `name'."
+  "Returns the first child of the `node' with given tag `name'."
   (when (s-xml:xml-element-p (car (s-xml:xml-element-children node)))
     (find name (s-xml:xml-element-children node)
           :key #'s-xml:xml-element-name)))
 
 (defun xml-element-children-list (node name)
-  "Returns all children of the `node' with given key `name'."
+  "Returns all children of the `node' with given tag `name'."
   (when (s-xml:xml-element-p (car (s-xml:xml-element-children node)))
     (flet ((searched-name (child)
              (eq (s-xml:xml-element-name child) name)))
@@ -89,8 +89,8 @@
                  (find-root-link (parent (from-joint link)))
                  link)))
     (let ((robot (make-instance
-                  'robot
-                  :name (s-xml:xml-element-attribute node :|name|)))
+                     'robot
+                   :name (s-xml:xml-element-attribute node :|name|)))
           (material-descriptions nil)
           (link-descriptions nil)
           (joint-descriptions nil)
@@ -126,11 +126,11 @@
              (s-xml:xml-element-attribute texture-node :|filename|))))
     (or (gethash (s-xml:xml-element-attribute node :|name|) (materials robot))
         (make-instance
-         'material
-         :name (s-xml:xml-element-attribute node :|name|)
-         :color (or (parse-color (xml-element-child node :|color|))
-                    '(0.8 0.8 0.8 1.0))
-         :texture (parse-texture (xml-element-child node :|texture|))))))
+            'material
+          :name (s-xml:xml-element-attribute node :|name|)
+          :color (or (parse-color (xml-element-child node :|color|))
+                     '(0.8 0.8 0.8 1.0))
+          :texture (parse-texture (xml-element-child node :|texture|))))))
 
 (defmethod parse-xml-node ((name (eql :|link|)) node &optional robot)
   (let ((inertial (xml-element-child node :|inertial|))
@@ -139,22 +139,22 @@
         (collision (xml-element-child node :|collision|))
         (collisions (xml-element-children-list node :|collision|)))
     (make-instance
-     'link
-     :name (s-xml:xml-element-attribute node :|name|)
-     :inertial (when inertial
-                 (parse-xml-node :|inertial| inertial robot))
-     :visual (when visual
-               (parse-xml-node :|visual| visual robot))
-     :visuals (when visuals
-                (mapcar (lambda (visual)
-                          (parse-xml-node :|visual| visual robot))
-                        visuals))
-     :collision (when collision
-                  (parse-xml-node :|collision| collision robot))
-     :collisions (when collisions
-                   (mapcar (lambda (collision)
-                             (parse-xml-node :|collision| collision robot))
-                           collisions)))))
+        'link
+      :name (s-xml:xml-element-attribute node :|name|)
+      :inertial (when inertial
+                  (parse-xml-node :|inertial| inertial robot))
+      :visual (when visual
+                (parse-xml-node :|visual| visual robot))
+      :visuals (when visuals
+                 (mapcar (lambda (visual)
+                           (parse-xml-node :|visual| visual robot))
+                         visuals))
+      :collision (when collision
+                   (parse-xml-node :|collision| collision robot))
+      :collisions (when collisions
+                    (mapcar (lambda (collision)
+                              (parse-xml-node :|collision| collision robot))
+                            collisions)))))
 
 (defmethod parse-xml-node ((name (eql :|inertial|)) node &optional robot)
   (let ((mass-node (xml-element-child node :|mass|))
@@ -171,11 +171,11 @@
   (let ((origin-node (xml-element-child node :|origin|))
         (material-node (xml-element-child node :|material|))
         (visual (make-instance
-                 'visual
-                 :geometry (parse-xml-node
-                            :|geometry|
-                            (xml-element-child node :|geometry|)
-                            robot))))
+                    'visual
+                  :geometry (parse-xml-node
+                             :|geometry|
+                             (xml-element-child node :|geometry|)
+                             robot))))
     (with-slots (origin material) visual
       (when origin-node
         (setf origin (parse-xml-node :|origin| origin-node robot)))
@@ -186,11 +186,11 @@
 (defmethod parse-xml-node ((name (eql :|collision|)) node &optional robot)
   (let ((origin-node (xml-element-child node :|origin|))
         (collision (make-instance
-                    'collision
-                    :geometry (parse-xml-node
-                               :|geometry|
-                               (xml-element-child node :|geometry|)
-                               robot))))
+                       'collision
+                     :geometry (parse-xml-node
+                                :|geometry|
+                                (xml-element-child node :|geometry|)
+                                robot))))
     (with-slots (origin material) collision
       (when origin-node
         (setf origin (parse-xml-node :|origin| origin-node robot))))
@@ -211,15 +211,15 @@
 (defmethod parse-xml-node ((name (eql :|cylinder|)) node &optional robot)
   (declare (ignore robot))
   (make-instance
-   'cylinder
-   :radius (read-number (s-xml:xml-element-attribute node :|radius|))
-   :length (read-number (s-xml:xml-element-attribute node :|length|))))
+      'cylinder
+    :radius (read-number (s-xml:xml-element-attribute node :|radius|))
+    :length (read-number (s-xml:xml-element-attribute node :|length|))))
 
 (defmethod parse-xml-node ((name (eql :|sphere|)) node &optional robot)
   (declare (ignore robot))
   (make-instance
-   'sphere
-   :radius (read-number (s-xml:xml-element-attribute node :|radius|))))
+      'sphere
+    :radius (read-number (s-xml:xml-element-attribute node :|radius|))))
 
 (defmethod parse-xml-node ((name (eql :|mesh|)) node &optional robot)
   (declare (ignore robot))
@@ -240,13 +240,13 @@
          (child-name (parse-xml-node :|child| (xml-element-child node :|child|) robot))
          (mimics-node (xml-element-child node :|mimic|))
          (joint
-          (make-instance 'joint
-                         :name (s-xml:xml-element-attribute node :|name|)
-                         :type (intern (string-upcase
-                                        (s-xml:xml-element-attribute node :|type|))
-                                       (find-package :keyword))
-                         :parent (gethash parent-name (links robot))
-                         :child (gethash child-name (links robot)))))
+           (make-instance 'joint
+             :name (s-xml:xml-element-attribute node :|name|)
+             :type (intern (string-upcase
+                            (s-xml:xml-element-attribute node :|type|))
+                           (find-package :keyword))
+             :parent (gethash parent-name (links robot))
+             :child (gethash child-name (links robot)))))
     (with-slots (axis origin limits parent child mimics) joint
       (when axis-node
         (setf axis (parse-xml-node :|axis| axis-node robot)))
@@ -299,11 +299,11 @@
   (let ((lower-str (s-xml:xml-element-attribute node :|lower|))
         (upper-str (s-xml:xml-element-attribute node :|upper|))
         (limits (make-instance
-                'limits
-                :effort (read-number
-                         (s-xml:xml-element-attribute node :|effort|))
-                :velocity (read-number
-                           (s-xml:xml-element-attribute node :|velocity|)))))
+                    'limits
+                  :effort (read-number
+                           (s-xml:xml-element-attribute node :|effort|))
+                  :velocity (read-number
+                             (s-xml:xml-element-attribute node :|velocity|)))))
     (with-slots (lower upper) limits
       (when lower-str
         (setf lower (read-number lower-str)))
@@ -317,8 +317,8 @@
         (multiplier-str (s-xml:xml-element-attribute node :|multiplier|))
         (offset-str (s-xml:xml-element-attribute node :|offset|))
         (mimics (make-instance
-                'mimics
-                :joint (s-xml:xml-element-attribute node :|joint|))))
+                    'mimics
+                  :joint (s-xml:xml-element-attribute node :|joint|))))
     (with-slots (joint multiplier offset) mimics
       (when joint-str
         (setf joint joint-str))
