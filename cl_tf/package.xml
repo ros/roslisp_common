@@ -1,6 +1,6 @@
 <package>
   <name>cl_tf</name>
-  <version>0.2.14</version>
+  <version>0.2.15</version>
   <description>
     Client implementation to use TF from Common Lisp
   </description>
